@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+started_at=$SECONDS
+trap 'printf "[orb setup] Completed in %ss\n" "$((SECONDS - started_at))"' EXIT
+
+printf '[orb setup] Checking Node.js\n'
+node -e '
+  const [major, minor] = process.versions.node.split(".").map(Number)
+  if (major < 22 || (major === 22 && minor < 18)) {
+    console.error(`Node.js >=22.18.0 is required; found ${process.versions.node}`)
+    process.exit(1)
+  }
+'
+
+printf '[orb setup] Installing Corepack and activating pnpm from packageManager\n'
+npm install --global corepack@0.34.5
+corepack enable pnpm
+package_manager="$(node -p 'require("./package.json").packageManager')"
+corepack install --global "$package_manager"
+pnpm --version
+
+printf '[orb setup] Installing workspace dependencies\n'
+time CI=1 pnpm install --frozen-lockfile

@@ -1,0 +1,13 @@
+packages:
+  - website
+
+overrides:
+  vite@*: npm:@voidzero-dev/vite-plus-core@0.3.0
+
+peerDependencyRules:
+  allowAny:
+    - vite
+
+onlyBuiltDependencies:
+  - esbuild
+  - lightningcss

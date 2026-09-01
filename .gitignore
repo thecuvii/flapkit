@@ -1,0 +1,8 @@
+.DS_Store
+.amp/
+.vite-hooks/_/
+dist/
+node_modules/
+website/dist/
+website/node_modules/
+*.tgz

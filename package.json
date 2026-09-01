@@ -1,0 +1,67 @@
+{
+  "name": "@thecuvii/flapkit",
+  "version": "0.0.0",
+  "description": "React split-flap display components and looks.",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./riffle-settle": {
+      "types": "./dist/riffle-settle/index.d.ts",
+      "import": "./dist/riffle-settle/index.js"
+    },
+    "./css-3d-cascade": {
+      "types": "./dist/css-3d-cascade/index.d.ts",
+      "import": "./dist/css-3d-cascade/index.js"
+    },
+    "./sound": {
+      "types": "./dist/sound/index.d.ts",
+      "import": "./dist/sound/index.js"
+    },
+    "./look": {
+      "types": "./dist/split-flap-look.stylex.d.ts",
+      "import": "./dist/split-flap-look.stylex.js"
+    },
+    "./looks/airport": {
+      "types": "./dist/looks/airport.look.stylex.d.ts",
+      "import": "./dist/looks/airport.look.stylex.js"
+    },
+    "./looks/industrial": {
+      "types": "./dist/looks/industrial.look.stylex.d.ts",
+      "import": "./dist/looks/industrial.look.stylex.js"
+    }
+  },
+  "scripts": {
+    "build": "vp pack",
+    "build:website": "pnpm build && vp -C website build",
+    "check": "pnpm build && vp check && tsc -p website/tsconfig.json",
+    "check:fix": "pnpm build && vp check --fix && pnpm build && tsc -p website/tsconfig.json",
+    "dev": "pnpm build && vp -C website dev",
+    "prepack": "pnpm build",
+    "test": "vp test run",
+    "prepare": "vp config --no-agent"
+  },
+  "devDependencies": {
+    "@stylexjs/stylex": "0.19.0",
+    "@types/react": "^19.2.18",
+    "react": "19.2.8",
+    "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "vite-plus": "0.3.0",
+    "vitest": "4.1.0"
+  },
+  "peerDependencies": {
+    "@stylexjs/stylex": ">=0.19.0",
+    "react": ">=19.0.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "packageManager": "pnpm@12.0.0"
+}

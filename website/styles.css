@@ -602,6 +602,8 @@ h2 {
 
 .performance-header,
 .performance-controls,
+.performance-summary,
+.performance-samples,
 .performance-results,
 .performance-stage,
 .performance-note {
@@ -638,7 +640,7 @@ h2 {
 
 .performance-controls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   align-items: end;
   gap: 12px;
   margin-top: 48px;
@@ -655,7 +657,7 @@ h2 {
 }
 
 .performance-controls select,
-.performance-controls button {
+.performance-actions button {
   min-height: 44px;
   border: 1px solid #deded9;
   border-radius: 7px;
@@ -665,22 +667,75 @@ h2 {
   padding-inline: 13px;
 }
 
-.performance-controls button {
+.performance-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.performance-actions button {
+  cursor: pointer;
+  font-weight: 680;
+  white-space: nowrap;
+}
+
+.performance-actions button:last-child {
   border-color: var(--ink);
   background: var(--ink);
   color: white;
-  cursor: pointer;
-  font-weight: 680;
 }
 
-.performance-results {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 1px;
+.performance-actions button:disabled,
+.performance-controls select:disabled {
+  cursor: wait;
+  opacity: 0.52;
+}
+
+.performance-summary {
   margin-top: 18px;
   overflow: hidden;
   border: 1px solid #e6e6e1;
   border-radius: 8px;
+  background: white;
+}
+
+.performance-summary > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 18px;
+}
+
+.performance-summary > header span,
+.performance-summary > header strong {
+  display: block;
+}
+
+.performance-summary > header span,
+.performance-samples header span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 680;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.performance-summary > header strong {
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.performance-summary > header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.performance-results {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  border-top: 1px solid #e6e6e1;
   background: #e6e6e1;
 }
 
@@ -691,7 +746,8 @@ h2 {
 }
 
 .performance-results span,
-.performance-results strong {
+.performance-results strong,
+.performance-results small {
   display: block;
 }
 
@@ -707,6 +763,69 @@ h2 {
   margin-top: 7px;
   font-size: 18px;
   font-variant-numeric: tabular-nums;
+}
+
+.performance-results small {
+  min-height: 16px;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.performance-samples {
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid #e6e6e1;
+  border-radius: 8px;
+  background: white;
+}
+
+.performance-samples header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 18px;
+}
+
+.performance-samples h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.performance-samples > div {
+  overflow-x: auto;
+}
+
+.performance-samples table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.performance-samples th,
+.performance-samples td {
+  border-top: 1px solid #ecece7;
+  padding: 10px 18px;
+  text-align: right;
+}
+
+.performance-samples th:first-child,
+.performance-samples td:first-child {
+  text-align: left;
+}
+
+.performance-samples th {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .performance-stage {
@@ -795,6 +914,18 @@ h2 {
     width: min(100% - 40px, 720px);
     margin-inline: auto;
   }
+
+  .performance-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .performance-actions {
+    grid-column: 1 / -1;
+  }
+
+  .performance-results {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 560px) {
@@ -828,6 +959,12 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .performance-actions {
+    display: grid;
+    grid-column: auto;
+    grid-template-columns: 1fr 1fr;
+  }
+
   .performance-header > div {
     align-items: flex-start;
     flex-direction: column;
@@ -839,6 +976,11 @@ h2 {
 
   .performance-results {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .performance-summary > header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .performance-stage {

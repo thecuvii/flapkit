@@ -25,13 +25,19 @@ const unicodeColumns: SplitFlapSource['columns'] = [
   },
 ]
 
-const wideCassetteColumns: SplitFlapSource['columns'] = [
+const cassetteComparisonColumns: SplitFlapSource['columns'] = [
   {
-    id: 'number',
-    label: 'NUMBER',
+    id: 'double',
+    label: 'DOUBLE',
     cells: 1,
     cassetteSpan: 2,
     flapDeck: createSplitFlapDeck(['  ', '14', '05', '55', '15', '30', '20']),
+  },
+  {
+    id: 'single',
+    label: 'SINGLE',
+    cells: 1,
+    flapDeck: createSplitFlapDeck(' 145302'),
   },
 ]
 
@@ -85,9 +91,17 @@ export function ExperimentsPage() {
     columns: unicodeColumns,
     rows: [{ id: 'local', values: { local: unicodePresets[presetIndex]! } }],
   }
-  const wideCassetteSource: SplitFlapSource = {
-    columns: wideCassetteColumns,
-    rows: [{ id: 'number', values: { number: widePresets[presetIndex]! } }],
+  const cassetteComparisonSource: SplitFlapSource = {
+    columns: cassetteComparisonColumns,
+    rows: [
+      {
+        id: 'comparison',
+        values: {
+          double: widePresets[presetIndex]!,
+          single: widePresets[presetIndex]![0]!,
+        },
+      },
+    ],
   }
 
   return (
@@ -162,11 +176,15 @@ export function ExperimentsPage() {
         >
           <div className="wide-demo">
             <div {...stylex.props(airportBoardLook)}>
-              <SplitFlapRiffle source={wideCassetteSource}>
-                <SplitFlapGrid aria-label="One double-width numeric cassette" />
+              <SplitFlapRiffle source={cassetteComparisonSource}>
+                <SplitFlapGrid aria-label="One double-width and one single-width numeric cassette" />
               </SplitFlapRiffle>
             </div>
-            <strong>One cassette · two graphemes</strong>
+            <div className="cassette-demo-labels" aria-hidden="true">
+              <span>Double-width</span>
+              <span>Single-width</span>
+            </div>
+            <strong>One runtime per cassette</strong>
           </div>
         </Experiment>
       </div>

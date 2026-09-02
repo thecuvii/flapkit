@@ -83,6 +83,30 @@ function WideRetainers() {
   )
 }
 
+function CompactHardware({ wide }: { wide: boolean }) {
+  return (
+    <span {...stylex.props(styles.compactHardware)} data-slot="hardware">
+      <span {...stylex.props(styles.compactSeam)} data-slot="seam" />
+      {wide ? (
+        <WideRetainers />
+      ) : (
+        <>
+          <span
+            {...stylex.props(styles.axle, styles.axleLeft)}
+            data-position="left"
+            data-slot="retainer"
+          />
+          <span
+            {...stylex.props(styles.axle, styles.axleRight)}
+            data-position="right"
+            data-slot="retainer"
+          />
+        </>
+      )}
+    </span>
+  )
+}
+
 function FaceGlyph({
   activeBottomInset,
   color,
@@ -442,11 +466,7 @@ const FlapCell = memo(function FlapCell({
     return (
       <span
         ref={rootRef}
-        {...stylex.props(
-          styles.cassette,
-          styles.compactCassette,
-          cell.span === 2 && styles.wideCompactCassette,
-        )}
+        {...stylex.props(styles.cassette, styles.compactCassette)}
         aria-hidden="true"
         data-slot="cassette"
         data-split-flap-cassette
@@ -458,7 +478,6 @@ const FlapCell = memo(function FlapCell({
             ...toneGlyphStyle,
             '--compact-seam-base-opacity': splitFlapLook.seamOpacity,
             '--compact-seam-height': splitFlapLook.seamThickness,
-            '--compact-seam-visibility': 1,
           } as CSSProperties
         }
       >
@@ -607,12 +626,7 @@ const FlapCell = memo(function FlapCell({
             </>
           )}
         </span>
-        {cell.span === 2 && (
-          <span {...stylex.props(styles.compactWideHardware)} data-slot="wide-hardware">
-            <span {...stylex.props(styles.compactWideSeam)} data-slot="seam" />
-            <WideRetainers />
-          </span>
-        )}
+        <CompactHardware wide={cell.span === 2} />
       </span>
     )
   }

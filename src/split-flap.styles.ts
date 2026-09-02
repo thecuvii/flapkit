@@ -183,17 +183,6 @@ export const styles = stylex.create({
     boxShadow: splitFlapLook.cassetteShadow,
   },
   compactCassette: {
-    '::before': {
-      position: 'absolute',
-      zIndex: 8,
-      inset: 0,
-      content: '',
-      backgroundImage: splitFlapLook.compactHardwareBackground,
-      backgroundPosition: splitFlapLook.compactHardwarePosition,
-      backgroundRepeat: 'no-repeat',
-      backgroundSize: splitFlapLook.compactHardwareSize,
-      pointerEvents: 'none',
-    },
     '::after': {
       position: 'absolute',
       zIndex: 7,
@@ -201,11 +190,6 @@ export const styles = stylex.create({
       content: '',
       backgroundImage: splitFlapLook.compactCoverDetail,
       pointerEvents: 'none',
-    },
-  },
-  wideCompactCassette: {
-    '::before': {
-      backgroundImage: 'none',
     },
   },
   cell: {
@@ -653,7 +637,7 @@ export const styles = stylex.create({
   axleRight: {
     right: '0.02cqw',
   },
-  compactWideHardware: {
+  compactHardware: {
     position: 'absolute',
     zIndex: 8,
     top: splitFlapLook.cavityTop,
@@ -662,7 +646,7 @@ export const styles = stylex.create({
     left: splitFlapLook.cavityLeft,
     pointerEvents: 'none',
   },
-  compactWideSeam: {
+  compactSeam: {
     position: 'absolute',
     zIndex: 5,
     top: '50%',

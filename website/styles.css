@@ -555,18 +555,14 @@ h2 {
   transform: scale(5);
 }
 
-.wide-demo {
-  width: 300px;
-}
-
 .wide-demo > div:first-child {
-  transform: scale(5.5);
+  transform: scale(4.8);
 }
 
-.demo-labels {
+.demo-labels,
+.cassette-demo-labels {
   width: 280px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 2px;
   color: var(--muted);
   font-size: 10px;
@@ -576,7 +572,17 @@ h2 {
   text-transform: uppercase;
 }
 
-.demo-labels span {
+.demo-labels {
+  grid-template-columns: 1fr 1fr;
+}
+
+.cassette-demo-labels {
+  width: 330px;
+  grid-template-columns: 2fr 1fr;
+}
+
+.demo-labels span,
+.cassette-demo-labels span {
   border-radius: 4px;
   background: white;
   padding: 8px 4px;

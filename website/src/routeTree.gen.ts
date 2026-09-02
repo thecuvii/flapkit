@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ExperimentsRouteImport } from './routes/experiments'
+import { Route as PerformanceRouteImport } from './routes/performance'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const ExperimentsRoute = ExperimentsRouteImport.update({
   path: '/experiments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PerformanceRoute = PerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/experiments': typeof ExperimentsRoute
+  '/performance': typeof PerformanceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/experiments': typeof ExperimentsRoute
+  '/performance': typeof PerformanceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/experiments': typeof ExperimentsRoute
+  '/performance': typeof PerformanceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/experiments'
+  fullPaths: '/' | '/experiments' | '/performance'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/experiments'
-  id: '__root__' | '/' | '/experiments'
+  to: '/' | '/experiments' | '/performance'
+  id: '__root__' | '/' | '/experiments' | '/performance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ExperimentsRoute: typeof ExperimentsRoute
+  PerformanceRoute: typeof PerformanceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExperimentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/performance': {
+      id: '/performance'
+      path: '/performance'
+      fullPath: '/performance'
+      preLoaderRoute: typeof PerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ExperimentsRoute: ExperimentsRoute,
+  PerformanceRoute: PerformanceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

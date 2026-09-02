@@ -199,6 +199,7 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
               </a>
             ))}
             <a href="/experiments">Experiments</a>
+            <a href="/performance">Performance bench</a>
           </nav>
           <a className="github-link" href="https://github.com/thecuvii/flapkit">
             GitHub <span aria-hidden="true">↗</span>

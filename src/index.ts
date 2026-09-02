@@ -5,6 +5,23 @@ export {
   type SplitFlapGridProps,
 } from './split-flap.board'
 export {
+  Board,
+  Cell,
+  Field,
+  Header,
+  Root,
+  Row,
+  WideCell,
+  type BoardProps,
+  type CellProps,
+  type FieldProps,
+  type HeaderProps,
+  type MotionAdapter,
+  type RootProps,
+  type RowProps,
+  type SoundAdapter,
+} from './flapkit'
+export {
   createSplitFlapDeck,
   splitFlapGraphemes,
   splitFlapCharacters,

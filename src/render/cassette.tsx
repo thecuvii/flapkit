@@ -153,7 +153,7 @@ function FaceGlyph({
   )
 }
 
-const FlapCell = memo(function FlapCell({
+export const FlapCell = memo(function FlapCell({
   cell,
   controller,
   detailed = false,
@@ -914,6 +914,7 @@ const FlapCell = memo(function FlapCell({
 export const BoardRow = memo(function BoardRow({
   columnGap,
   controller,
+  detailed = false,
   groupGap,
   layout,
   rowIndex,
@@ -921,6 +922,7 @@ export const BoardRow = memo(function BoardRow({
 }: {
   columnGap: number
   controller: SplitFlapMotionController
+  detailed?: boolean
   groupGap: number
   layout: ResolvedSplitFlapSource
   rowIndex: number
@@ -971,6 +973,7 @@ export const BoardRow = memo(function BoardRow({
                     key={cell.id}
                     cell={cell}
                     controller={controller}
+                    detailed={detailed}
                     highlighted={Boolean(row.highlighted)}
                     className={presentation?.groups[columnIndex]?.cells[cassetteIndex]?.className}
                   />

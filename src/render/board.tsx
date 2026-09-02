@@ -115,6 +115,7 @@ function GridContent({
           key={row.id}
           columnGap={columnGap}
           controller={controller}
+          detailed={motion.variant === 'scrub'}
           groupGap={groupGap}
           layout={layout}
           rowIndex={rowIndex}

@@ -68,6 +68,28 @@ describe('Flapkit motion controller', () => {
     expect(controller.readPerformanceCounters().runningCassettes).toBe(0)
   })
 
+  it('seeks one adjacent deck pitch without scheduling animation frames', () => {
+    const controller = new SplitFlapMotionController(cells(' ').cells)
+    let runtime: SplitFlapRuntime | undefined
+    controller.registerCanvasRenderer((runtimes) => {
+      runtime = runtimes[0]
+    })
+
+    controller.seekPitch(0, 2, 0.5)
+
+    expect(runtime?.currentIndex).toBe(2)
+    expect(runtime?.finalPitch).toBe(true)
+    expect(runtime?.targetIndex).toBe(3)
+    expect(runtime?.running).toBe(false)
+    expect(frames).toHaveLength(0)
+
+    controller.seekPitch(0, 2, 1)
+    expect(runtime?.currentIndex).toBe(3)
+
+    controller.seekPitch(0, 3, 0.5, false)
+    expect(runtime?.finalPitch).toBe(false)
+  })
+
   it('starts only cells whose targets differ', () => {
     const controller = new SplitFlapMotionController(cells('  ', 2).cells)
     controller.setMotion(cascadeMotion)

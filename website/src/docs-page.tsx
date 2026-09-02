@@ -1,9 +1,11 @@
 import * as Flapkit from '@thecuvii/flapkit'
-import { useState, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { CassettePreview } from '../../src/render/cassette-preview'
 import type { HighlightedDocsCode } from './docs-code'
 
 const navigation = [
   ['Introduction', 'introduction'],
+  ['How it works', 'how-it-works'],
   ['Installation', 'installation'],
   ['Usage', 'usage'],
   ['Composition', 'composition'],
@@ -16,6 +18,16 @@ const navigation = [
 ] as const
 
 const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
+const principleDeck: Flapkit.Deck = Flapkit.createDeck(
+  ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-./:東京大阪成田羽出発到着搭乗口',
+).map((position) => ({
+  ...position,
+  variant: 'AEIOU東京大阪'.includes(position.character)
+    ? 'yellow'
+    : 'RST出発到着'.includes(position.character)
+      ? 'orange'
+      : 'white',
+}))
 
 function cells(text: string, count: number, deck?: Flapkit.Deck) {
   return Array.from({ length: count }, (_, index) => (
@@ -86,6 +98,195 @@ function ComponentPreview() {
   return (
     <div className="component-preview">
       <Flapkit.Root motion={Flapkit.riffle()}>{PreviewGrid({})}</Flapkit.Root>
+    </div>
+  )
+}
+
+function FlapPrinciple() {
+  const firstCharacterProgress = 1 / (principleDeck.length - 1)
+  const [progress, setProgress] = useState(firstCharacterProgress)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [look, setLook] = useState<'airport' | 'industrial'>('airport')
+  const [motionMode, setMotionMode] = useState<'cascade' | 'riffle'>('cascade')
+  const playbackFrame = useRef<number | null>(null)
+  const deckPosition = progress * (principleDeck.length - 1)
+  const fromIndex = Math.min(principleDeck.length - 2, Math.floor(deckPosition))
+  const pitchProgress = deckPosition - fromIndex
+  const visibleIndex = Math.min(principleDeck.length - 1, fromIndex + Number(pitchProgress >= 0.5))
+  const visiblePosition = principleDeck[visibleIndex]!
+
+  const stopPlayback = () => {
+    if (playbackFrame.current !== null) cancelAnimationFrame(playbackFrame.current)
+    playbackFrame.current = null
+    setIsPlaying(false)
+  }
+
+  const togglePlayback = () => {
+    if (isPlaying) {
+      stopPlayback()
+      return
+    }
+
+    const startProgress = progress >= 1 ? 0 : progress
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setProgress(1)
+      return
+    }
+
+    const startedAt = performance.now()
+    const pitchDuration = motionMode === 'cascade' ? 95 : 58
+    const duration = (1 - startProgress) * (principleDeck.length - 1) * pitchDuration
+    setProgress(startProgress)
+    setIsPlaying(true)
+
+    const advance = (now: number) => {
+      const nextProgress = Math.min(
+        1,
+        startProgress + ((now - startedAt) / duration) * (1 - startProgress),
+      )
+      setProgress(nextProgress)
+      if (nextProgress < 1) {
+        playbackFrame.current = requestAnimationFrame(advance)
+      } else {
+        playbackFrame.current = null
+        setIsPlaying(false)
+      }
+    }
+    playbackFrame.current = requestAnimationFrame(advance)
+  }
+
+  useEffect(
+    () => () => {
+      if (playbackFrame.current !== null) cancelAnimationFrame(playbackFrame.current)
+    },
+    [],
+  )
+
+  return (
+    <div className="principle-demo">
+      <div className="principle-stage">
+        <div className="principle-cassette-stage">
+          <div className="principle-cassette-scale">
+            <CassettePreview
+              className={`flapkit-${look} principle-cassette`}
+              deck={principleDeck}
+              fromIndex={fromIndex}
+              mode={motionMode}
+              progress={pitchProgress}
+            />
+          </div>
+          <span>
+            {look} · {motionMode}
+          </span>
+        </div>
+
+        <div className="principle-copy">
+          <span>Inside one cassette</span>
+          <strong>One indexed deck, one moving leaf, every character.</strong>
+          <p>
+            Each stop in the deck carries a complete glyph. The active leaf rotates around the
+            center axle while the remaining leaves stay packed behind it.
+          </p>
+          <div className="principle-switches">
+            <div>
+              <span>Look</span>
+              <div role="group" aria-label="Cassette look">
+                {(['airport', 'industrial'] as const).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    aria-pressed={look === option}
+                    onClick={() => setLook(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span>Motion</span>
+              <div role="group" aria-label="Cassette motion">
+                {(['cascade', 'riffle'] as const).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    aria-pressed={motionMode === option}
+                    onClick={() => {
+                      stopPlayback()
+                      setMotionMode(option)
+                    }}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <dl className="principle-facts">
+            <div>
+              <dt>Deck</dt>
+              <dd>{principleDeck.length} positions</dd>
+            </div>
+            <div>
+              <dt>Active</dt>
+              <dd>1 moving leaf</dd>
+            </div>
+            <div>
+              <dt>Reserve</dt>
+              <dd>Visible leaf stack</dd>
+            </div>
+          </dl>
+          <div className="principle-deck" aria-label="Complete Latin and CJK character deck">
+            {principleDeck.map(({ character, variant }, index) => (
+              <span
+                key={`${character}-${index}`}
+                data-active={index === visibleIndex || undefined}
+                data-variant={variant}
+              >
+                {character.trim() || '·'}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="principle-scrubber">
+        <label htmlFor="principle-deck-position">Deck position</label>
+        <output data-variant={visiblePosition.variant}>
+          {visiblePosition.character.trim() || 'Blank'} · {visibleIndex + 1}/{principleDeck.length}
+        </output>
+        <div className="principle-controls">
+          <input
+            id="principle-deck-position"
+            type="range"
+            min="0"
+            max="1000"
+            value={Math.round(progress * 1000)}
+            onChange={(event) => {
+              stopPlayback()
+              setProgress(Number(event.currentTarget.value) / 1000)
+            }}
+            onKeyDown={stopPlayback}
+            onPointerDown={stopPlayback}
+          />
+          <button
+            type="button"
+            onClick={togglePlayback}
+            aria-label={isPlaying ? 'Pause deck playback' : 'Play deck to the final position'}
+            title={isPlaying ? 'Pause' : progress >= 1 ? 'Replay' : 'Play'}
+          >
+            {isPlaying ? (
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M4.5 3.5h2v9h-2zm5 0h2v9h-2z" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="m5 3 8 5-8 5z" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -200,6 +401,12 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
             optional mechanical sound.
           </p>
           <ComponentPreview />
+        </section>
+
+        <section id="how-it-works" className="doc-section principle-section">
+          <h2>How it works</h2>
+          <p>Scrub through the complete character deck and inspect one physical pitch at a time.</p>
+          <FlapPrinciple />
         </section>
 
         <section id="installation" className="doc-section">

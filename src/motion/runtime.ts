@@ -3,7 +3,7 @@ import { type ResolvedSplitFlapCell } from '../layout'
 // Motion controller shared by the Riffle and Cascade adapters.
 import type { SplitFlapMechanicalEvent, SplitFlapMechanicalEventSource } from '../sound/engine'
 
-export type SplitFlapMotionVariant = 'riffle' | 'cascade'
+export type SplitFlapMotionVariant = 'riffle' | 'cascade' | 'scrub'
 
 const cssMotionPrewarmMs = 17
 const mechanicalSoundLookaheadMs = 60
@@ -220,6 +220,10 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   private cssCassetteListeners = new Map<number, Set<(active: boolean) => void>>()
   private frameId: number | null = null
   private mechanicalEventListeners = new Set<SplitFlapMechanicalEventListener>()
+  private scrubbedPitches = new Map<
+    number,
+    { fromIndex: number; progress: number; settle: boolean }
+  >()
   private motion: MotionTuning = {
     cadenceVariationPct: 4,
     finalSettleMs: 260,
@@ -267,6 +271,20 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   registerView(index: number, view: SplitFlapView) {
     const runtime = this.runtimes[index]
     runtime.views.add(view)
+    const scrubbedPitch = this.scrubbedPitches.get(index)
+    if (scrubbedPitch) {
+      this.renderScrubbedPitchView(
+        runtime,
+        view,
+        scrubbedPitch.fromIndex,
+        scrubbedPitch.progress,
+        scrubbedPitch.settle,
+      )
+      return () => {
+        this.disposeViewAnimations(view)
+        runtime.views.delete(view)
+      }
+    }
     const now = performance.now()
 
     if (view.compact && !view.compactMotion) {
@@ -372,6 +390,29 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     this.renderCanvases(now)
   }
 
+  seekPitch(cellIndex: number, fromIndex: number, progress: number, settle = true) {
+    const runtime = this.runtimes[cellIndex]
+    if (!runtime || runtime.positions.length === 0) return
+
+    const positionCount = runtime.positions.length
+    const resolvedFromIndex =
+      ((Math.floor(fromIndex) % positionCount) + positionCount) % positionCount
+    const resolvedProgress = Math.max(0, Math.min(1, progress))
+    this.scrubbedPitches.set(cellIndex, {
+      fromIndex: resolvedFromIndex,
+      progress: resolvedProgress,
+      settle,
+    })
+    const nextIndex = (resolvedFromIndex + 1) % positionCount
+    runtime.currentIndex = resolvedProgress >= 1 ? nextIndex : resolvedFromIndex
+    runtime.finalPitch = settle
+    runtime.targetIndex = nextIndex
+    runtime.running = false
+    runtime.views.forEach((view) =>
+      this.renderScrubbedPitchView(runtime, view, resolvedFromIndex, resolvedProgress, settle),
+    )
+  }
+
   private replanRuntime(runtime: SplitFlapRuntime, now: number) {
     const waiting =
       now < runtime.pitchStart || (this.motion.variant === 'cascade' && !runtime.animationStarted)
@@ -448,6 +489,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     this.canvasRenderers.clear()
     this.cssCassetteListeners.clear()
     this.mechanicalEventListeners.clear()
+    this.scrubbedPitches.clear()
   }
 
   private clearActiveCssCassettes() {
@@ -619,6 +661,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     keyframes: Keyframe[],
     timing: KeyframeAnimationOptions & { duration: number },
     elapsed: number,
+    paused = false,
   ) {
     let animation = view.animations[slot]
 
@@ -630,14 +673,15 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
         this.animationKeyframes.set(animation, keyframes)
       }
       effect.updateTiming(timing)
-      animation.play()
+      if (!paused) animation.play()
     } else {
       animation = element.animate(keyframes, timing)
       view.animations[slot] = animation
       this.animationKeyframes.set(animation, keyframes)
     }
 
-    if (elapsed > 0) animation.currentTime = Math.min(elapsed, timing.duration)
+    if (paused) animation.pause()
+    animation.currentTime = Math.min(elapsed, timing.duration)
   }
 
   private renderIdle(runtime: SplitFlapRuntime, phase = 'idle') {
@@ -682,15 +726,47 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     view.root.dataset.variant = position.variant
   }
 
-  private animatePitchView(runtime: SplitFlapRuntime, view: SplitFlapView, now: number) {
+  private renderScrubbedPitchView(
+    runtime: SplitFlapRuntime,
+    view: SplitFlapView,
+    fromIndex: number,
+    progress: number,
+    settle: boolean,
+  ) {
+    const nextIndex = (fromIndex + 1) % runtime.positions.length
+    if (progress >= 1) {
+      runtime.currentIndex = nextIndex
+      runtime.targetIndex = nextIndex
+      this.renderIdleView(runtime, view, 'scrub')
+      return
+    }
+
+    runtime.currentIndex = fromIndex
+    runtime.targetIndex = nextIndex
+    runtime.duration = 1_000
+    runtime.finalPitch = settle
+    runtime.pitchStart = performance.now() - progress * runtime.duration
+    this.animatePitchView(runtime, view, performance.now(), progress)
+    view.root.dataset.splitFlapPhase = 'scrub'
+  }
+
+  private animatePitchView(
+    runtime: SplitFlapRuntime,
+    view: SplitFlapView,
+    now: number,
+    scrubProgress?: number,
+  ) {
     const currentPosition = runtime.positions[runtime.currentIndex]
     const nextPosition = runtime.positions[(runtime.currentIndex + 1) % runtime.positions.length]
 
     if (view.compact && (!view.compactMotion || this.motion.variant !== 'cascade')) return
     ensureStackShiftProperty()
     if (!view.compact) ensureSpecularProperty()
-    const delay = Math.max(0, runtime.pitchStart - now)
-    const elapsed = Math.max(0, now - runtime.pitchStart)
+    const paused = scrubProgress !== undefined
+    const delay = paused ? 0 : Math.max(0, runtime.pitchStart - now)
+    const elapsed = paused
+      ? Math.max(0, Math.min(1, scrubProgress)) * runtime.duration
+      : Math.max(0, now - runtime.pitchStart)
     const timing = {
       delay,
       duration: runtime.duration,
@@ -739,6 +815,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
         runtime.finalPitch ? this.compactSettleKeyframes : compactRiffleVaneKeyframes,
         runtime.finalPitch ? timing : { ...timing, iterations: riffleIterations },
         elapsed,
+        paused,
       )
       this.playViewAnimation(
         view,
@@ -747,6 +824,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
         runtime.finalPitch ? settleStackTransformKeyframes : riffleStackTransformKeyframes,
         runtime.finalPitch ? timing : { ...timing, iterations: riffleIterations },
         elapsed,
+        paused,
       )
       return
     }
@@ -858,8 +936,16 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
         ]
     view.movingVane.style.setProperty(specularProperty, '0')
 
-    this.playViewAnimation(view, 0, view.movingVane, vaneKeyframes, timing, elapsed)
-    this.playViewAnimation(view, 1, view.lowerMotionShadow, shadowKeyframes, timing, elapsed)
+    this.playViewAnimation(view, 0, view.movingVane, vaneKeyframes, timing, elapsed, paused)
+    this.playViewAnimation(
+      view,
+      1,
+      view.lowerMotionShadow,
+      shadowKeyframes,
+      timing,
+      elapsed,
+      paused,
+    )
     this.playViewAnimation(
       view,
       2,
@@ -867,6 +953,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       runtime.finalPitch ? settleStackKeyframes : riffleStackKeyframes,
       timing,
       elapsed,
+      paused,
     )
   }
 

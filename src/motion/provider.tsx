@@ -55,6 +55,13 @@ type SplitFlapContextValue = {
   presentation: CompiledBoardPresentation
 }
 
+type ScrubPitch = {
+  cellIndex: number
+  fromIndex: number
+  progress: number
+  settle: boolean
+}
+
 const SplitFlapContext = createContext<SplitFlapContextValue | null>(null)
 
 /** @internal Shared renderer context; not exported from package entry points. */
@@ -73,11 +80,13 @@ function SplitFlapEffectProvider({
   children,
   motion,
   presentation,
+  scrubPitch,
   source,
 }: {
   children: ReactNode
   motion: MotionTuning
   presentation?: CompiledBoardPresentation
+  scrubPitch?: ScrubPitch
   source: SplitFlapSource
 }) {
   const layout = useMemo(() => resolveSplitFlapSource(source), [source])
@@ -99,6 +108,7 @@ function SplitFlapEffectProvider({
       layout={layout}
       motion={motion}
       presentation={resolvedPresentation}
+      scrubPitch={scrubPitch}
     >
       {children}
     </SplitFlapRuntimeProvider>
@@ -110,16 +120,28 @@ function SplitFlapRuntimeProvider({
   layout,
   motion,
   presentation,
+  scrubPitch,
 }: {
   children: ReactNode
   layout: ResolvedSplitFlapSource
   motion: MotionTuning
   presentation: CompiledBoardPresentation
+  scrubPitch?: ScrubPitch
 }) {
   const [controller] = useState(() => new SplitFlapMotionController(layout.cells))
 
   useEffect(() => {
     controller.setMotion({ ...motion, specularStrength: splitFlapSpecularStrength })
+    if (scrubPitch) {
+      controller.seekPitch(
+        scrubPitch.cellIndex,
+        scrubPitch.fromIndex,
+        scrubPitch.progress,
+        scrubPitch.settle,
+      )
+      return
+    }
+
     let startFrame = 0
     let prepareFrame = 0
     let cancelled = false
@@ -138,7 +160,7 @@ function SplitFlapRuntimeProvider({
       cancelAnimationFrame(prepareFrame)
       cancelAnimationFrame(startFrame)
     }
-  }, [controller, layout.targetIndices, motion])
+  }, [controller, layout.targetIndices, motion, scrubPitch])
 
   useEffect(() => () => controller.destroy(), [controller])
 
@@ -234,4 +256,50 @@ export function RiffleProvider(
   props: SplitFlapEffectProps & SplitFlapPresentationProps & { motion?: Partial<RiffleMotion> },
 ) {
   return <RiffleEffect {...props} />
+}
+
+/** @internal Controlled renderer used by the documentation mechanism preview. */
+export function ScrubProvider({
+  children,
+  fromIndex,
+  mode,
+  presentation,
+  progress,
+  source,
+}: SplitFlapEffectProps &
+  SplitFlapPresentationProps & {
+    fromIndex: number
+    mode: 'cascade' | 'riffle'
+    progress: number
+  }) {
+  const motion = useMemo<MotionTuning>(
+    () => ({
+      cadenceVariationPct: 0,
+      finalSettleMs: 1_000,
+      maximumConcurrentCassettes: 1,
+      pitchMs: 1_000,
+      reboundDeg: 2,
+      rowDelayMs: 0,
+      specularStrength: splitFlapSpecularStrength,
+      startSpreadMs: 0,
+      variant: 'scrub',
+      withinRowJitterMs: 0,
+    }),
+    [],
+  )
+  const scrubPitch = useMemo(
+    () => ({ cellIndex: 0, fromIndex, progress, settle: mode === 'cascade' }),
+    [fromIndex, mode, progress],
+  )
+
+  return (
+    <SplitFlapEffectProvider
+      motion={motion}
+      presentation={presentation}
+      scrubPitch={scrubPitch}
+      source={source}
+    >
+      {children}
+    </SplitFlapEffectProvider>
+  )
 }

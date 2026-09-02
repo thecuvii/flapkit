@@ -533,6 +533,60 @@ h2 {
 
 .experiment-board {
   width: max-content;
+  margin-inline: auto;
+}
+
+.unicode-demo,
+.wide-demo {
+  width: 340px;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding-block: 22px 8px;
+}
+
+.unicode-demo > div:first-child,
+.wide-demo > div:first-child {
+  margin-block: 72px;
+  transform-origin: center;
+}
+
+.unicode-demo > div:first-child {
+  transform: scale(5);
+}
+
+.wide-demo {
+  width: 300px;
+}
+
+.wide-demo > div:first-child {
+  transform: scale(5.5);
+}
+
+.demo-labels {
+  width: 280px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 680;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.demo-labels span {
+  border-radius: 4px;
+  background: white;
+  padding: 8px 4px;
+}
+
+.unicode-demo > strong,
+.wide-demo > strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 680;
 }
 
 @media (max-width: 860px) {

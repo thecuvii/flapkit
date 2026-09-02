@@ -17,7 +17,7 @@ import {
   type MotionTuning,
   type SplitFlapRuntime,
 } from './split-flap.runtime'
-import { splitFlapTones, type SplitFlapTone } from './split-flap.source'
+import { splitFlapGraphemes, splitFlapTones, type SplitFlapTone } from './split-flap.source'
 import { styles } from './split-flap.styles'
 
 type CanvasCassetteGeometry = {
@@ -55,6 +55,7 @@ type CanvasCellVisual = {
   characters: readonly string[]
   glyphColors: Record<SplitFlapTone, { bottom: string; top: string }>
   glyphOffset: number
+  span: number
   topBrightness: number
   topFaceColor: string
 }
@@ -158,13 +159,14 @@ function getCanvasGlyphAtlas(
   return atlas
 }
 
-function drawCanvasGlyph(
+function drawCanvasGlyphSlot(
   context: CanvasRenderingContext2D,
   geometry: CanvasCassetteGeometry,
   glyphOffset: number,
   characters: readonly string[],
   character: string,
   color: string,
+  centerX: number,
   faceY: number,
   faceHeight: number,
   lower = false,
@@ -174,10 +176,7 @@ function drawCanvasGlyph(
   const atlas = getCanvasGlyphAtlas(geometry.glyphStyle, color, characters)
   const index = atlas.characterIndices.get(character) ?? atlas.characterIndices.get(' ') ?? 0
   const destinationX =
-    geometry.cellX +
-    geometry.cellWidth / 2 +
-    geometry.unit * (glyphOffset + (lower ? lowerGlyphXOffset : 0)) -
-    atlas.slotWidth / 2
+    centerX + geometry.unit * (glyphOffset + (lower ? lowerGlyphXOffset : 0)) - atlas.slotWidth / 2
   const destinationY = geometry.baseline - atlas.baseline
   const clippedLeft = Math.max(destinationX, geometry.faceX)
   const clippedTop = Math.max(destinationY, faceY)
@@ -199,6 +198,43 @@ function drawCanvasGlyph(
     clippedBottom - clippedTop,
   )
   return 1
+}
+
+function drawCanvasGlyph(
+  context: CanvasRenderingContext2D,
+  geometry: CanvasCassetteGeometry,
+  glyphOffset: number,
+  characters: readonly string[],
+  character: string,
+  color: string,
+  span: number,
+  faceY: number,
+  faceHeight: number,
+  lower = false,
+) {
+  const graphemes = splitFlapGraphemes(character)
+  const centers =
+    span === 2
+      ? [geometry.faceX + geometry.faceWidth * 0.21, geometry.faceX + geometry.faceWidth * 0.79]
+      : [geometry.cellX + geometry.cellWidth / 2]
+
+  return centers.reduce(
+    (operations, centerX, index) =>
+      operations +
+      drawCanvasGlyphSlot(
+        context,
+        geometry,
+        glyphOffset,
+        characters,
+        graphemes[index] ?? ' ',
+        color,
+        centerX,
+        faceY,
+        faceHeight,
+        lower,
+      ),
+    0,
+  )
 }
 
 function drawCanvasFace(
@@ -239,6 +275,7 @@ function drawCanvasFace(
       visual.characters,
       character,
       glyphColor,
+      visual.span,
       faceY,
       faceHeight,
       lower,
@@ -369,9 +406,12 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
         return {
           bottomBrightness: 1 + signedLeafNoise(index, 31) * tuning.leafBrightnessVariation,
           bottomFaceColor,
-          characters: Array.from(new Set(cell.flapDeck.map(({ character }) => character))),
+          characters: Array.from(
+            new Set(cell.flapDeck.flatMap(({ character }) => splitFlapGraphemes(character))),
+          ),
           glyphColors,
           glyphOffset: glyphOffsetValues[index % glyphOffsetValues.length],
+          span: cell.span,
           topBrightness: 1 + signedLeafNoise(index, 7) * tuning.leafBrightnessVariation,
           topFaceColor,
         }
@@ -460,6 +500,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
             visual.characters,
             nextPosition.character,
             nextGlyphColors.top,
+            visual.span,
             topFaceY,
             topFaceHeight,
           )
@@ -470,6 +511,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
             visual.characters,
             currentPosition.character,
             currentGlyphColors.bottom,
+            visual.span,
             bottomFaceY,
             bottomFaceHeight,
             true,

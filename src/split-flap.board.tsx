@@ -12,7 +12,7 @@ import { styles } from './split-flap.styles'
 
 function splitFlapColumnTracks(layout: ResolvedSplitFlapSource) {
   return layout.columns
-    .map((column) => `calc(${column.cells} * ${splitFlapLook.cellTrack})`)
+    .map((column) => `calc(${column.cells * column.cassetteSpan} * ${splitFlapLook.cellTrack})`)
     .join(' ')
 }
 
@@ -82,7 +82,11 @@ export type SplitFlapGridProps = {
 }
 
 function splitFlapGridWidth(layout: ResolvedSplitFlapSource, fieldGap: number) {
-  return `calc(${layout.rowCellCount} * ${splitFlapLook.cellTrack} + ${Math.max(0, layout.columns.length - 1) * fieldGap} * ${splitFlapLook.boardUnit})`
+  const trackCount = layout.columns.reduce(
+    (count, column) => count + column.cells * column.cassetteSpan,
+    0,
+  )
+  return `calc(${trackCount} * ${splitFlapLook.cellTrack} + ${Math.max(0, layout.columns.length - 1) * fieldGap} * ${splitFlapLook.boardUnit})`
 }
 
 function SplitFlapGridContent({

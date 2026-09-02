@@ -1,7 +1,7 @@
 # Flapkit
 
 Composable React split-flap displays with two motion engines, mechanical sound,
-independently importable looks, Unicode decks, and one- or two-panel cassettes.
+independently importable looks, Unicode decks, and multi-cell cassettes.
 
 ## Install
 
@@ -98,12 +98,12 @@ Changing `source` values updates only cassettes whose resolved deck positions
 changed. Keeping row IDs, column IDs, and column structure stable preserves the
 mechanical state between updates.
 
-## Unicode and two-panel cassettes
+## Unicode decks
 
 Built-in decks cover Latin letters, numbers, and common punctuation. Provide a
 physical custom deck for Chinese, Japanese, emoji, or any other grapheme. Text
 is segmented with `Intl.Segmenter`, so combining marks and emoji sequences are
-not split across panels.
+not split across cells.
 
 ```tsx
 import { createSplitFlapDeck, type SplitFlapSource } from '@thecuvii/flapkit'
@@ -117,16 +117,39 @@ const source: SplitFlapSource = {
       label: 'LOCAL',
       cells: 4,
       flapDeck: localDeck,
-      panelsPerCassette: 2,
     },
   ],
   rows: [{ id: 'one', values: { local: '東京出発' } }],
 }
 ```
 
-`panelsPerCassette: 2` groups adjacent leaf panels into one physical cassette
-with a central vertical seam. The column's `cells` count must be even. Omit the
-property for one panel per cassette.
+Each grapheme resolves to one independently driven character cell. Every cell
+has its own upper and lower split-flap leaves.
+
+## Double-width cassettes
+
+Some displays use a single cassette whose leaves are wide enough to carry two
+graphemes. Use `cassetteSpan: 2` with a custom deck of two-grapheme positions:
+
+```tsx
+const source: SplitFlapSource = {
+  columns: [
+    {
+      id: 'number',
+      label: 'NUMBER',
+      cells: 2,
+      cassetteSpan: 2,
+      flapDeck: createSplitFlapDeck(['  ', '14', '05', '55', '30']),
+    },
+  ],
+  rows: [{ id: 'one', values: { number: '1405' } }],
+}
+```
+
+This renders two double-width cassettes: `[14] [05]`. Each cassette has one
+leaf stack, one deck position, one motion state, and one sound event. The
+column's `cells` count remains the number of independently driven cassettes;
+`cassetteSpan` only changes each cassette's width and graphemes per deck position.
 
 ## Looks and CSS customization
 

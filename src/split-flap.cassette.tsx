@@ -29,8 +29,58 @@ type CellTuning = SplitFlapMaterial
 
 function splitFlapColumnTracks(layout: ResolvedSplitFlapSource) {
   return layout.columns
-    .map((column) => `calc(${column.cells} * ${splitFlapLook.cellTrack})`)
+    .map((column) => `calc(${column.cells * column.cassetteSpan} * ${splitFlapLook.cellTrack})`)
     .join(' ')
+}
+
+function WideGlyphParts({ compact = false }: { compact?: boolean }) {
+  return (
+    <>
+      <span
+        {...stylex.props(
+          styles.wideGlyphPart,
+          compact && styles.compactWideGlyphPart,
+          styles.wideGlyphPartLeft,
+        )}
+        data-split-flap-glyph-part="0"
+      />
+      <span
+        {...stylex.props(
+          styles.wideGlyphPart,
+          compact && styles.compactWideGlyphPart,
+          styles.wideGlyphPartRight,
+        )}
+        data-split-flap-glyph-part="1"
+      />
+    </>
+  )
+}
+
+function WideRetainers() {
+  return (
+    <>
+      <span
+        {...stylex.props(styles.wideRetainer, styles.wideRetainerOuterLeft)}
+        data-position="outer-left"
+        data-slot="retainer"
+      />
+      <span
+        {...stylex.props(styles.wideRetainer, styles.wideRetainerInnerLeft)}
+        data-position="inner-left"
+        data-slot="retainer"
+      />
+      <span
+        {...stylex.props(styles.wideRetainer, styles.wideRetainerInnerRight)}
+        data-position="inner-right"
+        data-slot="retainer"
+      />
+      <span
+        {...stylex.props(styles.wideRetainer, styles.wideRetainerOuterRight)}
+        data-position="outer-right"
+        data-slot="retainer"
+      />
+    </>
+  )
 }
 
 function FaceGlyph({
@@ -41,6 +91,7 @@ function FaceGlyph({
   glyphStyle,
   lower,
   moving = false,
+  wide = false,
 }: {
   activeBottomInset: string
   color: string
@@ -49,6 +100,7 @@ function FaceGlyph({
   glyphStyle: CSSProperties
   lower: boolean
   moving?: boolean
+  wide?: boolean
 }) {
   return (
     <span
@@ -61,15 +113,21 @@ function FaceGlyph({
     >
       <span
         ref={glyphRef}
-        {...stylex.props(styles.glyph, glyphOffset)}
-        style={{
-          ...glyphStyle,
-          color: `var(${activeGlyphColorProperty}, ${color})`,
-          textShadow: `0 0 ${lower ? '0.04' : '0.05'}cqw color-mix(in srgb, var(${activeGlyphColorProperty}, ${color}) ${lower ? 5 : 6}%, transparent)`,
-          top: splitFlapLook.glyphY,
-          transform: `translateX(-50%)${lower ? ` translateX(${lowerGlyphXOffset}cqw)` : ''} scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
-        }}
-      />
+        {...stylex.props(styles.glyph, glyphOffset, wide && styles.wideGlyphCarrier)}
+        data-split-flap-wide-glyph={wide || undefined}
+        style={
+          {
+            ...glyphStyle,
+            color: `var(${activeGlyphColorProperty}, ${color})`,
+            textShadow: `0 0 ${lower ? '0.04' : '0.05'}cqw color-mix(in srgb, var(${activeGlyphColorProperty}, ${color}) ${lower ? 5 : 6}%, transparent)`,
+            top: splitFlapLook.glyphY,
+            transform: `translateX(-50%)${lower ? ` translateX(${lowerGlyphXOffset}cqw)` : ''}${wide ? '' : ` scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`}`,
+            '--wide-glyph-transform': `scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
+          } as CSSProperties
+        }
+      >
+        {wide && <WideGlyphParts />}
+      </span>
     </span>
   )
 }
@@ -79,14 +137,12 @@ const FlapCell = memo(function FlapCell({
   controller,
   detailed = false,
   highlighted,
-  paired = false,
   tuning,
 }: {
   cell: ResolvedSplitFlapCell
   controller: SplitFlapMotionController
   detailed?: boolean
   highlighted: boolean
-  paired?: boolean
   tuning: CellTuning
 }) {
   const { index } = cell
@@ -148,6 +204,7 @@ const FlapCell = memo(function FlapCell({
     letterSpacing: splitFlapLook.glyphTracking,
     opacity: splitFlapLook.glyphOpacity,
     transformOrigin: '50% 0%',
+    width: `calc(${cell.span} * 10cqw)`,
   }
   const wearStrength = Math.min(tuning.patinaStrength, 2)
   const wearVariation = tuning.leafVariation ? tuning.leafWearVariation : 0
@@ -305,6 +362,8 @@ const FlapCell = memo(function FlapCell({
       '--compact-glyph-top': top,
       '--compact-glyph-tracking': splitFlapLook.glyphTracking,
       '--compact-glyph-transform': `translateX(-50%)${lower ? ` translateX(${lowerGlyphXOffset}cqw)` : ''} scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
+      '--wide-glyph-transform': `${lower ? `translateX(${lowerGlyphXOffset}cqw) ` : ''}scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
+      '--compact-glyph-width': `calc(${cell.span} * 10cqw)`,
     }) as CSSProperties
   const compactSpareLeafLayers = tuning.stackedEdges
     ? [...spareLeaves]
@@ -383,10 +442,15 @@ const FlapCell = memo(function FlapCell({
     return (
       <span
         ref={rootRef}
-        {...stylex.props(styles.cassette, styles.compactCassette, paired && styles.pairedCassette)}
+        {...stylex.props(
+          styles.cassette,
+          styles.compactCassette,
+          cell.span === 2 && styles.wideCompactCassette,
+        )}
         aria-hidden="true"
         data-slot="cassette"
         data-split-flap-cassette
+        data-split-flap-cassette-span={cell.span}
         data-split-flap-cell-id={cell.id}
         data-split-flap-index={index}
         style={
@@ -420,10 +484,12 @@ const FlapCell = memo(function FlapCell({
               styles.compactGlyphCarrier,
               styles.compactStaticFace,
               styles.compactStaticBottom,
+              cell.span === 2 && styles.compactWideGlyphCarrier,
             )}
             data-glyph=""
             data-slot="stationary-lower"
             data-split-flap-compact-glyph
+            data-split-flap-wide-glyph={cell.span === 2 || undefined}
             style={{
               ...compactGlyphCarrierStyle(
                 bottomGlyphColor,
@@ -437,17 +503,21 @@ const FlapCell = memo(function FlapCell({
               left: splitFlapLook.faceInsetX,
               right: splitFlapLook.faceInsetX,
             }}
-          />
+          >
+            {cell.span === 2 && <WideGlyphParts compact />}
+          </span>
           <span
             ref={arrivingUpperRef}
             {...stylex.props(
               styles.compactGlyphCarrier,
               styles.compactStaticFace,
               styles.compactStaticTop,
+              cell.span === 2 && styles.compactWideGlyphCarrier,
             )}
             data-glyph=""
             data-slot="stationary-upper"
             data-split-flap-compact-glyph
+            data-split-flap-wide-glyph={cell.span === 2 || undefined}
             style={{
               ...compactGlyphCarrierStyle(
                 glyphColor,
@@ -462,7 +532,9 @@ const FlapCell = memo(function FlapCell({
               right: splitFlapLook.faceInsetX,
               top: splitFlapLook.faceInsetY,
             }}
-          />
+          >
+            {cell.span === 2 && <WideGlyphParts compact />}
+          </span>
           {css3dMotion && (
             <>
               <span
@@ -485,10 +557,12 @@ const FlapCell = memo(function FlapCell({
                     styles.compactGlyphCarrier,
                     styles.movingVaneFace,
                     styles.compactMovingVaneFace,
+                    cell.span === 2 && styles.compactWideGlyphCarrier,
                   )}
                   data-glyph=""
                   data-slot="moving-leaf-front"
                   data-split-flap-compact-glyph
+                  data-split-flap-wide-glyph={cell.span === 2 || undefined}
                   style={{
                     ...compactGlyphCarrierStyle(
                       glyphColor,
@@ -500,17 +574,21 @@ const FlapCell = memo(function FlapCell({
                     clipPath: `inset(${splitFlapLook.faceInsetY} ${splitFlapLook.faceInsetX} 50% ${splitFlapLook.faceInsetX})`,
                     transform: `translateZ(calc(${splitFlapLook.leafThickness} / 2))`,
                   }}
-                />
+                >
+                  {cell.span === 2 && <WideGlyphParts compact />}
+                </span>
                 <span
                   ref={movingBackGlyphRef}
                   {...stylex.props(
                     styles.compactGlyphCarrier,
                     styles.movingVaneFace,
                     styles.compactMovingVaneFace,
+                    cell.span === 2 && styles.compactWideGlyphCarrier,
                   )}
                   data-glyph=""
                   data-slot="moving-leaf-back"
                   data-split-flap-compact-glyph
+                  data-split-flap-wide-glyph={cell.span === 2 || undefined}
                   style={{
                     ...compactGlyphCarrierStyle(
                       bottomGlyphColor,
@@ -522,11 +600,19 @@ const FlapCell = memo(function FlapCell({
                     clipPath: `inset(50% ${splitFlapLook.faceInsetX} ${activeBottomInset} ${splitFlapLook.faceInsetX})`,
                     transform: `translateZ(calc(${splitFlapLook.leafThickness} / -2)) rotateX(180deg)`,
                   }}
-                />
+                >
+                  {cell.span === 2 && <WideGlyphParts compact />}
+                </span>
               </span>
             </>
           )}
         </span>
+        {cell.span === 2 && (
+          <span {...stylex.props(styles.compactWideHardware)} data-slot="wide-hardware">
+            <span {...stylex.props(styles.compactWideSeam)} data-slot="seam" />
+            <WideRetainers />
+          </span>
+        )}
       </span>
     )
   }
@@ -534,10 +620,11 @@ const FlapCell = memo(function FlapCell({
   return (
     <span
       ref={rootRef}
-      {...stylex.props(styles.cassette, paired && styles.pairedCassette)}
+      {...stylex.props(styles.cassette)}
       aria-hidden="true"
       data-slot="cassette"
       data-split-flap-cassette
+      data-split-flap-cassette-span={cell.span}
       data-split-flap-cell-id={cell.id}
       data-split-flap-index={index}
       style={toneGlyphStyle}
@@ -629,6 +716,7 @@ const FlapCell = memo(function FlapCell({
               glyphRef={outgoingLowerGlyphRef}
               glyphStyle={glyphStyle}
               lower
+              wide={cell.span === 2}
             />
           </span>
           <span ref={arrivingUpperRef} {...stylex.props(styles.faceLayer, styles.arrivingUpper)}>
@@ -652,6 +740,7 @@ const FlapCell = memo(function FlapCell({
               glyphRef={arrivingUpperGlyphRef}
               glyphStyle={glyphStyle}
               lower={false}
+              wide={cell.span === 2}
             />
           </span>
           <span ref={movingVaneRef} {...stylex.props(styles.movingVane)} data-slot="moving-leaf">
@@ -679,6 +768,7 @@ const FlapCell = memo(function FlapCell({
                 glyphStyle={glyphStyle}
                 lower={false}
                 moving
+                wide={cell.span === 2}
               />
             </span>
             <span
@@ -706,6 +796,7 @@ const FlapCell = memo(function FlapCell({
                 glyphStyle={glyphStyle}
                 lower
                 moving
+                wide={cell.span === 2}
               />
               <span
                 {...stylex.props(styles.movingVaneSpecular, styles.movingVaneBackSpecular)}
@@ -773,8 +864,14 @@ const FlapCell = memo(function FlapCell({
               height: splitFlapLook.seamThickness,
             }}
           />
-          <span {...stylex.props(styles.axle, styles.axleLeft)} />
-          <span {...stylex.props(styles.axle, styles.axleRight)} />
+          {cell.span === 2 ? (
+            <WideRetainers />
+          ) : (
+            <>
+              <span {...stylex.props(styles.axle, styles.axleLeft)} />
+              <span {...stylex.props(styles.axle, styles.axleRight)} />
+            </>
+          )}
           {tuning.stackedEdges && (
             <span
               {...stylex.props(styles.cassetteBezel)}
@@ -839,59 +936,23 @@ export const SplitFlapBoardRow = memo(function SplitFlapBoardRow({
               {...stylex.props(styles.departureFieldGrid)}
               style={{
                 columnGap: `${columnGap}cqw`,
-                gridTemplateColumns: `repeat(${column.cells / column.panelsPerCassette}, minmax(0, 1fr))`,
-                width: `calc(${column.cells} * ${splitFlapLook.cellTrack})`,
+                gridTemplateColumns: `repeat(${column.cells}, minmax(0, 1fr))`,
+                width: `calc(${column.cells * column.cassetteSpan} * ${splitFlapLook.cellTrack})`,
               }}
             >
-              {Array.from(
-                { length: column.cells / column.panelsPerCassette },
-                (_, cassetteIndex) => {
-                  const firstColumnIndex = cassetteIndex * column.panelsPerCassette
-                  const cassetteCells = Array.from(
-                    { length: column.panelsPerCassette },
-                    (_, panelIndex) =>
-                      layout.cells[
-                        rowIndex * layout.rowCellCount +
-                          column.offset +
-                          firstColumnIndex +
-                          panelIndex
-                      ],
-                  )
-
-                  if (column.panelsPerCassette === 1) {
-                    const cell = cassetteCells[0]
-                    return (
-                      <FlapCell
-                        key={cell.id}
-                        cell={cell}
-                        controller={controller}
-                        highlighted={Boolean(row.highlighted)}
-                        tuning={tuning}
-                      />
-                    )
-                  }
-
-                  return (
-                    <span
-                      key={cassetteCells[0].id}
-                      {...stylex.props(styles.pairedCassetteShell)}
-                      data-split-flap-cassette-panels="2"
-                    >
-                      {cassetteCells.map((cell) => (
-                        <FlapCell
-                          key={cell.id}
-                          cell={cell}
-                          controller={controller}
-                          highlighted={Boolean(row.highlighted)}
-                          paired
-                          tuning={tuning}
-                        />
-                      ))}
-                      <span {...stylex.props(styles.pairedCassetteSeam)} aria-hidden="true" />
-                    </span>
-                  )
-                },
-              )}
+              {Array.from({ length: column.cells }, (_, cassetteIndex) => {
+                const cell =
+                  layout.cells[rowIndex * layout.rowCellCount + column.offset + cassetteIndex]
+                return (
+                  <FlapCell
+                    key={cell.id}
+                    cell={cell}
+                    controller={controller}
+                    highlighted={Boolean(row.highlighted)}
+                    tuning={tuning}
+                  />
+                )
+              })}
             </div>
           </div>
         </div>

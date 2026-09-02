@@ -1,4 +1,9 @@
-import type { ResolvedSplitFlapCell, SplitFlapPosition, SplitFlapTone } from './split-flap.source'
+import {
+  splitFlapGraphemes,
+  type ResolvedSplitFlapCell,
+  type SplitFlapPosition,
+  type SplitFlapTone,
+} from './split-flap.source'
 import type {
   SplitFlapMechanicalEvent,
   SplitFlapMechanicalEventSource,
@@ -182,7 +187,16 @@ export type SplitFlapPerformanceCounters = {
 }
 
 function setGlyph(element: HTMLSpanElement, character: string) {
-  const glyph = character === ' ' ? '' : character
+  const glyph = character.trim() === '' ? '' : character
+  if (element.hasAttribute('data-split-flap-wide-glyph')) {
+    const glyphParts = element.querySelectorAll<HTMLElement>('[data-split-flap-glyph-part]')
+    const graphemes = splitFlapGraphemes(glyph)
+    glyphParts.forEach((part, index) => {
+      const partGlyph = graphemes[index] ?? ''
+      if (part.textContent !== partGlyph) part.textContent = partGlyph
+    })
+    return
+  }
   if (element.hasAttribute('data-split-flap-compact-glyph')) {
     if (element.dataset.glyph !== glyph) element.dataset.glyph = glyph
     return
@@ -227,11 +241,11 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
 
   constructor(cells: readonly ResolvedSplitFlapCell[]) {
     const rowCellCount = cells.reduce(
-      (count, cell) => Math.max(count, cell.columnOffset + cell.columnIndex + 1),
+      (count, cell) => Math.max(count, cell.trackIndex + cell.span),
       0,
     )
     this.runtimes = cells.map((cell, index) => {
-      const columnIndex = cell.columnOffset + cell.columnIndex
+      const columnCenter = cell.trackIndex + (cell.span - 1) / 2
 
       return {
         animationStarted: false,
@@ -243,7 +257,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
         impactAt: 65.6,
         impactEventScheduled: false,
         index,
-        pan: rowCellCount <= 1 ? 0 : (columnIndex / (rowCellCount - 1)) * 2 - 1,
+        pan: rowCellCount <= 1 ? 0 : (columnCenter / (rowCellCount - 1)) * 2 - 1,
         pitchStart: 0,
         positions: cell.flapDeck,
         rowIndex: cell.rowIndex,
@@ -666,7 +680,8 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       view.movingVane.style.setProperty(specularProperty, '0')
       this.setLowerMotionShadow(view, '0', 'translate3d(0, 0, 0) scaleY(0.45)')
     }
-    view.root.dataset.displayedCharacter = position.character === ' ' ? 'blank' : position.character
+    view.root.dataset.displayedCharacter =
+      position.character.trim() === '' ? 'blank' : position.character
     view.root.dataset.splitFlapPhase = phase
     view.root.dataset.tone = position.tone
   }
@@ -697,7 +712,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     view.arrivingUpper.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
     view.movingVane.style.opacity = '1'
     view.root.dataset.displayedCharacter =
-      currentPosition.character === ' ' ? 'blank' : currentPosition.character
+      currentPosition.character.trim() === '' ? 'blank' : currentPosition.character
     view.root.dataset.splitFlapPhase =
       delay > 0 ? 'waiting' : runtime.finalPitch ? 'settle' : 'riffle'
     view.root.dataset.tone = currentPosition.tone

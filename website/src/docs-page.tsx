@@ -35,7 +35,6 @@ const unicodePreviewSource: SplitFlapSource = {
       label: 'LOCAL',
       cells: 4,
       flapDeck: createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗'),
-      panelsPerCassette: 2,
     },
   ],
   rows: [
@@ -47,7 +46,7 @@ const unicodePreviewSource: SplitFlapSource = {
 const usageTabs = [
   { id: 'riffle', label: 'Riffle', description: 'Lightweight canvas motion' },
   { id: 'cascade', label: 'Cascade', description: 'Row-staggered 3D leaves' },
-  { id: 'unicode', label: 'Unicode', description: 'Paired grapheme panels' },
+  { id: 'unicode', label: 'Unicode', description: 'One grapheme per character cell' },
 ] as const
 
 type UsageTab = (typeof usageTabs)[number]['id']

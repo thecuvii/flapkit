@@ -1,5 +1,10 @@
 import * as stylex from '@stylexjs/stylex'
-import { createSplitFlapDeck, SplitFlapBoard, type SplitFlapSource } from '@thecuvii/flapkit'
+import {
+  createSplitFlapDeck,
+  SplitFlapBoard,
+  SplitFlapGrid,
+  type SplitFlapSource,
+} from '@thecuvii/flapkit'
 import { SplitFlapCascade } from '@thecuvii/flapkit/cascade'
 import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
 import { industrialWallLook } from '@thecuvii/flapkit/looks/industrial'
@@ -8,31 +13,37 @@ import { useState, type ReactNode } from 'react'
 
 const columns: SplitFlapSource['columns'] = [
   { id: 'status', label: 'STATUS', cells: 8 },
-  {
-    id: 'local',
-    label: 'LOCAL',
-    cells: 4,
-    flapDeck: createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗'),
-    panelsPerCassette: 2,
-  },
+  { id: 'gate', label: 'GATE', cells: 4 },
 ]
 
 const unicodeColumns: SplitFlapSource['columns'] = [
   {
     id: 'local',
     label: 'LOCAL',
-    cells: 4,
+    cells: 2,
     flapDeck: createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗'),
-    panelsPerCassette: 2,
+  },
+]
+
+const wideCassetteColumns: SplitFlapSource['columns'] = [
+  {
+    id: 'number',
+    label: 'NUMBER',
+    cells: 1,
+    cassetteSpan: 2,
+    flapDeck: createSplitFlapDeck(['  ', '14', '05', '55', '15', '30', '20']),
   },
 ]
 
 const presets = [
-  { status: 'ON TIME', local: '東京出発' },
-  { status: 'BOARDING', local: '大阪搭乗' },
-  { status: 'ARRIVED', local: '成田到着' },
-  { status: 'DELAYED', local: '羽田出発' },
+  { status: 'ON TIME', gate: 'A12' },
+  { status: 'BOARDING', gate: 'B07' },
+  { status: 'ARRIVED', gate: 'C21' },
+  { status: 'DELAYED', gate: 'D04' },
 ] as const
+
+const unicodePresets = ['東京', '大阪', '成田', '羽田'] as const
+const widePresets = ['55', '30', '14', '05'] as const
 
 function Experiment({
   children,
@@ -72,10 +83,11 @@ export function ExperimentsPage() {
   }
   const unicodeSource: SplitFlapSource = {
     columns: unicodeColumns,
-    rows: [
-      { id: 'primary', values: { local: preset.local } },
-      { id: 'alternate', values: { local: alternatePreset.local } },
-    ],
+    rows: [{ id: 'local', values: { local: unicodePresets[presetIndex]! } }],
+  }
+  const wideCassetteSource: SplitFlapSource = {
+    columns: wideCassetteColumns,
+    rows: [{ id: 'number', values: { number: widePresets[presetIndex]! } }],
   }
 
   return (
@@ -93,7 +105,7 @@ export function ExperimentsPage() {
       <div className="experiments-intro">
         <span>Flapkit lab</span>
         <h1>Motion experiments</h1>
-        <p>Compare both motion engines and verify custom Unicode decks with live updates.</p>
+        <p>Compare motion engines, Unicode decks, and double-width cassettes with live updates.</p>
       </div>
 
       <div className="experiments-stack">
@@ -122,14 +134,39 @@ export function ExperimentsPage() {
         </Experiment>
 
         <Experiment
-          label="Unicode · Paired panels"
-          title="Two-panel grapheme cassettes"
-          description="Custom decks keep CJK graphemes intact and render each value across paired physical panels."
+          label="Unicode · Custom deck"
+          title="One grapheme per cell"
+          description="Each CJK grapheme occupies one independently driven character cell with its own upper and lower leaves."
         >
-          <div {...stylex.props(airportBoardLook)}>
-            <SplitFlapRiffle source={unicodeSource}>
-              <SplitFlapBoard>Local service</SplitFlapBoard>
-            </SplitFlapRiffle>
+          <div className="unicode-demo">
+            <div {...stylex.props(airportBoardLook)}>
+              <SplitFlapRiffle source={unicodeSource}>
+                <SplitFlapGrid
+                  aria-label="Two independent Unicode character cells"
+                  columnGap={2.4}
+                />
+              </SplitFlapRiffle>
+            </div>
+            <div className="demo-labels" aria-hidden="true">
+              <span>Cell 1</span>
+              <span>Cell 2</span>
+            </div>
+            <strong>Two independent cells</strong>
+          </div>
+        </Experiment>
+
+        <Experiment
+          label="Cassette · Double width"
+          title="One leaf stack, two graphemes"
+          description="Each double-width cassette has one deck and one motion state while every leaf position carries two graphemes."
+        >
+          <div className="wide-demo">
+            <div {...stylex.props(airportBoardLook)}>
+              <SplitFlapRiffle source={wideCassetteSource}>
+                <SplitFlapGrid aria-label="One double-width numeric cassette" />
+              </SplitFlapRiffle>
+            </div>
+            <strong>One cassette · two graphemes</strong>
           </div>
         </Experiment>
       </div>

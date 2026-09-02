@@ -3,7 +3,7 @@ export const splitFlapTones = ['warmWhite', 'signalYellow', 'ochreOrange'] as co
 export type SplitFlapTone = (typeof splitFlapTones)[number]
 
 export type SplitFlapSequence = 'alphanumeric' | 'numeric' | 'punctuation'
-export type SplitFlapPanelsPerCassette = 1 | 2
+export type SplitFlapCassetteSpan = 1 | 2
 
 export type SplitFlapPosition = {
   character: string
@@ -29,24 +29,26 @@ export function createSplitFlapDeck(
 ): SplitFlapDeck {
   const normalizedCharacters = (
     typeof characters === 'string' ? splitFlapGraphemes(characters) : characters
-  ).map(normalizeSplitFlapCharacter)
+  ).map(normalizeSplitFlapText)
 
   return tones.flatMap((tone, toneIndex) =>
     normalizedCharacters
-      .filter((character) => toneIndex === 0 || character !== ' ')
+      .filter((character) => toneIndex === 0 || character.trim() !== '')
       .map((character) => ({ character, tone })),
   )
 }
 
 export type SplitFlapColumn = {
-  cellFlapDecks?: readonly (SplitFlapDeck | undefined)[]
+  cassetteFlapDecks?: readonly (SplitFlapDeck | undefined)[]
+  /** Number of standard character-cell widths occupied by each cassette. */
+  cassetteSpan?: SplitFlapCassetteSpan
+  /** Number of independently driven cassettes in this column. */
   cells: number
-  cellSequences?: readonly SplitFlapSequence[]
+  cassetteSequences?: readonly SplitFlapSequence[]
   flapDeck?: SplitFlapDeck
   flapSequence?: SplitFlapSequence
   id: string
   label: string
-  panelsPerCassette?: SplitFlapPanelsPerCassette
 }
 
 export type SplitFlapValue =
@@ -68,8 +70,9 @@ export type SplitFlapSource = {
 }
 
 export type ResolvedSplitFlapColumn = SplitFlapColumn & {
+  cassetteSpan: SplitFlapCassetteSpan
   offset: number
-  panelsPerCassette: SplitFlapPanelsPerCassette
+  trackOffset: number
 }
 
 export type ResolvedSplitFlapCell = {
@@ -84,7 +87,9 @@ export type ResolvedSplitFlapCell = {
   index: number
   rowId: string
   rowIndex: number
+  span: SplitFlapCassetteSpan
   targetIndex: number
+  trackIndex: number
   tone: SplitFlapTone
 }
 
@@ -104,9 +109,12 @@ const builtInDecks: Readonly<Record<SplitFlapSequence, SplitFlapDeck>> = {
   punctuation: createSplitFlapDeck(splitFlapPunctuationCharacters),
 }
 
-function normalizeSplitFlapCharacter(character: string) {
-  const grapheme = splitFlapGraphemes(character)[0] ?? ' '
-  return /^[a-z]$/.test(grapheme) ? grapheme.toUpperCase() : grapheme
+function normalizeSplitFlapText(text: string) {
+  const graphemes = splitFlapGraphemes(text)
+  if (graphemes.length === 0) return ' '
+  return graphemes
+    .map((grapheme) => (/^[a-z]$/.test(grapheme) ? grapheme.toUpperCase() : grapheme))
+    .join('')
 }
 
 function assertUniqueIds(items: readonly { id: string }[], kind: 'column' | 'row') {
@@ -119,13 +127,33 @@ function assertUniqueIds(items: readonly { id: string }[], kind: 'column' | 'row
   }
 }
 
-function resolveSplitFlapDeck(deck: SplitFlapDeck | undefined, sequence: SplitFlapSequence) {
-  if (!deck?.length) return builtInDecks[sequence]
+function resolveSplitFlapDeck(
+  deck: SplitFlapDeck | undefined,
+  sequence: SplitFlapSequence,
+  cassetteSpan: SplitFlapCassetteSpan,
+  columnId: string,
+) {
+  if (!deck?.length) {
+    if (cassetteSpan > 1) {
+      throw new Error(
+        `Split-flap column "${columnId}" requires a custom deck with ${cassetteSpan}-grapheme positions`,
+      )
+    }
+    return builtInDecks[sequence]
+  }
 
   const positions = deck.map((position) => ({
-    character: normalizeSplitFlapCharacter(position.character),
+    character: normalizeSplitFlapText(position.character),
     tone: position.tone,
   }))
+  const invalidPosition = positions.find(
+    (position) => splitFlapGraphemes(position.character).length !== cassetteSpan,
+  )
+  if (invalidPosition) {
+    throw new Error(
+      `Split-flap deck for column "${columnId}" has position "${invalidPosition.character}" with the wrong grapheme count for a ${cassetteSpan}-cell cassette`,
+    )
+  }
   return positions
 }
 
@@ -135,15 +163,15 @@ function targetPositionIndex(
   tone: SplitFlapTone,
   cellId: string,
 ) {
-  const normalizedCharacter = normalizeSplitFlapCharacter(character)
+  const normalizedCharacter = normalizeSplitFlapText(character)
   const exactIndex = deck.findIndex(
     (position) => position.character === normalizedCharacter && position.tone === tone,
   )
   if (exactIndex >= 0) return exactIndex
 
-  const blankIndex = deck.findIndex((position) => position.character === ' ')
+  const blankIndex = deck.findIndex((position) => position.character.trim() === '')
   if (
-    normalizedCharacter === ' ' ||
+    normalizedCharacter.trim() === '' ||
     !deck.some((position) => position.character === normalizedCharacter)
   ) {
     if (blankIndex >= 0) return blankIndex
@@ -170,16 +198,13 @@ export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFl
   assertUniqueIds(source.rows, 'row')
 
   let offset = 0
+  let trackOffset = 0
   const columns = source.columns.map((column) => {
     const cells = Math.max(1, Math.round(column.cells))
-    const panelsPerCassette = column.panelsPerCassette ?? 1
-    if (cells % panelsPerCassette !== 0) {
-      throw new Error(
-        `Split-flap column "${column.id}" has ${cells} panels, which cannot fill ${panelsPerCassette}-panel cassettes`,
-      )
-    }
-    const resolved = { ...column, cells, offset, panelsPerCassette }
+    const cassetteSpan = column.cassetteSpan ?? 1
+    const resolved = { ...column, cassetteSpan, cells, offset, trackOffset }
     offset += cells
+    trackOffset += cells * cassetteSpan
     return resolved
   })
   const rowCellCount = offset
@@ -187,18 +212,24 @@ export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFl
     columns.flatMap((column) => {
       const value = splitFlapValue(row.values[column.id])
       const valueCharacters = splitFlapGraphemes(value.text)
-      const characters = Array.from(
-        { length: column.cells },
-        (_, characterIndex) => valueCharacters[characterIndex] ?? ' ',
+      const characters = Array.from({ length: column.cells }, (_, cassetteIndex) =>
+        Array.from(
+          { length: column.cassetteSpan },
+          (_, spanIndex) => valueCharacters[cassetteIndex * column.cassetteSpan + spanIndex] ?? ' ',
+        ).join(''),
       )
 
       return characters.map((character, columnIndex) => {
         const index = rowIndex * rowCellCount + column.offset + columnIndex
         const flapSequence =
-          column.cellSequences?.[columnIndex] ?? column.flapSequence ?? ('alphanumeric' as const)
+          column.cassetteSequences?.[columnIndex] ??
+          column.flapSequence ??
+          ('alphanumeric' as const)
         const flapDeck = resolveSplitFlapDeck(
-          column.cellFlapDecks?.[columnIndex] ?? column.flapDeck,
+          column.cassetteFlapDecks?.[columnIndex] ?? column.flapDeck,
           flapSequence,
+          column.cassetteSpan,
+          column.id,
         )
         const id = `${row.id}:${column.id}:${columnIndex}`
         return {
@@ -210,13 +241,15 @@ export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFl
           flapSequence,
           homeIndex: Math.max(
             0,
-            flapDeck.findIndex((position) => position.character === ' '),
+            flapDeck.findIndex((position) => position.character.trim() === ''),
           ),
           id,
           index,
           rowId: row.id,
           rowIndex,
+          span: column.cassetteSpan,
           targetIndex: targetPositionIndex(flapDeck, character, value.tone, id),
+          trackIndex: column.trackOffset + columnIndex * column.cassetteSpan,
           tone: value.tone,
         }
       })
@@ -230,7 +263,7 @@ export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFl
     layoutKey: `${columns
       .map(
         (column) =>
-          `${column.id}:${column.cells}:${column.panelsPerCassette}:${column.flapSequence ?? 'alphanumeric'}:${column.cellSequences?.join(',') ?? ''}:${splitFlapDeckKey(column.flapDeck)}:${column.cellFlapDecks?.map(splitFlapDeckKey).join(';') ?? ''}`,
+          `${column.id}:${column.cells}:${column.cassetteSpan}:${column.flapSequence ?? 'alphanumeric'}:${column.cassetteSequences?.join(',') ?? ''}:${splitFlapDeckKey(column.flapDeck)}:${column.cassetteFlapDecks?.map(splitFlapDeckKey).join(';') ?? ''}`,
       )
       .join('|')}::${source.rows.map((row) => row.id).join('|')}`,
     rowCellCount,

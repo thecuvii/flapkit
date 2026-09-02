@@ -32,7 +32,6 @@ const source = {
     label: 'LOCAL',
     cells: 4,
     flapDeck: localDeck,
-    panelsPerCassette: 2,
   }],
   rows: [{ id: 'service', values: { local: '東京出発' } }],
 }

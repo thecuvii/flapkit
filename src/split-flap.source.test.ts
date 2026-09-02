@@ -106,7 +106,7 @@ describe('split-flap source resolution', () => {
     ).toThrow('Split-flap deck for "row:value:0" has no blank fallback position')
   })
 
-  it('selects decks and sequences per cell before column defaults', () => {
+  it('selects decks and sequences per cassette before column defaults', () => {
     const secondDeck = createSplitFlapDeck(' B')
     const resolved = resolveSplitFlapSource(
       sourceFor(
@@ -115,8 +115,8 @@ describe('split-flap source resolution', () => {
           label: 'Value',
           cells: 2,
           flapSequence: 'numeric',
-          cellSequences: ['punctuation'],
-          cellFlapDecks: [undefined, secondDeck],
+          cassetteSequences: ['punctuation'],
+          cassetteFlapDecks: [undefined, secondDeck],
         },
         ':B',
       ),
@@ -131,25 +131,76 @@ describe('split-flap source resolution', () => {
     expect(resolved.targetIndices).toEqual([1, 1])
   })
 
-  it('resolves one- and two-panel cassette structures', () => {
-    const single = resolveSplitFlapSource(
-      sourceFor({ id: 'value', label: 'Value', cells: 2 }, 'AB'),
-    )
-    const double = resolveSplitFlapSource(
-      sourceFor({ id: 'value', label: 'Value', cells: 2, panelsPerCassette: 2 }, 'AB'),
+  it('resolves one runtime for a cassette spanning two character cells', () => {
+    const single = resolveSplitFlapSource(sourceFor({ id: 'value', label: 'Value', cells: 1 }, 'A'))
+    const wide = resolveSplitFlapSource(
+      sourceFor(
+        {
+          id: 'value',
+          label: 'Value',
+          cells: 1,
+          cassetteSpan: 2,
+          flapDeck: createSplitFlapDeck(['  ', 'AB']),
+        },
+        'AB',
+      ),
     )
 
-    expect(single.columns[0].panelsPerCassette).toBe(1)
-    expect(double.columns[0].panelsPerCassette).toBe(2)
-    expect(double.layoutKey).not.toBe(single.layoutKey)
+    expect(single.cells).toHaveLength(1)
+    expect(wide.columns[0]).toMatchObject({ cells: 1, cassetteSpan: 2 })
+    expect(wide.cells).toHaveLength(1)
+    expect(wide.cells[0]).toMatchObject({
+      character: 'AB',
+      span: 2,
+      targetIndex: 1,
+      trackIndex: 0,
+    })
+    expect(wide.rowCellCount).toBe(1)
+    expect(wide.layoutKey).not.toBe(single.layoutKey)
   })
 
-  it('rejects incomplete two-panel cassettes', () => {
+  it('keeps cells as the cassette count when cassettes are double width', () => {
+    const resolved = resolveSplitFlapSource(
+      sourceFor(
+        {
+          id: 'value',
+          label: 'Value',
+          cells: 2,
+          cassetteSpan: 2,
+          flapDeck: createSplitFlapDeck(['  ', 'AB', 'CD']),
+        },
+        'ABCD',
+      ),
+    )
+
+    expect(resolved.cells.map(({ character, trackIndex }) => ({ character, trackIndex }))).toEqual([
+      { character: 'AB', trackIndex: 0 },
+      { character: 'CD', trackIndex: 2 },
+    ])
+    expect(resolved.rowCellCount).toBe(2)
+  })
+
+  it('requires every wide-cassette deck position to carry two graphemes', () => {
     expect(() =>
       resolveSplitFlapSource(
-        sourceFor({ id: 'value', label: 'Value', cells: 3, panelsPerCassette: 2 }, 'ABC'),
+        sourceFor({ id: 'value', label: 'Value', cells: 1, cassetteSpan: 2 }, 'AB'),
       ),
-    ).toThrow('cannot fill 2-panel cassettes')
+    ).toThrow('requires a custom deck with 2-grapheme positions')
+
+    expect(() =>
+      resolveSplitFlapSource(
+        sourceFor(
+          {
+            id: 'value',
+            label: 'Value',
+            cells: 1,
+            cassetteSpan: 2,
+            flapDeck: createSplitFlapDeck([' ', 'AB']),
+          },
+          'AB',
+        ),
+      ),
+    ).toThrow('wrong grapheme count for a 2-cell cassette')
   })
 
   it.each([

@@ -182,34 +182,6 @@ export const styles = stylex.create({
     backgroundImage: splitFlapLook.cassetteBackgroundImage,
     boxShadow: splitFlapLook.cassetteShadow,
   },
-  pairedCassette: {
-    borderRadius: 0,
-    boxShadow: 'none',
-  },
-  pairedCassetteShell: {
-    position: 'relative',
-    display: 'grid',
-    height: splitFlapLook.cellHeight,
-    overflow: 'visible',
-    borderRadius: splitFlapLook.cassetteRadius,
-    backgroundColor: splitFlapLook.cassetteBackgroundColor,
-    backgroundImage: splitFlapLook.cassetteBackgroundImage,
-    boxShadow: splitFlapLook.cassetteShadow,
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-  },
-  pairedCassetteSeam: {
-    position: 'absolute',
-    zIndex: 9,
-    top: splitFlapLook.cavityTop,
-    bottom: splitFlapLook.cavityBottom,
-    left: '50%',
-    width: '0.14cqw',
-    backgroundImage:
-      'linear-gradient(90deg, rgba(0, 0, 0, 0.72), rgba(211, 206, 177, 0.035) 46%, rgba(0, 0, 0, 0.82))',
-    boxShadow: '-0.06cqw 0 0.1cqw rgba(0, 0, 0, 0.38), 0.06cqw 0 0.1cqw rgba(0, 0, 0, 0.48)',
-    transform: 'translateX(-50%)',
-    pointerEvents: 'none',
-  },
   compactCassette: {
     '::before': {
       position: 'absolute',
@@ -229,6 +201,11 @@ export const styles = stylex.create({
       content: '',
       backgroundImage: splitFlapLook.compactCoverDetail,
       pointerEvents: 'none',
+    },
+  },
+  wideCompactCassette: {
+    '::before': {
+      backgroundImage: 'none',
     },
   },
   cell: {
@@ -343,7 +320,6 @@ export const styles = stylex.create({
       top: 'var(--compact-glyph-top)',
       left: '50%',
       display: 'block',
-      width: '10cqw',
       content: 'attr(data-glyph)',
       color: 'var(--split-flap-active-glyph-color, var(--compact-glyph-fallback-color, #e8e5d7))',
       fontFamily: splitFlapLook.glyphFontFamily,
@@ -358,7 +334,21 @@ export const styles = stylex.create({
         '0 0 0.05cqw color-mix(in srgb, var(--split-flap-active-glyph-color, var(--compact-glyph-fallback-color, #e8e5d7)) 6%, transparent)',
       transform: 'var(--compact-glyph-transform)',
       transformOrigin: '50% 50%',
+      width: 'var(--compact-glyph-width, 10cqw)',
       pointerEvents: 'none',
+    },
+  },
+  compactWideGlyphCarrier: {
+    color: 'var(--split-flap-active-glyph-color, var(--compact-glyph-fallback-color, #e8e5d7))',
+    fontFamily: splitFlapLook.glyphFontFamily,
+    fontSize: 'var(--compact-glyph-font-size)',
+    fontWeight: splitFlapLook.glyphFontWeight,
+    lineHeight: '12.2cqw',
+    opacity: 'var(--compact-glyph-opacity)',
+    textShadow:
+      '0 0 0.05cqw color-mix(in srgb, var(--split-flap-active-glyph-color, var(--compact-glyph-fallback-color, #e8e5d7)) 6%, transparent)',
+    '::before': {
+      display: 'none',
     },
   },
   compactStaticFace: {
@@ -557,6 +547,30 @@ export const styles = stylex.create({
     transform: 'translateX(-50%) scaleX(0.62)',
     transformOrigin: '50% 50%',
   },
+  wideGlyphCarrier: {
+    display: 'grid',
+    gridTemplateColumns: '42% 16% 42%',
+  },
+  wideGlyphPart: {
+    display: 'block',
+    gridRow: 1,
+    textAlign: 'center',
+    transform: 'var(--wide-glyph-transform)',
+    transformOrigin: '50% 50%',
+  },
+  compactWideGlyphPart: {
+    position: 'absolute',
+    top: 'var(--compact-glyph-top)',
+    width: '42%',
+  },
+  wideGlyphPartLeft: {
+    left: 0,
+    gridColumn: 1,
+  },
+  wideGlyphPartRight: {
+    left: '58%',
+    gridColumn: 3,
+  },
   glyphHalf: {
     position: 'absolute',
     zIndex: 4,
@@ -638,6 +652,52 @@ export const styles = stylex.create({
   },
   axleRight: {
     right: '0.02cqw',
+  },
+  compactWideHardware: {
+    position: 'absolute',
+    zIndex: 8,
+    top: splitFlapLook.cavityTop,
+    right: splitFlapLook.cavityRight,
+    bottom: splitFlapLook.cavityBottom,
+    left: splitFlapLook.cavityLeft,
+    pointerEvents: 'none',
+  },
+  compactWideSeam: {
+    position: 'absolute',
+    zIndex: 5,
+    top: '50%',
+    right: '0.1cqw',
+    left: '0.1cqw',
+    height: 'var(--compact-seam-height)',
+    backgroundImage:
+      'linear-gradient(90deg, rgba(4 5 3 / calc(0.98 * var(--compact-seam-base-opacity))) 0%, rgba(9 10 7 / calc(0.94 * var(--compact-seam-base-opacity))) 38%, rgba(5 6 4 / var(--compact-seam-base-opacity)) 78%, rgba(3 4 3 / calc(0.97 * var(--compact-seam-base-opacity))) 100%)',
+    transform: 'translateY(-50%)',
+  },
+  wideRetainer: {
+    position: 'absolute',
+    zIndex: 7,
+    top: '50%',
+    width: '0.36cqw',
+    height: '4.6cqw',
+    borderRadius: '28%',
+    backgroundColor: '#0a0b08',
+    backgroundImage: splitFlapLook.axleBackground,
+    boxShadow: splitFlapLook.axleShadow,
+    opacity: splitFlapLook.axleOpacity,
+    transform: 'translate3d(-50%, -50%, 0.18cqw)',
+    pointerEvents: 'none',
+  },
+  wideRetainerOuterLeft: {
+    left: '0.28cqw',
+  },
+  wideRetainerInnerLeft: {
+    left: '42%',
+  },
+  wideRetainerInnerRight: {
+    left: '58%',
+  },
+  wideRetainerOuterRight: {
+    left: 'calc(100% - 0.28cqw)',
   },
   spareLeafPack: {
     position: 'absolute',

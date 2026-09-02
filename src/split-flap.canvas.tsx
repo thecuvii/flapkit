@@ -3,7 +3,12 @@
 import * as stylex from '@stylexjs/stylex'
 import { memo, useEffect, useMemo, useRef } from 'react'
 import { useSplitFlap } from './split-flap.context'
-import { glyphOffsetValues, spareLeafStep, spareLeafXOffsets } from './split-flap.constants'
+import {
+  glyphOffsetValues,
+  lowerGlyphXOffset,
+  spareLeafStep,
+  spareLeafXOffsets,
+} from './split-flap.constants'
 import {
   activeGlyphColorProperty,
   signedLeafNoise,
@@ -162,13 +167,17 @@ function drawCanvasGlyph(
   color: string,
   faceY: number,
   faceHeight: number,
+  lower = false,
 ) {
   if (character === ' ') return 0
 
   const atlas = getCanvasGlyphAtlas(geometry.glyphStyle, color, characters)
   const index = atlas.characterIndices.get(character) ?? atlas.characterIndices.get(' ') ?? 0
   const destinationX =
-    geometry.cellX + geometry.cellWidth / 2 + geometry.unit * glyphOffset - atlas.slotWidth / 2
+    geometry.cellX +
+    geometry.cellWidth / 2 +
+    geometry.unit * (glyphOffset + (lower ? lowerGlyphXOffset : 0)) -
+    atlas.slotWidth / 2
   const destinationY = geometry.baseline - atlas.baseline
   const clippedLeft = Math.max(destinationX, geometry.faceX)
   const clippedTop = Math.max(destinationY, faceY)
@@ -203,6 +212,7 @@ function drawCanvasFace(
   glyphColor: string,
   brightness: number,
   surface: CanvasGradient,
+  lower = false,
 ) {
   let drawOperations = 2
   context.fillStyle = faceColor
@@ -231,6 +241,7 @@ function drawCanvasFace(
       glyphColor,
       faceY,
       faceHeight,
+      lower,
     )
   )
 }
@@ -385,7 +396,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       context.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio)
       let drawOperations = 1
-      if (motion.variant === 'css3dCascade') {
+      if (motion.variant === 'cascade') {
         controller.recordCanvasFrame(drawOperations)
         return
       }
@@ -461,6 +472,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
             currentGlyphColors.bottom,
             bottomFaceY,
             bottomFaceHeight,
+            true,
           )
           staticGlyphIndices[runtime.index] = runtime.currentIndex
           drawOperations += 1
@@ -567,6 +579,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
             nextGlyphColors.bottom,
             visual.bottomBrightness,
             bottomSurface,
+            true,
           )
         }
         context.restore()

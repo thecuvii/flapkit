@@ -128,9 +128,7 @@ function SplitFlapGridContent({
           tuning={material}
         />
       ))}
-      {motion.variant === 'riffleSettle' && (
-        <SplitFlapMotionCanvas geometryKey={canvasGeometryKey} />
-      )}
+      {motion.variant === 'riffle' && <SplitFlapMotionCanvas geometryKey={canvasGeometryKey} />}
     </div>
   )
 }

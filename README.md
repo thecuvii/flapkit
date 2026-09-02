@@ -54,7 +54,7 @@ Source → Motion Effect → Board or Grid
 ```tsx
 import * as stylex from '@stylexjs/stylex'
 import { SplitFlapBoard, type SplitFlapSource } from '@thecuvii/flapkit'
-import { SplitFlapRiffleSettle } from '@thecuvii/flapkit/riffle-settle'
+import { SplitFlapRiffle } from '@thecuvii/flapkit/riffle'
 import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
 
 const source: SplitFlapSource = {
@@ -78,18 +78,19 @@ const source: SplitFlapSource = {
 export function Departures() {
   return (
     <section {...stylex.props(airportBoardLook)}>
-      <SplitFlapRiffleSettle source={source}>
+      <SplitFlapRiffle source={source}>
         <SplitFlapBoard>
           <span>Departures</span>
         </SplitFlapBoard>
-      </SplitFlapRiffleSettle>
+      </SplitFlapRiffle>
     </section>
   )
 }
 ```
 
-Import `SplitFlapCss3dCascade` from
-`@thecuvii/flapkit/css-3d-cascade` for the CSS 3D engine. Import
+Riffle provides lightweight, randomized rapid flipping for dense boards. Import
+`SplitFlapCascade` from `@thecuvii/flapkit/cascade` for higher-fidelity CSS 3D
+motion that cascades across rows. Import
 `SplitFlapGrid` from the root when the composition should contain only the
 cassette grid without the board frame or header.
 
@@ -171,10 +172,10 @@ const soundBank = {
 
 function BoardWithSound() {
   return (
-    <SplitFlapRiffleSettle source={source}>
+    <SplitFlapRiffle source={source}>
       <SplitFlapBoard />
       <SplitFlapSound bank={soundBank} />
-    </SplitFlapRiffleSettle>
+    </SplitFlapRiffle>
   )
 }
 ```
@@ -186,8 +187,8 @@ for custom integrations.
 ## Package subpaths
 
 - `@thecuvii/flapkit`
-- `@thecuvii/flapkit/riffle-settle`
-- `@thecuvii/flapkit/css-3d-cascade`
+- `@thecuvii/flapkit/riffle`
+- `@thecuvii/flapkit/cascade`
 - `@thecuvii/flapkit/sound`
 - `@thecuvii/flapkit/look`
 - `@thecuvii/flapkit/looks/airport`

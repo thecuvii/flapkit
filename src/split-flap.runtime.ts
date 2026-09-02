@@ -4,7 +4,7 @@ import type {
   SplitFlapMechanicalEventSource,
 } from './split-flap.sound-engine'
 
-export type SplitFlapMotionVariant = 'riffleSettle' | 'css3dCascade'
+export type SplitFlapMotionVariant = 'riffle' | 'cascade'
 
 const cssMotionPrewarmMs = 17
 const mechanicalSoundLookaheadMs = 60
@@ -219,7 +219,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     rowDelayMs: 150,
     specularStrength: 0.82,
     startSpreadMs: 120,
-    variant: 'css3dCascade',
+    variant: 'cascade',
     withinRowJitterMs: 16,
   }
   private runtimes: SplitFlapRuntime[]
@@ -326,7 +326,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   }
 
   setMotion(motion: MotionTuning) {
-    if (motion.variant !== 'css3dCascade') this.clearActiveCssCassettes()
+    if (motion.variant !== 'cascade') this.clearActiveCssCassettes()
     if (motion.reboundDeg !== this.motion.reboundDeg) {
       this.compactSettleKeyframes = compactSettleVaneKeyframes(motion.reboundDeg)
     }
@@ -343,7 +343,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       const targetIndex = targetIndices[runtime.index] ?? runtime.targetIndex
       if (runtime.targetIndex === targetIndex) return
 
-      if (runtime.running && (this.motion.variant !== 'css3dCascade' || runtime.animationStarted)) {
+      if (runtime.running && (this.motion.variant !== 'cascade' || runtime.animationStarted)) {
         this.advanceRuntime(runtime, now)
         if (!runtime.running && this.activeCssCassettes.delete(runtime.index)) {
           this.emitCssCassette(runtime.index, false)
@@ -364,8 +364,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
 
   private replanRuntime(runtime: SplitFlapRuntime, now: number) {
     const waiting =
-      now < runtime.pitchStart ||
-      (this.motion.variant === 'css3dCascade' && !runtime.animationStarted)
+      now < runtime.pitchStart || (this.motion.variant === 'cascade' && !runtime.animationStarted)
 
     if (waiting) {
       if (runtime.currentIndex === runtime.targetIndex) {
@@ -379,7 +378,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       }
 
       const startAt =
-        this.motion.variant === 'css3dCascade'
+        this.motion.variant === 'cascade'
           ? Math.max(runtime.pitchStart, now + cssMotionPrewarmMs)
           : runtime.pitchStart
       this.startPitch(runtime, startAt)
@@ -400,7 +399,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   }
 
   private startRuntimes(runtimes: SplitFlapRuntime[], now: number, noiseSalt: number) {
-    if (this.motion.variant === 'css3dCascade') {
+    if (this.motion.variant === 'cascade') {
       const affectedRows = Array.from(new Set(runtimes.map((runtime) => runtime.rowIndex))).sort(
         (a, b) => a - b,
       )
@@ -472,7 +471,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
 
     if (animate) {
       const now = performance.now()
-      if (this.motion.variant !== 'css3dCascade' || now >= startAt) {
+      if (this.motion.variant !== 'cascade' || now >= startAt) {
         runtime.views.forEach((view) => this.animatePitchView(runtime, view, now))
         runtime.animationStarted = true
       }
@@ -494,7 +493,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       if (!runtime.running) return
 
       if (
-        this.motion.variant === 'css3dCascade' &&
+        this.motion.variant === 'cascade' &&
         !runtime.animationStarted &&
         now >= runtime.pitchStart - cssMotionPrewarmMs &&
         !this.activeCssCassettes.has(runtime.index)
@@ -551,7 +550,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     if (now < runtime.pitchStart) return
 
     let elapsed = now - runtime.pitchStart
-    let needsAnimation = this.motion.variant === 'css3dCascade' && !runtime.animationStarted
+    let needsAnimation = this.motion.variant === 'cascade' && !runtime.animationStarted
 
     while (elapsed >= runtime.duration) {
       if (!runtime.didImpact) this.emitImpact(runtime)
@@ -676,7 +675,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     const currentPosition = runtime.positions[runtime.currentIndex]
     const nextPosition = runtime.positions[(runtime.currentIndex + 1) % runtime.positions.length]
 
-    if (view.compact && (!view.compactMotion || this.motion.variant !== 'css3dCascade')) return
+    if (view.compact && (!view.compactMotion || this.motion.variant !== 'cascade')) return
     ensureStackShiftProperty()
     if (!view.compact) ensureSpecularProperty()
     const delay = Math.max(0, runtime.pitchStart - now)

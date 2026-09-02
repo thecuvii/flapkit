@@ -21,8 +21,8 @@ export default defineConfig({
     dts: true,
     entry: [
       'src/index.ts',
-      'src/riffle-settle/index.ts',
-      'src/css-3d-cascade/index.ts',
+      'src/riffle/index.ts',
+      'src/cascade/index.ts',
       'src/sound/index.ts',
       'src/split-flap-look.stylex.ts',
       'src/looks/airport.look.stylex.ts',

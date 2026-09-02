@@ -8,7 +8,7 @@ import {
 } from './split-flap.runtime'
 import { resolveSplitFlapSource } from './split-flap.source'
 
-const cssMotion: MotionTuning = {
+const cascadeMotion: MotionTuning = {
   cadenceVariationPct: 0,
   finalSettleMs: 100,
   maximumConcurrentCassettes: 32,
@@ -17,7 +17,7 @@ const cssMotion: MotionTuning = {
   rowDelayMs: 0,
   specularStrength: 0.82,
   startSpreadMs: 0,
-  variant: 'css3dCascade',
+  variant: 'cascade',
   withinRowJitterMs: 0,
 }
 
@@ -70,7 +70,7 @@ describe('SplitFlapMotionController', () => {
 
   it('starts only cells whose targets differ', () => {
     const controller = new SplitFlapMotionController(cells('  ', 2).cells)
-    controller.setMotion(cssMotion)
+    controller.setMotion(cascadeMotion)
 
     controller.setTargets(cells(' A', 2).targetIndices)
 
@@ -85,9 +85,9 @@ describe('SplitFlapMotionController', () => {
       runtime = runtimes[0]
     })
     controller.setMotion({
-      ...cssMotion,
+      ...cascadeMotion,
       startSpreadMs: 480,
-      variant: 'riffleSettle',
+      variant: 'riffle',
     })
 
     controller.setTargets(cells('A').targetIndices)
@@ -99,7 +99,7 @@ describe('SplitFlapMotionController', () => {
   it('prewarms CSS cassettes and respects the concurrency limit', () => {
     const controller = new SplitFlapMotionController(cells('  ', 2).cells)
     controller.setMotion({
-      ...cssMotion,
+      ...cascadeMotion,
       maximumConcurrentCassettes: 1,
       withinRowJitterMs: 16,
     })
@@ -121,7 +121,7 @@ describe('SplitFlapMotionController', () => {
 
   it('publishes one look-ahead mechanical impact with final and pan metadata', () => {
     const controller = new SplitFlapMotionController(cells(' ').cells)
-    controller.setMotion({ ...cssMotion, withinRowJitterMs: 16 })
+    controller.setMotion({ ...cascadeMotion, withinRowJitterMs: 16 })
     const listener = vi.fn()
     controller.subscribeMechanicalEvents(listener)
 
@@ -142,7 +142,7 @@ describe('SplitFlapMotionController', () => {
 
   it('cancels frames and clears subscriptions on destroy', () => {
     const controller = new SplitFlapMotionController(cells(' ').cells)
-    controller.setMotion(cssMotion)
+    controller.setMotion(cascadeMotion)
     const cssListener = vi.fn()
     const eventListener = vi.fn()
     const canvasRenderer = vi.fn()

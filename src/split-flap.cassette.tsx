@@ -5,6 +5,7 @@ import { memo, useEffect, useRef, useState, type CSSProperties, type RefObject }
 import {
   activeLeafClearance,
   glyphOffsetValues,
+  lowerGlyphXOffset,
   spareLeafStep,
   spareLeafXOffsets,
   splitFlapReferenceTracks,
@@ -66,7 +67,7 @@ function FaceGlyph({
           color: `var(${activeGlyphColorProperty}, ${color})`,
           textShadow: `0 0 ${lower ? '0.04' : '0.05'}cqw color-mix(in srgb, var(${activeGlyphColorProperty}, ${color}) ${lower ? 5 : 6}%, transparent)`,
           top: splitFlapLook.glyphY,
-          transform: `translateX(-50%)${lower ? ' translateX(0.03cqw)' : ''} scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
+          transform: `translateX(-50%)${lower ? ` translateX(${lowerGlyphXOffset}cqw)` : ''} scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
         }}
       />
     </span>
@@ -303,7 +304,7 @@ const FlapCell = memo(function FlapCell({
       '--compact-glyph-opacity': splitFlapLook.glyphOpacity,
       '--compact-glyph-top': top,
       '--compact-glyph-tracking': splitFlapLook.glyphTracking,
-      '--compact-glyph-transform': `translateX(-50%)${lower ? ' translateX(0.03cqw)' : ''} scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
+      '--compact-glyph-transform': `translateX(-50%)${lower ? ` translateX(${lowerGlyphXOffset}cqw)` : ''} scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
     }) as CSSProperties
   const compactSpareLeafLayers = tuning.stackedEdges
     ? [...spareLeaves]

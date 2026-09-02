@@ -1,7 +1,7 @@
 'use client'
 
 import * as stylex from '@stylexjs/stylex'
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useSplitFlap } from './split-flap.context'
 import {
   glyphOffsetValues,
@@ -372,6 +372,13 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
   const staticCanvasRef = useRef<HTMLCanvasElement>(null)
   const staticGlyphIndicesRef = useRef(new Int16Array())
   const geometryRef = useRef<(CanvasCassetteGeometry | undefined)[]>([])
+  const layoutRef = useRef(layout)
+  useLayoutEffect(() => {
+    layoutRef.current = layout
+  }, [layout])
+  const cellVisualsKey = `${layout.layoutKey}:${layout.rows
+    .map((row) => Number(Boolean(row.highlighted)))
+    .join('')}:${JSON.stringify(tuning)}`
   const cellVisuals = useMemo(
     () =>
       layout.cells.map((cell, index) => {
@@ -416,7 +423,10 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
           topFaceColor,
         }
       }),
-    [layout.cells, layout.rows, tuning],
+    // Targets create fresh layout arrays, but do not alter these static visuals.
+    // Recompute only when topology, highlighting, or material tuning changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [cellVisualsKey],
   )
   const renderConfigRef = useRef({ cellVisuals, tuning })
   useEffect(() => {
@@ -652,6 +662,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
     if (!canvas || !staticCanvas || !parent) return
 
     const measure = () => {
+      const activeLayout = layoutRef.current
       const canvasRect = canvas.getBoundingClientRect()
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
       canvas.dataset.pixelRatio = `${pixelRatio}`
@@ -665,8 +676,8 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
       if (!context || !staticContext) return
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       staticContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-      geometryRef.current = Array.from({ length: layout.cells.length })
-      staticGlyphIndicesRef.current = new Int16Array(layout.cells.length)
+      geometryRef.current = Array.from({ length: activeLayout.cells.length })
+      staticGlyphIndicesRef.current = new Int16Array(activeLayout.cells.length)
       staticGlyphIndicesRef.current.fill(-1)
 
       const cassettes = Array.from(
@@ -681,13 +692,13 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
       cassettes.forEach((cassette) => {
         const index = Number(cassette.dataset.splitFlapIndex)
         if (Number.isNaN(index)) return
-        const cell = layout.cells[index]
+        const cell = activeLayout.cells[index]
         if (!cell) return
         const upperFace = cassette.querySelector<HTMLElement>('[data-slot="stationary-upper"]')
         const lowerFace = cassette.querySelector<HTMLElement>('[data-slot="stationary-lower"]')
         const visual = resolvedVisuals[index]
         if (upperFace && lowerFace && visual) {
-          const visualKey = `${Number(Boolean(layout.rows[cell.rowIndex]?.highlighted))}`
+          const visualKey = `${Number(Boolean(activeLayout.rows[cell.rowIndex]?.highlighted))}`
           let computedVisual = computedVisuals.get(visualKey)
           if (!computedVisual) {
             const upperStyle = getComputedStyle(upperFace)
@@ -826,7 +837,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
         const visual = resolvedVisuals[index]
         if (!geometry || !visual) return
         const deckVariants = new Set(
-          layout.cells[index]?.flapDeck.map((position) => position.variant),
+          activeLayout.cells[index]?.flapDeck.map((position) => position.variant),
         )
         deckVariants.forEach((variant) => {
           glyphAtlases.add(
@@ -902,7 +913,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
       resizeObserver.disconnect()
       styleObserver.disconnect()
     }
-  }, [controller, geometryKey, layout.cells, layout.columns, layout.rows])
+  }, [cellVisualsKey, controller, geometryKey])
 
   return (
     <>

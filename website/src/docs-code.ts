@@ -3,6 +3,45 @@ export const docsCode = {
     code: 'pnpm add @thecuvii/flapkit @stylexjs/stylex',
     language: 'shell',
   },
+  usageRiffle: {
+    code: `import { SplitFlapGrid } from '@thecuvii/flapkit'
+import { SplitFlapRiffle } from '@thecuvii/flapkit/riffle'
+
+<SplitFlapRiffle source={source}>
+  <SplitFlapGrid aria-label="Package status" />
+</SplitFlapRiffle>`,
+    language: 'tsx',
+  },
+  usageCascade: {
+    code: `import { SplitFlapGrid } from '@thecuvii/flapkit'
+import { SplitFlapCascade } from '@thecuvii/flapkit/cascade'
+
+<SplitFlapCascade source={source}>
+  <SplitFlapGrid aria-label="Package status" />
+</SplitFlapCascade>`,
+    language: 'tsx',
+  },
+  usageUnicode: {
+    code: `import { createSplitFlapDeck, SplitFlapGrid } from '@thecuvii/flapkit'
+import { SplitFlapRiffle } from '@thecuvii/flapkit/riffle'
+
+const localDeck = createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗')
+const source = {
+  columns: [{
+    id: 'local',
+    label: 'LOCAL',
+    cells: 4,
+    flapDeck: localDeck,
+    panelsPerCassette: 2,
+  }],
+  rows: [{ id: 'service', values: { local: '東京出発' } }],
+}
+
+<SplitFlapRiffle source={source}>
+  <SplitFlapGrid aria-label="Local service" />
+</SplitFlapRiffle>`,
+    language: 'tsx',
+  },
   composition: {
     code: `import * as stylex from '@stylexjs/stylex'
 import { SplitFlapBoard } from '@thecuvii/flapkit'

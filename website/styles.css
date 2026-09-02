@@ -4,7 +4,7 @@
   --sidebar: #fff;
   --surface: #ecece7;
   --ink: #191a17;
-  --muted: #6d6f67;
+  --muted: #62645d;
   --code: #1c1d1a;
   font-family:
     Inter,
@@ -132,6 +132,14 @@ a:focus-visible {
   padding-bottom: 160px;
 }
 
+#usage {
+  padding-bottom: 40px;
+}
+
+#usage + .doc-section {
+  padding-top: 64px;
+}
+
 .introduction {
   padding-top: 104px;
 }
@@ -201,6 +209,74 @@ h2 {
   width: max-content;
 }
 
+.usage-demo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  min-width: 0;
+  margin-top: 34px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.usage-preview {
+  min-width: 0;
+  min-height: 230px;
+  display: grid;
+  place-items: center;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 32px;
+}
+
+.usage-tabs {
+  align-content: center;
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+}
+
+.usage-tabs button {
+  min-width: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.usage-tabs button:hover {
+  color: var(--ink);
+}
+
+.usage-tabs button.is-active {
+  background: white;
+  color: var(--ink);
+}
+
+.usage-tabs button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.usage-tabs strong,
+.usage-tabs span {
+  display: block;
+}
+
+.usage-tabs strong {
+  font-size: 13px;
+  font-weight: 680;
+}
+
+.usage-tabs span {
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .code-block {
   max-width: 100%;
   margin: 30px 0;
@@ -234,9 +310,11 @@ h2 {
   display: grid;
   gap: 8px;
   margin-top: 32px;
+  padding: 0;
+  list-style: none;
 }
 
-.anatomy > div {
+.anatomy > li {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
   align-items: baseline;
@@ -297,19 +375,19 @@ h2 {
   line-height: 1.55;
 }
 
-.doc-section ul {
+.doc-section > ul:not(.anatomy) {
   margin: 30px 0 0;
   padding: 0;
   list-style: none;
 }
 
-.doc-section li {
+.doc-section > ul:not(.anatomy) > li {
   padding: 16px 0;
   color: var(--muted);
   font-size: 14px;
 }
 
-.doc-section li::before {
+.doc-section > ul:not(.anatomy) > li::before {
   content: '—';
   margin-right: 14px;
   color: var(--ink);
@@ -334,6 +412,127 @@ h2 {
 
 .readme-link:hover {
   color: var(--muted);
+}
+
+.experiments-page {
+  min-height: 100dvh;
+  background: var(--background);
+  padding: 32px clamp(24px, 6vw, 88px) 120px;
+}
+
+.experiments-header {
+  width: min(100%, 1180px);
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.experiments-header a,
+.experiments-header button {
+  font:
+    650 13px/1.2 Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+.experiments-header a:hover {
+  color: var(--muted);
+}
+
+.experiments-header button {
+  border: 0;
+  border-radius: 6px;
+  background: var(--ink);
+  color: white;
+  padding: 11px 15px;
+  cursor: pointer;
+}
+
+.experiments-header button:hover {
+  background: #343630;
+}
+
+.experiments-header button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.experiments-intro,
+.experiments-stack {
+  width: min(100%, 1180px);
+  margin-inline: auto;
+}
+
+.experiments-intro {
+  padding-block: 112px 80px;
+}
+
+.experiments-intro > span,
+.experiment-copy > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 680;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.experiments-intro h1 {
+  margin-top: 18px;
+}
+
+.experiments-intro p {
+  max-width: 580px;
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.experiments-stack {
+  display: grid;
+  gap: 112px;
+}
+
+.experiment {
+  min-width: 0;
+}
+
+.experiment-copy {
+  max-width: 620px;
+  margin-bottom: 30px;
+}
+
+.experiment-copy h2 {
+  margin: 13px 0 16px;
+  font-size: 27px;
+}
+
+.experiment-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.experiment-stage {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border-radius: 10px;
+  background: var(--surface);
+  padding: clamp(28px, 5vw, 64px);
+}
+
+.experiment-stage:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.experiment-board {
+  width: max-content;
 }
 
 @media (max-width: 860px) {
@@ -404,6 +603,32 @@ h2 {
 }
 
 @media (max-width: 560px) {
+  .experiments-page {
+    padding: 22px 20px 88px;
+  }
+
+  .experiments-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .experiments-header button {
+    min-height: 44px;
+  }
+
+  .experiments-intro {
+    padding-block: 80px 64px;
+  }
+
+  .experiments-stack {
+    gap: 88px;
+  }
+
+  .experiment-stage {
+    width: calc(100% + 20px);
+    padding: 28px 22px;
+  }
+
   .doc-section {
     padding-block: 78px;
   }
@@ -424,12 +649,34 @@ h2 {
     padding: 22px;
   }
 
+  .usage-demo {
+    grid-template-columns: 1fr;
+  }
+
+  .usage-preview {
+    min-height: 210px;
+    padding: 26px 22px;
+  }
+
+  .usage-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: initial;
+  }
+
+  .usage-tabs button {
+    text-align: center;
+  }
+
+  .usage-tabs span {
+    display: none;
+  }
+
   .option-list > div {
     grid-template-columns: 1fr;
     gap: 9px;
   }
 
-  .anatomy > div {
+  .anatomy > li {
     grid-template-columns: 1fr;
     gap: 6px;
   }

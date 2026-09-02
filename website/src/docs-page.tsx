@@ -1,12 +1,16 @@
 import * as stylex from '@stylexjs/stylex'
-import { SplitFlapGrid, type SplitFlapSource } from '@thecuvii/flapkit'
+import { createSplitFlapDeck, SplitFlapGrid, type SplitFlapSource } from '@thecuvii/flapkit'
+import { SplitFlapCascade } from '@thecuvii/flapkit/cascade'
 import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
+import { industrialWallLook } from '@thecuvii/flapkit/looks/industrial'
 import { SplitFlapRiffle } from '@thecuvii/flapkit/riffle'
+import { useState, type KeyboardEvent } from 'react'
 import type { HighlightedDocsCode } from './docs-code'
 
 const navigation = [
   ['Introduction', 'introduction'],
   ['Installation', 'installation'],
+  ['Usage', 'usage'],
   ['Composition', 'composition'],
   ['Anatomy', 'anatomy'],
   ['Motion', 'motion'],
@@ -24,6 +28,36 @@ const previewSource: SplitFlapSource = {
   ],
 }
 
+const unicodePreviewSource: SplitFlapSource = {
+  columns: [
+    {
+      id: 'local',
+      label: 'LOCAL',
+      cells: 4,
+      flapDeck: createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗'),
+      panelsPerCassette: 2,
+    },
+  ],
+  rows: [
+    { id: 'primary', values: { local: '東京出発' } },
+    { id: 'secondary', values: { local: '大阪搭乗' } },
+  ],
+}
+
+const usageTabs = [
+  { id: 'riffle', label: 'Riffle', description: 'Lightweight canvas motion' },
+  { id: 'cascade', label: 'Cascade', description: 'Row-staggered 3D leaves' },
+  { id: 'unicode', label: 'Unicode', description: 'Paired grapheme panels' },
+] as const
+
+type UsageTab = (typeof usageTabs)[number]['id']
+
+const usageCodeKeys = {
+  riffle: 'usageRiffle',
+  cascade: 'usageCascade',
+  unicode: 'usageUnicode',
+} as const satisfies Record<UsageTab, keyof HighlightedDocsCode>
+
 function Logo() {
   return (
     <a className="logo" href="#introduction" aria-label="Flapkit documentation home">
@@ -37,6 +71,8 @@ function CodeBlock({ html }: { html: string }) {
   return (
     <div
       className="code-block"
+      role="region"
+      aria-label="Code example"
       // Shiki escapes source code before producing this trusted HTML.
       dangerouslySetInnerHTML={{ __html: html }}
       tabIndex={0}
@@ -61,7 +97,97 @@ function ComponentPreview() {
   )
 }
 
+function UsagePreview({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: UsageTab
+  onTabChange: (tab: UsageTab) => void
+}) {
+  const airportProps = stylex.props(airportBoardLook)
+  const industrialProps = stylex.props(industrialWallLook)
+  const moveTabFocus = (tab: UsageTab) => {
+    onTabChange(tab)
+    requestAnimationFrame(() =>
+      document.querySelector<HTMLButtonElement>(`#usage-tab-${tab}`)?.focus(),
+    )
+  }
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const lastIndex = usageTabs.length - 1
+    const nextIndex =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown'
+        ? (index + 1) % usageTabs.length
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+          ? (index + lastIndex) % usageTabs.length
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? lastIndex
+              : undefined
+    if (nextIndex === undefined) return
+    event.preventDefault()
+    moveTabFocus(usageTabs[nextIndex]!.id)
+  }
+
+  const preview =
+    activeTab === 'cascade' ? (
+      <div
+        {...industrialProps}
+        className={[industrialProps.className, 'preview-board'].filter(Boolean).join(' ')}
+      >
+        <SplitFlapCascade source={previewSource}>
+          <SplitFlapGrid aria-label="Cascade package status" />
+        </SplitFlapCascade>
+      </div>
+    ) : (
+      <div
+        {...airportProps}
+        className={[airportProps.className, 'preview-board'].filter(Boolean).join(' ')}
+      >
+        <SplitFlapRiffle source={activeTab === 'unicode' ? unicodePreviewSource : previewSource}>
+          <SplitFlapGrid
+            aria-label={activeTab === 'unicode' ? 'Unicode local service' : 'Riffle package status'}
+          />
+        </SplitFlapRiffle>
+      </div>
+    )
+
+  return (
+    <div className="usage-demo">
+      <div
+        id="usage-preview"
+        className="usage-preview"
+        role="tabpanel"
+        aria-labelledby={`usage-tab-${activeTab}`}
+      >
+        {preview}
+      </div>
+      <div className="usage-tabs" role="tablist" aria-label="Usage examples">
+        {usageTabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            id={`usage-tab-${tab.id}`}
+            type="button"
+            role="tab"
+            aria-controls="usage-preview"
+            aria-selected={activeTab === tab.id}
+            className={activeTab === tab.id ? 'is-active' : undefined}
+            tabIndex={activeTab === tab.id ? 0 : -1}
+            onClick={() => onTabChange(tab.id)}
+            onKeyDown={(event) => handleTabKeyDown(event, index)}
+          >
+            <strong>{tab.label}</strong>
+            <span>{tab.description}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocsCode }) {
+  const [usageTab, setUsageTab] = useState<UsageTab>('riffle')
+
   return (
     <div className="docs-layout">
       <aside className="sidebar">
@@ -73,6 +199,7 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
                 {label}
               </a>
             ))}
+            <a href="/experiments">Experiments</a>
           </nav>
           <a className="github-link" href="https://github.com/thecuvii/flapkit">
             GitHub <span aria-hidden="true">↗</span>
@@ -100,6 +227,13 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
           </p>
         </section>
 
+        <section id="usage" className="doc-section">
+          <h2>Usage</h2>
+          <p>Switch between the core rendering modes and keep the implementation in sync.</p>
+          <UsagePreview activeTab={usageTab} onTabChange={setUsageTab} />
+          <CodeBlock html={highlightedCode[usageCodeKeys[usageTab]]} />
+        </section>
+
         <section id="composition" className="doc-section">
           <h2>Composition</h2>
           <p>
@@ -115,28 +249,28 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
             Flapkit is composed from small layers. The look supplies visual variables, the effect
             owns motion state, and the rendered parts remain interchangeable.
           </p>
-          <div className="anatomy" role="list" aria-label="Flapkit component anatomy">
-            <div role="listitem">
+          <ul className="anatomy" aria-label="Flapkit component anatomy">
+            <li>
               <code>Look</code>
               <span>Theme variables on an ancestor</span>
-            </div>
-            <div className="anatomy-depth-1" role="listitem">
+            </li>
+            <li className="anatomy-depth-1">
               <code>Motion effect</code>
               <span>Source resolution and cassette runtime</span>
-            </div>
-            <div className="anatomy-depth-2" role="listitem">
+            </li>
+            <li className="anatomy-depth-2">
               <code>Board</code>
               <span>Frame, header, labels, and grid</span>
-            </div>
-            <div className="anatomy-depth-3" role="listitem">
+            </li>
+            <li className="anatomy-depth-3">
               <code>Grid</code>
               <span>Rows and physical cassettes</span>
-            </div>
-            <div className="anatomy-depth-2" role="listitem">
+            </li>
+            <li className="anatomy-depth-2">
               <code>Sound</code>
               <span>Optional mechanical event listener</span>
-            </div>
-          </div>
+            </li>
+          </ul>
         </section>
 
         <section id="motion" className="doc-section">

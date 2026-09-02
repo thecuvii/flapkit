@@ -1,3 +1,5 @@
+'use client'
+
 import { Children, Fragment, isValidElement, type ReactElement, type ReactNode } from 'react'
 import type { SplitFlapBoardProps } from './split-flap.board'
 import {
@@ -6,37 +8,56 @@ import {
   type SplitFlapDeck,
   type SplitFlapSequence,
   type SplitFlapSource,
-  type SplitFlapTone,
+  type SplitFlapVariant,
 } from './split-flap.source'
+
+export type Variant = SplitFlapVariant
 
 export type BoardProps = Omit<SplitFlapBoardProps, 'children'> & { children: ReactNode }
 
 export type HeaderProps = { children: ReactNode }
-export type RowProps = { children: ReactNode; highlighted?: boolean }
-export type FieldProps = { children: ReactNode; label?: string }
+export type RowProps = {
+  children: ReactNode
+  deck?: SplitFlapDeck
+  highlighted?: boolean
+  id?: string
+  label?: string
+  sequence?: SplitFlapSequence
+  variant?: Variant
+}
+export type GroupProps = {
+  children: ReactNode
+  deck?: SplitFlapDeck
+  id?: string
+  label?: string
+  sequence?: SplitFlapSequence
+  variant?: Variant
+}
 
 export type CellProps = {
-  children: string
-  flapDeck?: SplitFlapDeck
-  flapSequence?: SplitFlapSequence
-  tone?: SplitFlapTone
+  children: number | string
+  deck?: SplitFlapDeck
+  sequence?: SplitFlapSequence
 }
+
+export type WideCellProps = CellProps
 
 type CellDescriptor = {
-  flapDeck?: SplitFlapDeck
-  flapSequence?: SplitFlapSequence
+  deck?: SplitFlapDeck
+  sequence?: SplitFlapSequence
   span: SplitFlapCassetteSpan
   text: string
-  tone?: SplitFlapTone
 }
 
-type FieldDescriptor = {
+type GroupDescriptor = {
   cells: CellDescriptor[]
+  id: string
   label: string
+  variant: Variant
 }
 
 export type CompiledBoard = {
-  boardProps: Omit<BoardProps, 'children'>
+  boardProps: Omit<SplitFlapBoardProps, 'children'>
   header?: ReactNode
   source: SplitFlapSource
   sourceSignature: string
@@ -51,14 +72,14 @@ export const Header: (props: HeaderProps) => null = () => null
 /** Structural marker consumed by Root before rendering. */
 export const Row: (props: RowProps) => null = () => null
 
-/** A legacy board field containing adjacent cassettes with one shared label. */
-export const Field: (props: FieldProps) => null = () => null
+/** A horizontal region of adjacent cassettes sharing one label and variant. */
+export const Group: (props: GroupProps) => null = () => null
 
 /** One independently driven, single-grapheme cassette. */
 export const Cell: (props: CellProps) => null = () => null
 
 /** One independently driven cassette whose leaves carry two graphemes. */
-export const WideCell: (props: CellProps) => null = () => null
+export const WideCell: (props: WideCellProps) => null = () => null
 
 function componentName(element: ReactElement) {
   if (typeof element.type === 'string') return element.type
@@ -87,7 +108,11 @@ function structuralElements(children: ReactNode, owner: string): ReactElement[] 
   return result
 }
 
-function cellDescriptor(element: ReactElement, rowIndex: number): CellDescriptor {
+function cellDescriptor(
+  element: ReactElement,
+  rowIndex: number,
+  defaults: Pick<GroupProps, 'deck' | 'sequence'> = {},
+): CellDescriptor {
   const wide = element.type === WideCell
   if (element.type !== Cell && !wide) {
     throw new Error(
@@ -95,100 +120,123 @@ function cellDescriptor(element: ReactElement, rowIndex: number): CellDescriptor
     )
   }
   const props = element.props as CellProps
-  if (typeof props.children !== 'string') {
-    throw new TypeError(`Flapkit Cell content must be a string in row ${rowIndex + 1}`)
+  if (typeof props.children !== 'number' && typeof props.children !== 'string') {
+    throw new TypeError(`Flapkit Cell content must be a string or number in row ${rowIndex + 1}`)
   }
+  const text = String(props.children)
+  const deck = props.deck ?? defaults.deck
+  const sequence = props.sequence ?? defaults.sequence
   const span = wide ? 2 : 1
-  const graphemeCount = splitFlapGraphemes(props.children).length
+  const graphemeCount = splitFlapGraphemes(text).length
   if (graphemeCount !== 0 && graphemeCount !== span) {
     throw new Error(
       `${wide ? 'Flapkit.WideCell' : 'Flapkit.Cell'} requires ${span} grapheme${span === 1 ? '' : 's'}; received ${graphemeCount}`,
     )
   }
+  if (wide && !deck) {
+    throw new Error('Flapkit.WideCell requires a custom two-grapheme deck on itself or its Group')
+  }
   return {
-    flapDeck: props.flapDeck,
-    flapSequence: props.flapSequence,
+    deck,
+    sequence,
     span,
-    text: props.children,
-    tone: props.tone,
+    text,
   }
 }
 
 function deckSignature(deck: SplitFlapDeck | undefined) {
-  return deck?.map(({ character, tone }) => `${tone}:${character}`).join('\u001f') ?? ''
+  return deck?.map(({ character, variant }) => `${variant}:${character}`).join('\u001f') ?? ''
 }
 
 function cellTopologySignature(cell: CellDescriptor) {
-  return `${cell.span}:${cell.flapSequence ?? 'alphanumeric'}:${deckSignature(cell.flapDeck)}`
+  return `${cell.span}:${cell.sequence ?? 'alphanumeric'}:${deckSignature(cell.deck)}`
 }
 
-function fieldColumnOptions(field: FieldDescriptor) {
-  const firstDeck = field.cells[0]!.flapDeck
-  const firstSequence = field.cells[0]!.flapSequence
-  const sharesDeck = field.cells.every(
-    (cell) => deckSignature(cell.flapDeck) === deckSignature(firstDeck),
+function groupColumnOptions(group: GroupDescriptor) {
+  const firstDeck = group.cells[0]!.deck
+  const firstSequence = group.cells[0]!.sequence
+  const sharesDeck = group.cells.every(
+    (cell) => deckSignature(cell.deck) === deckSignature(firstDeck),
   )
-  const sharesSequence = field.cells.every((cell) => cell.flapSequence === firstSequence)
+  const sharesSequence = group.cells.every((cell) => cell.sequence === firstSequence)
 
   return {
     ...(sharesDeck
       ? firstDeck
         ? { flapDeck: firstDeck }
         : {}
-      : { cassetteFlapDecks: field.cells.map((cell) => cell.flapDeck) }),
+      : { cassetteFlapDecks: group.cells.map((cell) => cell.deck) }),
     ...(sharesSequence
       ? firstSequence
         ? { flapSequence: firstSequence }
         : {}
       : {
-          cassetteSequences: field.cells.map(
-            (cell) => cell.flapSequence ?? ('alphanumeric' as const),
-          ),
+          cassetteSequences: group.cells.map((cell) => cell.sequence ?? ('alphanumeric' as const)),
         }),
   }
 }
 
-function fieldDescriptor(element: ReactElement, rowIndex: number): FieldDescriptor {
-  if (element.type !== Field) {
+function groupDescriptor(
+  element: ReactElement,
+  rowIndex: number,
+  groupIndex: number,
+): GroupDescriptor {
+  if (element.type !== Group) {
     throw new Error(
-      `Flapkit.Row ${rowIndex + 1} only accepts Flapkit.Field or a flat list of cells; received ${componentName(element)}`,
+      `Flapkit.Row ${rowIndex + 1} only accepts Flapkit.Group or a flat list of cells; received ${componentName(element)}`,
     )
   }
-  const props = element.props as FieldProps
-  const cells = structuralElements(props.children, `Flapkit.Field in row ${rowIndex + 1}`).map(
-    (cell) => cellDescriptor(cell, rowIndex),
+  const props = element.props as GroupProps
+  const cells = structuralElements(props.children, `Flapkit.Group in row ${rowIndex + 1}`).map(
+    (cell) => cellDescriptor(cell, rowIndex, props),
   )
-  if (cells.length === 0) throw new Error('Flapkit.Field requires at least one Cell')
+  if (cells.length === 0) throw new Error('Flapkit.Group requires at least one Cell')
   if (cells.some((cell) => cell.span !== cells[0]!.span)) {
-    throw new Error(`Flapkit.Field in row ${rowIndex + 1} requires one cassette width`)
+    throw new Error(`Flapkit.Group in row ${rowIndex + 1} requires one cassette width`)
   }
-  const tones = new Set(cells.map((cell) => cell.tone ?? 'warmWhite'))
-  if (tones.size > 1) {
-    throw new Error(`Flapkit.Field in row ${rowIndex + 1} requires one tone`)
+  return {
+    cells,
+    id: props.id ?? `group-${groupIndex}`,
+    label: props.label ?? '',
+    variant: props.variant ?? 'white',
   }
-  return { cells, label: props.label ?? '' }
 }
 
-function rowFields(row: ReactElement<RowProps>, rowIndex: number) {
+function rowGroups(row: ReactElement<RowProps>, rowIndex: number) {
   const parts = structuralElements(row.props.children, `Flapkit.Row ${rowIndex + 1}`)
-  if (parts.length === 0) throw new Error('Flapkit.Row requires at least one Cell or Field')
-  const hasFields = parts.some((part) => part.type === Field)
-  if (hasFields && parts.some((part) => part.type !== Field)) {
-    throw new Error(`Flapkit.Row ${rowIndex + 1} cannot mix Field and Cell children`)
+  if (parts.length === 0) throw new Error('Flapkit.Row requires at least one Cell or Group')
+  const hasGroups = parts.some((part) => part.type === Group)
+  if (hasGroups && parts.some((part) => part.type !== Group)) {
+    throw new Error(`Flapkit.Row ${rowIndex + 1} cannot mix Group and Cell children`)
   }
-  if (hasFields) return parts.map((part) => fieldDescriptor(part, rowIndex))
+  if (hasGroups) {
+    if (
+      row.props.deck !== undefined ||
+      row.props.label !== undefined ||
+      row.props.sequence !== undefined ||
+      row.props.variant !== undefined
+    ) {
+      throw new Error(
+        `Flapkit.Row ${rowIndex + 1} cannot set label, variant, deck, or sequence when it contains Groups`,
+      )
+    }
+    return parts.map((part, groupIndex) => groupDescriptor(part, rowIndex, groupIndex))
+  }
 
-  const cells = parts.map((part) => cellDescriptor(part, rowIndex))
+  const cells = parts.map((part) => cellDescriptor(part, rowIndex, row.props))
   if (cells.some((cell) => cell.span !== cells[0]!.span)) {
     throw new Error(
-      `Flapkit.Row ${rowIndex + 1} requires Field boundaries around different cassette widths`,
+      `Flapkit.Row ${rowIndex + 1} requires Group boundaries around different cassette widths`,
     )
   }
-  const tones = new Set(cells.map((cell) => cell.tone ?? 'warmWhite'))
-  if (tones.size > 1) {
-    throw new Error(`Flapkit.Row ${rowIndex + 1} requires Field boundaries around different tones`)
-  }
-  return [{ cells, label: '' }]
+  return [
+    {
+      cells,
+      id: 'group-0',
+      label: row.props.label ?? '',
+      variant: row.props.variant ?? 'white',
+    },
+  ]
 }
 
 /** Purely compiles structural components into the current source model. */
@@ -213,43 +261,47 @@ export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
   if (rowElements.length === 0) throw new Error('Flapkit.Board requires at least one Flapkit.Row')
 
   const rows = rowElements.map((row, rowIndex) => ({
-    fields: rowFields(row, rowIndex),
+    groups: rowGroups(row, rowIndex),
     highlighted: row.props.highlighted,
-    id: `row-${rowIndex}`,
+    id: row.props.id ?? `row-${rowIndex}`,
   }))
   const firstRow = rows[0]!
-  const topology = firstRow.fields.map((field) => field.cells.map(cellTopologySignature).join('|'))
+  const topology = firstRow.groups.map((group) => group.cells.map(cellTopologySignature).join('|'))
   for (const [rowIndex, row] of rows.entries()) {
     const matches =
-      row.fields.length === topology.length &&
-      row.fields.every(
-        (field, fieldIndex) =>
-          field.label === firstRow.fields[fieldIndex]?.label &&
-          field.cells.map(cellTopologySignature).join('|') === topology[fieldIndex],
+      row.groups.length === topology.length &&
+      row.groups.every(
+        (group, groupIndex) =>
+          group.id === firstRow.groups[groupIndex]?.id &&
+          group.label === firstRow.groups[groupIndex]?.label &&
+          group.cells.map(cellTopologySignature).join('|') === topology[groupIndex],
       )
     if (!matches) {
       throw new Error(
-        `Flapkit.Row ${rowIndex + 1} must use the same Field, Cell, and WideCell structure as the first row`,
+        `Flapkit.Row ${rowIndex + 1} must use the same Group, Cell, and WideCell structure as the first row`,
       )
     }
   }
 
-  const columns = firstRow.fields.map((field, fieldIndex) => ({
-    ...fieldColumnOptions(field),
-    cassetteSpan: field.cells[0]!.span,
-    cells: field.cells.length,
-    id: `field-${fieldIndex}`,
-    label: field.label,
+  const columns = firstRow.groups.map((group) => ({
+    ...groupColumnOptions(group),
+    cassetteSpan: group.cells[0]!.span,
+    cells: group.cells.length,
+    id: group.id,
+    label: group.label,
   }))
   const sourceRows = rows.map((row) => ({
     highlighted: row.highlighted,
     id: row.id,
     values: Object.fromEntries(
-      row.fields.map((field, fieldIndex) => [
-        `field-${fieldIndex}`,
-        field.cells[0]?.tone
-          ? { text: field.cells.map((cell) => cell.text).join(''), tone: field.cells[0].tone }
-          : field.cells.map((cell) => cell.text).join(''),
+      row.groups.map((group) => [
+        group.id,
+        group.variant === 'white'
+          ? group.cells.map((cell) => cell.text).join('')
+          : {
+              text: group.cells.map((cell) => cell.text).join(''),
+              variant: group.variant,
+            },
       ]),
     ),
   }))

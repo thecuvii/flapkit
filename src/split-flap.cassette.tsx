@@ -21,7 +21,7 @@ import {
 import type {
   ResolvedSplitFlapCell,
   ResolvedSplitFlapSource,
-  SplitFlapTone,
+  SplitFlapVariant,
 } from './split-flap.source'
 import { styles, glyphOffsets } from './split-flap.styles'
 
@@ -195,33 +195,33 @@ const FlapCell = memo(function FlapCell({
   const highlightGlyphPercent = highlighted ? Math.round(tuning.highlightGlyphStrength * 100) : 0
   const topFaceColor = `color-mix(in srgb, ${splitFlapLook.topFaceColor} ${100 - highlightFacePercent}%, ${splitFlapLook.highlightFace} ${highlightFacePercent}%)`
   const bottomFaceColor = `color-mix(in srgb, ${splitFlapLook.bottomFaceColor} ${100 - highlightFacePercent}%, ${splitFlapLook.highlightFace} ${highlightFacePercent}%)`
-  const glyphColorsForTone = (tone: SplitFlapTone) => {
+  const glyphColorsForVariant = (variant: SplitFlapVariant) => {
     const baseColor =
-      tone === 'ochreOrange'
-        ? splitFlapLook.glyphOchre
-        : tone === 'signalYellow'
-          ? splitFlapLook.glyphSignal
-          : splitFlapLook.glyphWarm
+      variant === 'orange'
+        ? splitFlapLook.glyphOrange
+        : variant === 'yellow'
+          ? splitFlapLook.glyphYellow
+          : splitFlapLook.glyphWhite
     const top = `color-mix(in srgb, ${baseColor} ${100 - highlightGlyphPercent}%, ${splitFlapLook.highlightGlyph} ${highlightGlyphPercent}%)`
     return {
       bottom: `color-mix(in srgb, ${top} 96%, ${bottomFaceColor} 4%)`,
       top,
     }
   }
-  const toneGlyphColors: Record<SplitFlapTone, { bottom: string; top: string }> = {
-    ochreOrange: glyphColorsForTone('ochreOrange'),
-    signalYellow: glyphColorsForTone('signalYellow'),
-    warmWhite: glyphColorsForTone('warmWhite'),
+  const variantGlyphColors: Record<SplitFlapVariant, { bottom: string; top: string }> = {
+    orange: glyphColorsForVariant('orange'),
+    white: glyphColorsForVariant('white'),
+    yellow: glyphColorsForVariant('yellow'),
   }
-  const glyphColor = toneGlyphColors.warmWhite.top
-  const bottomGlyphColor = toneGlyphColors.warmWhite.bottom
-  const toneGlyphStyle = {
-    '--split-flap-glyph-ochre-bottom': toneGlyphColors.ochreOrange.bottom,
-    '--split-flap-glyph-ochre-top': toneGlyphColors.ochreOrange.top,
-    '--split-flap-glyph-signal-bottom': toneGlyphColors.signalYellow.bottom,
-    '--split-flap-glyph-signal-top': toneGlyphColors.signalYellow.top,
-    '--split-flap-glyph-warm-bottom': toneGlyphColors.warmWhite.bottom,
-    '--split-flap-glyph-warm-top': toneGlyphColors.warmWhite.top,
+  const glyphColor = variantGlyphColors.white.top
+  const bottomGlyphColor = variantGlyphColors.white.bottom
+  const variantGlyphStyle = {
+    '--split-flap-glyph-orange-bottom': variantGlyphColors.orange.bottom,
+    '--split-flap-glyph-orange-top': variantGlyphColors.orange.top,
+    '--split-flap-glyph-yellow-bottom': variantGlyphColors.yellow.bottom,
+    '--split-flap-glyph-yellow-top': variantGlyphColors.yellow.top,
+    '--split-flap-glyph-white-bottom': variantGlyphColors.white.bottom,
+    '--split-flap-glyph-white-top': variantGlyphColors.white.top,
   } as CSSProperties
   const glyphStyle = {
     fontSize: splitFlapLook.glyphSize,
@@ -360,7 +360,7 @@ const FlapCell = memo(function FlapCell({
     `linear-gradient(180deg, rgba(4, 5, 3, ${bezelTopShadowOpacity}) 0, ` +
     `transparent ${0.22 * tuning.stackedTopShadow}cqw), ` +
     'linear-gradient(0deg, rgba(3, 4, 2, 0.88) 0, transparent 0.18cqw)'
-  const compactToneLayer = (brightness: number) => {
+  const compactBrightnessLayer = (brightness: number) => {
     const difference = Math.abs(brightness - 1)
     const channel = brightness >= 1 ? '255, 255, 255' : '0, 0, 0'
     const opacity = Math.min(0.16, difference * 0.9)
@@ -369,12 +369,12 @@ const FlapCell = memo(function FlapCell({
   }
   const compactTopFaceBackground = [
     `linear-gradient(180deg, transparent 0%, transparent calc(50% - ${0.5 + tuning.seamShadow * 0.04}cqw), rgba(0, 0, 0, ${0.1 + tuning.seamShadow * 0.08}) 50%, transparent 50%)`,
-    compactToneLayer(topBrightness),
+    compactBrightnessLayer(topBrightness),
     topFaceBackground,
   ].join(', ')
   const compactBottomFaceBackground = [
     `linear-gradient(180deg, transparent 0%, transparent 50%, rgba(0, 0, 0, ${0.2 + tuning.seamShadow * 0.11}) 50%, transparent calc(50% + ${0.38 + tuning.seamShadow * 0.04}cqw), transparent 100%)`,
-    compactToneLayer(bottomBrightness),
+    compactBrightnessLayer(bottomBrightness),
     bottomFaceBackground,
   ].join(', ')
   const compactGlyphCarrierStyle = (color: string, lower: boolean, top: string) =>
@@ -475,7 +475,7 @@ const FlapCell = memo(function FlapCell({
         data-split-flap-index={index}
         style={
           {
-            ...toneGlyphStyle,
+            ...variantGlyphStyle,
             '--compact-seam-base-opacity': splitFlapLook.seamOpacity,
             '--compact-seam-height': splitFlapLook.seamThickness,
           } as CSSProperties
@@ -641,7 +641,7 @@ const FlapCell = memo(function FlapCell({
       data-split-flap-cassette-span={cell.span}
       data-split-flap-cell-id={cell.id}
       data-split-flap-index={index}
-      style={toneGlyphStyle}
+      style={variantGlyphStyle}
     >
       <span
         {...stylex.props(styles.cell)}
@@ -908,14 +908,14 @@ const FlapCell = memo(function FlapCell({
 export const SplitFlapBoardRow = memo(function SplitFlapBoardRow({
   columnGap,
   controller,
-  fieldGap,
+  groupGap,
   layout,
   rowIndex,
   tuning,
 }: {
   columnGap: number
   controller: SplitFlapMotionController
-  fieldGap: number
+  groupGap: number
   layout: ResolvedSplitFlapSource
   rowIndex: number
   tuning: CellTuning
@@ -929,25 +929,25 @@ export const SplitFlapBoardRow = memo(function SplitFlapBoardRow({
       data-split-flap-row
       data-split-flap-row-id={row.id}
       style={{
-        columnGap: `calc(${fieldGap} * ${splitFlapLook.boardUnit})`,
+        columnGap: `calc(${groupGap} * ${splitFlapLook.boardUnit})`,
         gridTemplateColumns: columnTracks,
       }}
     >
       {layout.columns.map((column) => (
         <div
           key={column.id}
-          {...stylex.props(styles.departureField)}
-          data-split-flap-field={column.id}
+          {...stylex.props(styles.departureGroup)}
+          data-split-flap-group={column.id}
         >
           <div
-            {...stylex.props(styles.departureFieldScaleContext)}
+            {...stylex.props(styles.departureGroupScaleContext)}
             data-split-flap-scale-context
             style={{
               width: `calc(${splitFlapReferenceTracks} * ${splitFlapLook.cellTrack})`,
             }}
           >
             <div
-              {...stylex.props(styles.departureFieldGrid)}
+              {...stylex.props(styles.departureGroupGrid)}
               style={{
                 columnGap: `${columnGap}cqw`,
                 gridTemplateColumns: `repeat(${column.cells}, minmax(0, 1fr))`,

@@ -154,16 +154,16 @@ export const styles = stylex.create({
     backgroundImage: splitFlapLook.rowBackgroundImage,
     boxShadow: splitFlapLook.rowShadow,
   },
-  departureField: {
+  departureGroup: {
     position: 'relative',
     minWidth: 0,
   },
-  departureFieldScaleContext: {
+  departureGroupScaleContext: {
     position: 'relative',
     containerType: 'inline-size',
     pointerEvents: 'none',
   },
-  departureFieldGrid: {
+  departureGroupGrid: {
     display: 'grid',
     height: 'max-content',
     gridTemplateColumns: 'repeat(11, minmax(0, 1fr))',

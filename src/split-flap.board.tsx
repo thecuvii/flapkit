@@ -65,7 +65,7 @@ export type SplitFlapBoardProps = {
   children?: ReactNode
   className?: string
   columnGap?: number
-  fieldGap?: number
+  groupGap?: number
   grainOpacity?: number
   rowGap?: number
   showColumnLabels?: boolean
@@ -76,33 +76,33 @@ export type SplitFlapGridProps = {
   'aria-label'?: string
   className?: string
   columnGap?: number
-  fieldGap?: number
+  groupGap?: number
   rowGap?: number
   style?: SplitFlapStyle
 }
 
-function splitFlapGridWidth(layout: ResolvedSplitFlapSource, fieldGap: number) {
+function splitFlapGridWidth(layout: ResolvedSplitFlapSource, groupGap: number) {
   const trackCount = layout.columns.reduce(
     (count, column) => count + column.cells * column.cassetteSpan,
     0,
   )
-  return `calc(${trackCount} * ${splitFlapLook.cellTrack} + ${Math.max(0, layout.columns.length - 1) * fieldGap} * ${splitFlapLook.boardUnit})`
+  return `calc(${trackCount} * ${splitFlapLook.cellTrack} + ${Math.max(0, layout.columns.length - 1) * groupGap} * ${splitFlapLook.boardUnit})`
 }
 
 function SplitFlapGridContent({
   columnGap,
-  fieldGap,
+  groupGap,
   rowGap,
 }: {
   columnGap: number
-  fieldGap: number
+  groupGap: number
   rowGap: number
 }) {
   const { controller, layout, material, motion } = useSplitFlap()
   const canvasGeometryKey = [
     layout.layoutKey,
     columnGap,
-    fieldGap,
+    groupGap,
     rowGap,
     material.faceInsetX,
     material.faceInsetY,
@@ -126,7 +126,7 @@ function SplitFlapGridContent({
           key={row.id}
           columnGap={columnGap}
           controller={controller}
-          fieldGap={fieldGap}
+          groupGap={groupGap}
           layout={layout}
           rowIndex={rowIndex}
           tuning={material}
@@ -141,7 +141,7 @@ export function SplitFlapGrid({
   'aria-label': ariaLabel = 'Split-flap display grid',
   className,
   columnGap = 0.28,
-  fieldGap = 0.8,
+  groupGap = 0.8,
   rowGap = 0.4,
   style,
 }: SplitFlapGridProps) {
@@ -157,12 +157,12 @@ export function SplitFlapGrid({
       style={
         {
           ...splitFlapMaterialStyle(material),
-          width: splitFlapGridWidth(layout, fieldGap),
+          width: splitFlapGridWidth(layout, groupGap),
           ...style,
         } as CSSProperties
       }
     >
-      <SplitFlapGridContent columnGap={columnGap} fieldGap={fieldGap} rowGap={rowGap} />
+      <SplitFlapGridContent columnGap={columnGap} groupGap={groupGap} rowGap={rowGap} />
     </figure>
   )
 }
@@ -172,7 +172,7 @@ export function SplitFlapBoard({
   children,
   className,
   columnGap = 0.28,
-  fieldGap = 0.8,
+  groupGap = 0.8,
   grainOpacity = 0.32,
   rowGap = 0.4,
   showColumnLabels = true,
@@ -186,8 +186,8 @@ export function SplitFlapBoard({
       : splitFlapLook.titleOnlyHeaderHeight
     : '0px'
   const columnTracks = splitFlapColumnTracks(layout)
-  const fieldGapSize = `calc(${fieldGap} * ${splitFlapLook.boardUnit})`
-  const boardWidth = `calc(${splitFlapLook.frameLeft} + ${splitFlapGridWidth(layout, fieldGap)} + ${splitFlapLook.frameRight})`
+  const groupGapSize = `calc(${groupGap} * ${splitFlapLook.boardUnit})`
+  const boardWidth = `calc(${splitFlapLook.frameLeft} + ${splitFlapGridWidth(layout, groupGap)} + ${splitFlapLook.frameRight})`
   const boardProps = stylex.props(styles.board)
 
   return (
@@ -217,7 +217,7 @@ export function SplitFlapBoard({
             {showColumnLabels && (
               <div
                 {...stylex.props(styles.boardColumnLabels)}
-                style={{ columnGap: fieldGapSize, gridTemplateColumns: columnTracks }}
+                style={{ columnGap: groupGapSize, gridTemplateColumns: columnTracks }}
               >
                 {layout.columns.map((column) => (
                   <span key={column.id} {...stylex.props(styles.boardColumnLabel)}>
@@ -228,7 +228,7 @@ export function SplitFlapBoard({
             )}
           </div>
         )}
-        <SplitFlapGridContent columnGap={columnGap} fieldGap={fieldGap} rowGap={rowGap} />
+        <SplitFlapGridContent columnGap={columnGap} groupGap={groupGap} rowGap={rowGap} />
       </div>
     </figure>
   )

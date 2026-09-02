@@ -4,55 +4,70 @@ export const docsCode = {
     language: 'shell',
   },
   usageRiffle: {
-    code: `import { SplitFlapGrid } from '@thecuvii/flapkit'
-import { SplitFlapRiffle } from '@thecuvii/flapkit/riffle'
+    code: `import * as Flapkit from '@thecuvii/flapkit'
+import { riffle } from '@thecuvii/flapkit/riffle'
 
-<SplitFlapRiffle source={source}>
-  <SplitFlapGrid aria-label="Package status" />
-</SplitFlapRiffle>`,
+<Flapkit.Root motion={riffle()}>
+  <Flapkit.Board aria-label="Package status">
+    <Flapkit.Row label="STATUS">
+      {[...'IN TRANSIT'].map((character, index) => (
+        <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+      ))}
+    </Flapkit.Row>
+  </Flapkit.Board>
+</Flapkit.Root>`,
     language: 'tsx',
   },
   usageCascade: {
-    code: `import { SplitFlapGrid } from '@thecuvii/flapkit'
-import { SplitFlapCascade } from '@thecuvii/flapkit/cascade'
+    code: `import * as Flapkit from '@thecuvii/flapkit'
+import { cascade } from '@thecuvii/flapkit/cascade'
 
-<SplitFlapCascade source={source}>
-  <SplitFlapGrid aria-label="Package status" />
-</SplitFlapCascade>`,
+<Flapkit.Root motion={cascade()}>
+  <Flapkit.Board aria-label="Package status">
+    <Flapkit.Row label="STATUS">
+      {[...'IN TRANSIT'].map((character, index) => (
+        <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+      ))}
+    </Flapkit.Row>
+  </Flapkit.Board>
+</Flapkit.Root>`,
     language: 'tsx',
   },
   usageUnicode: {
-    code: `import { createSplitFlapDeck, SplitFlapGrid } from '@thecuvii/flapkit'
-import { SplitFlapRiffle } from '@thecuvii/flapkit/riffle'
+    code: `import * as Flapkit from '@thecuvii/flapkit'
+import { riffle } from '@thecuvii/flapkit/riffle'
 
-const localDeck = createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗')
-const source = {
-  columns: [{
-    id: 'local',
-    label: 'LOCAL',
-    cells: 4,
-    flapDeck: localDeck,
-  }],
-  rows: [{ id: 'service', values: { local: '東京出発' } }],
-}
+const localDeck = Flapkit.createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗')
 
-<SplitFlapRiffle source={source}>
-  <SplitFlapGrid aria-label="Local service" />
-</SplitFlapRiffle>`,
+<Flapkit.Root motion={riffle()}>
+  <Flapkit.Board aria-label="Local service">
+    <Flapkit.Row deck={localDeck} label="LOCAL">
+      {[...'東京出発'].map((character, index) => (
+        <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+      ))}
+    </Flapkit.Row>
+  </Flapkit.Board>
+</Flapkit.Root>`,
     language: 'tsx',
   },
   composition: {
     code: `import * as stylex from '@stylexjs/stylex'
-import { SplitFlapBoard } from '@thecuvii/flapkit'
-import { SplitFlapRiffle } from '@thecuvii/flapkit/riffle'
+import * as Flapkit from '@thecuvii/flapkit'
+import { riffle } from '@thecuvii/flapkit/riffle'
 import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
 
 export function Departures() {
   return (
     <section {...stylex.props(airportBoardLook)}>
-      <SplitFlapRiffle source={source}>
-        <SplitFlapBoard>Departures</SplitFlapBoard>
-      </SplitFlapRiffle>
+      <Flapkit.Root motion={riffle()}>
+        <Flapkit.Board>
+          <Flapkit.Header>Departures</Flapkit.Header>
+          <Flapkit.Row label="STATUS">
+            <Flapkit.Cell>O</Flapkit.Cell>
+            <Flapkit.Cell>N</Flapkit.Cell>
+          </Flapkit.Row>
+        </Flapkit.Board>
+      </Flapkit.Root>
     </section>
   )
 }`,
@@ -63,19 +78,22 @@ export function Departures() {
 import { splitFlapLook } from '@thecuvii/flapkit/look'
 
 export const customLook = stylex.createTheme(splitFlapLook, {
-  glyphWarm: '#f5efe0',
+  glyphWhite: '#f5efe0',
   topFaceColor: '#171918',
   bottomFaceColor: '#111312',
 })`,
     language: 'tsx',
   },
   sound: {
-    code: `import { SplitFlapSound } from '@thecuvii/flapkit/sound'
+    code: `import * as Flapkit from '@thecuvii/flapkit'
+import { riffle } from '@thecuvii/flapkit/riffle'
+import { mechanicalSound } from '@thecuvii/flapkit/sound'
 
-<SplitFlapRiffle source={source}>
-  <SplitFlapBoard />
-  <SplitFlapSound bank={soundBank} />
-</SplitFlapRiffle>`,
+<Flapkit.Root motion={riffle()} sound={mechanicalSound({ bank: soundBank })}>
+  <Flapkit.Board>
+    <Flapkit.Row><Flapkit.Cell>A</Flapkit.Cell></Flapkit.Row>
+  </Flapkit.Board>
+</Flapkit.Root>`,
     language: 'tsx',
   },
 } as const

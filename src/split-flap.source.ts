@@ -1,13 +1,13 @@
-export const splitFlapTones = ['warmWhite', 'signalYellow', 'ochreOrange'] as const
+export const splitFlapVariants = ['white', 'yellow', 'orange'] as const
 
-export type SplitFlapTone = (typeof splitFlapTones)[number]
+export type SplitFlapVariant = (typeof splitFlapVariants)[number]
 
 export type SplitFlapSequence = 'alphanumeric' | 'numeric' | 'punctuation'
 export type SplitFlapCassetteSpan = 1 | 2
 
 export type SplitFlapPosition = {
   character: string
-  tone: SplitFlapTone
+  variant: SplitFlapVariant
 }
 
 export type SplitFlapDeck = readonly SplitFlapPosition[]
@@ -25,16 +25,16 @@ export function splitFlapGraphemes(value: string) {
 
 export function createSplitFlapDeck(
   characters: string | readonly string[],
-  tones: readonly SplitFlapTone[] = ['warmWhite'],
+  variants: readonly SplitFlapVariant[] = ['white'],
 ): SplitFlapDeck {
   const normalizedCharacters = (
     typeof characters === 'string' ? splitFlapGraphemes(characters) : characters
   ).map(normalizeSplitFlapText)
 
-  return tones.flatMap((tone, toneIndex) =>
+  return variants.flatMap((variant, variantIndex) =>
     normalizedCharacters
-      .filter((character) => toneIndex === 0 || character.trim() !== '')
-      .map((character) => ({ character, tone })),
+      .filter((character) => variantIndex === 0 || character.trim() !== '')
+      .map((character) => ({ character, variant })),
   )
 }
 
@@ -55,7 +55,7 @@ export type SplitFlapValue =
   | string
   | {
       text: string
-      tone?: SplitFlapTone
+      variant?: SplitFlapVariant
     }
 
 export type SplitFlapRow = {
@@ -90,7 +90,7 @@ export type ResolvedSplitFlapCell = {
   span: SplitFlapCassetteSpan
   targetIndex: number
   trackIndex: number
-  tone: SplitFlapTone
+  variant: SplitFlapVariant
 }
 
 export type ResolvedSplitFlapSource = {
@@ -144,7 +144,7 @@ function resolveSplitFlapDeck(
 
   const positions = deck.map((position) => ({
     character: normalizeSplitFlapText(position.character),
-    tone: position.tone,
+    variant: position.variant,
   }))
   const invalidPosition = positions.find(
     (position) => splitFlapGraphemes(position.character).length !== cassetteSpan,
@@ -160,12 +160,12 @@ function resolveSplitFlapDeck(
 function targetPositionIndex(
   deck: SplitFlapDeck,
   character: string,
-  tone: SplitFlapTone,
+  variant: SplitFlapVariant,
   cellId: string,
 ) {
   const normalizedCharacter = normalizeSplitFlapText(character)
   const exactIndex = deck.findIndex(
-    (position) => position.character === normalizedCharacter && position.tone === tone,
+    (position) => position.character === normalizedCharacter && position.variant === variant,
   )
   if (exactIndex >= 0) return exactIndex
 
@@ -179,18 +179,18 @@ function targetPositionIndex(
   }
 
   throw new Error(
-    `Split-flap deck for "${cellId}" has no ${tone} "${normalizedCharacter}" position`,
+    `Split-flap deck for "${cellId}" has no ${variant} "${normalizedCharacter}" position`,
   )
 }
 
 function splitFlapDeckKey(deck: SplitFlapDeck | undefined) {
-  return deck?.map((position) => `${position.character}:${position.tone}`).join(',') ?? ''
+  return deck?.map((position) => `${position.character}:${position.variant}`).join(',') ?? ''
 }
 
 function splitFlapValue(value: SplitFlapValue | undefined) {
   return typeof value === 'string'
-    ? { text: value, tone: 'warmWhite' as const }
-    : { text: value?.text ?? '', tone: value?.tone ?? ('warmWhite' as const) }
+    ? { text: value, variant: 'white' as const }
+    : { text: value?.text ?? '', variant: value?.variant ?? ('white' as const) }
 }
 
 export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFlapSource {
@@ -248,9 +248,9 @@ export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFl
           rowId: row.id,
           rowIndex,
           span: column.cassetteSpan,
-          targetIndex: targetPositionIndex(flapDeck, character, value.tone, id),
+          targetIndex: targetPositionIndex(flapDeck, character, value.variant, id),
           trackIndex: column.trackOffset + columnIndex * column.cassetteSpan,
-          tone: value.tone,
+          variant: value.variant,
         }
       })
     }),

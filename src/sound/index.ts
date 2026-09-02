@@ -1,5 +1,4 @@
-import { createElement } from 'react'
-import type { SoundAdapter } from '../flapkit'
+import { createElement, type ReactElement } from 'react'
 import { SplitFlapSound, type SplitFlapSoundProps } from '../split-flap.sound'
 
 export { SplitFlapSound, type SplitFlapSoundProps } from '../split-flap.sound'
@@ -13,7 +12,7 @@ export {
   type SplitFlapSoundTuning,
 } from '../split-flap.sound-engine'
 
-/** Creates an optional mechanical sound adapter for Flapkit.Root. */
-export function mechanicalSound(props: SplitFlapSoundProps): SoundAdapter {
-  return { render: () => createElement(SplitFlapSound, props) }
+/** Creates the optional mechanical sound element rendered inside Flapkit.Root. */
+export function mechanicalSound(props: SplitFlapSoundProps): ReactElement {
+  return createElement(SplitFlapSound, props)
 }

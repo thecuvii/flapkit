@@ -237,8 +237,8 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
         <section id="composition" className="doc-section">
           <h2>Composition</h2>
           <p>
-            Source data, motion, board composition, and visual treatment are separate. Combine only
-            the parts your interface needs.
+            Root connects a motion adapter to a declarative board. A flat Row is one region; add
+            Group only when adjacent regions need different labels, variants, or decks.
           </p>
           <CodeBlock html={highlightedCode.composition} />
         </section>
@@ -246,36 +246,40 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
         <section id="anatomy" className="doc-section">
           <h2>Anatomy</h2>
           <p>
-            Flapkit is composed from small layers. The look supplies visual variables, the effect
-            owns motion state, and the rendered parts remain interchangeable.
+            The compound components describe the physical board. Root compiles that structure and
+            delegates animation to the selected adapter.
           </p>
           <ul className="anatomy" aria-label="Flapkit component anatomy">
             <li>
-              <code>Look</code>
-              <span>Theme variables on an ancestor</span>
+              <code>Root</code>
+              <span>Motion, material, and optional sound</span>
             </li>
             <li className="anatomy-depth-1">
-              <code>Motion effect</code>
-              <span>Source resolution and cassette runtime</span>
+              <code>Board</code>
+              <span>Frame, spacing, labels, and grid</span>
             </li>
             <li className="anatomy-depth-2">
-              <code>Board</code>
-              <span>Frame, header, labels, and grid</span>
+              <code>Header</code>
+              <span>Optional board title</span>
+            </li>
+            <li className="anatomy-depth-2">
+              <code>Row</code>
+              <span>One horizontal record</span>
             </li>
             <li className="anatomy-depth-3">
-              <code>Grid</code>
-              <span>Rows and physical cassettes</span>
+              <code>Group</code>
+              <span>Optional adjacent region with shared settings</span>
             </li>
-            <li className="anatomy-depth-2">
-              <code>Sound</code>
-              <span>Optional mechanical event listener</span>
+            <li className="anatomy-depth-3">
+              <code>Cell / WideCell</code>
+              <span>One independently driven cassette</span>
             </li>
           </ul>
         </section>
 
         <section id="motion" className="doc-section">
           <h2>Motion</h2>
-          <p>Both engines share the same source and presentation components.</p>
+          <p>Both adapters drive the same component structure and preserve the same visuals.</p>
           <div className="option-list">
             <div>
               <code>@thecuvii/flapkit/riffle</code>
@@ -301,7 +305,7 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
           <h2>Sound</h2>
           <p>
             Sound is optional and ships without audio assets. Supply your own click and settle
-            samples.
+            samples, then pass <code>mechanicalSound(...)</code> to Root.
           </p>
           <CodeBlock html={highlightedCode.sound} />
         </section>
@@ -309,8 +313,8 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
         <section id="performance" className="doc-section">
           <h2>Performance</h2>
           <p>
-            Stable row and column IDs preserve cassette state. Updates animate only cells whose
-            resolved deck position changed.
+            Stable optional row and group IDs preserve cassette state. Updates animate only cells
+            whose resolved deck position changed.
           </p>
           <ul>
             <li>Tree-shakeable motion engines and looks</li>

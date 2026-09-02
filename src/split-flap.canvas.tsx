@@ -12,12 +12,12 @@ import {
 import {
   activeGlyphColorProperty,
   signedLeafNoise,
-  splitFlapToneVariable,
+  splitFlapVariantVariable,
   type SplitFlapCanvasRenderer,
   type MotionTuning,
   type SplitFlapRuntime,
 } from './split-flap.runtime'
-import { splitFlapGraphemes, splitFlapTones, type SplitFlapTone } from './split-flap.source'
+import { splitFlapGraphemes, splitFlapVariants, type SplitFlapVariant } from './split-flap.source'
 import { styles } from './split-flap.styles'
 
 type CanvasCassetteGeometry = {
@@ -53,7 +53,7 @@ type CanvasCellVisual = {
   bottomBrightness: number
   bottomFaceColor: string
   characters: readonly string[]
-  glyphColors: Record<SplitFlapTone, { bottom: string; top: string }>
+  glyphColors: Record<SplitFlapVariant, { bottom: string; top: string }>
   glyphOffset: number
   span: number
   topBrightness: number
@@ -256,12 +256,12 @@ function drawCanvasFace(
   context.fillStyle = surface
   context.fillRect(geometry.faceX, faceY, geometry.faceWidth, faceHeight)
 
-  const toneDifference = Math.abs(brightness - 1)
-  if (toneDifference > 0.001) {
+  const brightnessDifference = Math.abs(brightness - 1)
+  if (brightnessDifference > 0.001) {
     context.fillStyle =
       brightness >= 1
-        ? `rgba(255, 255, 255, ${Math.min(0.16, toneDifference * 0.9)})`
-        : `rgba(0, 0, 0, ${Math.min(0.16, toneDifference * 0.9)})`
+        ? `rgba(255, 255, 255, ${Math.min(0.16, brightnessDifference * 0.9)})`
+        : `rgba(0, 0, 0, ${Math.min(0.16, brightnessDifference * 0.9)})`
     context.fillRect(geometry.faceX, faceY, geometry.faceWidth, faceHeight)
     drawOperations += 1
   }
@@ -385,16 +385,16 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
         const topFaceColor = `color-mix(in srgb, ${tuning.topFaceColor} ${100 - highlightFacePercent}%, ${tuning.highlightFaceColor} ${highlightFacePercent}%)`
         const bottomFaceColor = `color-mix(in srgb, ${tuning.bottomFaceColor} ${100 - highlightFacePercent}%, ${tuning.highlightFaceColor} ${highlightFacePercent}%)`
         const glyphColors = Object.fromEntries(
-          splitFlapTones.map((tone) => {
+          splitFlapVariants.map((variant) => {
             const baseGlyphColor =
-              tone === 'ochreOrange'
-                ? tuning.ochreOrangeGlyphColor
-                : tone === 'signalYellow'
-                  ? tuning.signalYellowGlyphColor
-                  : tuning.warmWhiteGlyphColor
+              variant === 'orange'
+                ? tuning.orangeGlyphColor
+                : variant === 'yellow'
+                  ? tuning.yellowGlyphColor
+                  : tuning.whiteGlyphColor
             const top = `color-mix(in srgb, ${baseGlyphColor} ${100 - highlightGlyphPercent}%, ${tuning.highlightGlyphColor} ${highlightGlyphPercent}%)`
             return [
-              tone,
+              variant,
               {
                 bottom: `color-mix(in srgb, ${top} 96%, ${bottomFaceColor} 4%)`,
                 top,
@@ -466,8 +466,8 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
         const currentPosition = runtime.positions[runtime.currentIndex]
         const nextPosition =
           runtime.positions[(runtime.currentIndex + 1) % runtime.positions.length]
-        const currentGlyphColors = visual.glyphColors[currentPosition.tone]
-        const nextGlyphColors = visual.glyphColors[nextPosition.tone]
+        const currentGlyphColors = visual.glyphColors[currentPosition.variant]
+        const nextGlyphColors = visual.glyphColors[nextPosition.variant]
         const angle = canvasVaneAngle(runtime, motion, now)
         const angleRadians = (Math.abs(angle) * Math.PI) / 180
         const edgeOn = Math.sin(Math.min(Math.PI, angleRadians))
@@ -695,17 +695,17 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
             const previousUpperColor = upperFace.style.getPropertyValue(activeGlyphColorProperty)
             const previousLowerColor = lowerFace.style.getPropertyValue(activeGlyphColorProperty)
             const glyphColors = Object.fromEntries(
-              splitFlapTones.map((tone) => {
+              splitFlapVariants.map((variant) => {
                 upperFace.style.setProperty(
                   activeGlyphColorProperty,
-                  splitFlapToneVariable(tone, false),
+                  splitFlapVariantVariable(variant, false),
                 )
                 lowerFace.style.setProperty(
                   activeGlyphColorProperty,
-                  splitFlapToneVariable(tone, true),
+                  splitFlapVariantVariable(variant, true),
                 )
                 return [
-                  tone,
+                  variant,
                   {
                     bottom: getComputedStyle(lowerFace, '::before').color,
                     top: getComputedStyle(upperFace, '::before').color,
@@ -825,19 +825,21 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
       geometryRef.current.forEach((geometry, index) => {
         const visual = resolvedVisuals[index]
         if (!geometry || !visual) return
-        const deckTones = new Set(layout.cells[index]?.flapDeck.map((position) => position.tone))
-        deckTones.forEach((tone) => {
+        const deckVariants = new Set(
+          layout.cells[index]?.flapDeck.map((position) => position.variant),
+        )
+        deckVariants.forEach((variant) => {
           glyphAtlases.add(
             getCanvasGlyphAtlas(
               geometry.glyphStyle,
-              visual.glyphColors[tone].top,
+              visual.glyphColors[variant].top,
               visual.characters,
             ),
           )
           glyphAtlases.add(
             getCanvasGlyphAtlas(
               geometry.glyphStyle,
-              visual.glyphColors[tone].bottom,
+              visual.glyphColors[variant].bottom,
               visual.characters,
             ),
           )
@@ -845,7 +847,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
       })
 
       // Upload each immutable atlas before motion starts. Without this warm-up,
-      // the first active frame pays the texture upload cost for every field and tone.
+      // the first active frame pays the texture upload cost for every group and variant.
       for (const targetContext of [context, staticContext]) {
         targetContext.save()
         targetContext.globalAlpha = 0.001

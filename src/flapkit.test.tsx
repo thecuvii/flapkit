@@ -1,75 +1,125 @@
 import { describe, expect, it } from 'vitest'
 import { createSplitFlapDeck, resolveSplitFlapSource } from './split-flap.source'
-import { Board, Cell, compileFlapkitBoard, Field, Header, Row, WideCell } from './flapkit.structure'
+import { Board, Cell, compileFlapkitBoard, Group, Header, Row, WideCell } from './flapkit.structure'
 
 const wideDeck = createSplitFlapDeck(['  ', '14', '55'])
+const variantDeck = createSplitFlapDeck(' 45', ['white', 'yellow', 'orange'])
 
 describe('Flapkit structural compiler', () => {
-  it('compiles rows of single and wide cells into the existing source model', () => {
+  it('compiles adjacent groups, variants, and wide cells into the source model', () => {
     const result = compileFlapkitBoard(
       <Board aria-label="Numbers">
         <Header>Numbers</Header>
-        <Row>
-          <Field label="PAIR">
-            <WideCell flapDeck={wideDeck}>55</WideCell>
-          </Field>
-          <Field label="SINGLE">
-            <Cell tone="signalYellow">5</Cell>
-          </Field>
+        <Row id="first">
+          <Group deck={wideDeck} label="PAIR">
+            <WideCell>55</WideCell>
+          </Group>
+          <Group deck={variantDeck} label="SINGLE" variant="yellow">
+            <Cell>5</Cell>
+          </Group>
         </Row>
-        <Row highlighted>
-          <Field label="PAIR">
-            <WideCell flapDeck={wideDeck}>14</WideCell>
-          </Field>
-          <Field label="SINGLE">
-            <Cell tone="signalYellow">4</Cell>
-          </Field>
+        <Row highlighted id="second">
+          <Group deck={wideDeck} label="PAIR">
+            <WideCell>14</WideCell>
+          </Group>
+          <Group deck={variantDeck} label="SINGLE" variant="yellow">
+            <Cell>4</Cell>
+          </Group>
         </Row>
       </Board>,
     )
 
     expect(result.header).toBe('Numbers')
     expect(result.source.columns).toMatchObject([
-      { id: 'field-0', label: 'PAIR', cells: 1, cassetteSpan: 2 },
-      { id: 'field-1', label: 'SINGLE', cells: 1, cassetteSpan: 1 },
+      { id: 'group-0', label: 'PAIR', cells: 1, cassetteSpan: 2 },
+      { id: 'group-1', label: 'SINGLE', cells: 1, cassetteSpan: 1 },
     ])
     expect(result.source.rows).toEqual([
       {
         highlighted: undefined,
-        id: 'row-0',
-        values: { 'field-0': '55', 'field-1': { text: '5', tone: 'signalYellow' } },
+        id: 'first',
+        values: { 'group-0': '55', 'group-1': { text: '5', variant: 'yellow' } },
       },
       {
         highlighted: true,
-        id: 'row-1',
-        values: { 'field-0': '14', 'field-1': { text: '4', tone: 'signalYellow' } },
+        id: 'second',
+        values: { 'group-0': '14', 'group-1': { text: '4', variant: 'yellow' } },
       },
     ])
   })
 
-  it('preserves the existing renderer and motion inputs for single-width cassettes', () => {
+  it('treats a flat row as one group and accepts numeric cell content', () => {
     const result = compileFlapkitBoard(
-      <Board columnGap={0.12} fieldGap={1.2} rowGap={0.6} showColumnLabels={false}>
-        <Row>
+      <Board columnGap={0.12} groupGap={1.2} rowGap={0.6} showColumnLabels={false}>
+        <Row label="CODE" sequence="alphanumeric">
           <Cell>A</Cell>
           <Cell>B</Cell>
-          <Cell>4</Cell>
+          <Cell>{4}</Cell>
         </Row>
       </Board>,
     )
-    const legacySource = {
-      columns: [{ id: 'field-0', label: '', cells: 3, cassetteSpan: 1 as const }],
-      rows: [{ id: 'row-0', values: { 'field-0': 'AB4' } }],
+    const source = {
+      columns: [
+        {
+          id: 'group-0',
+          label: 'CODE',
+          cells: 3,
+          cassetteSpan: 1 as const,
+          flapSequence: 'alphanumeric' as const,
+        },
+      ],
+      rows: [{ id: 'row-0', values: { 'group-0': 'AB4' } }],
     }
 
     expect(result.boardProps).toEqual({
       columnGap: 0.12,
-      fieldGap: 1.2,
+      groupGap: 1.2,
       rowGap: 0.6,
       showColumnLabels: false,
     })
-    expect(result.source).toEqual(legacySource)
-    expect(resolveSplitFlapSource(result.source)).toEqual(resolveSplitFlapSource(legacySource))
+    expect(result.source).toEqual(source)
+    expect(resolveSplitFlapSource(result.source)).toEqual(resolveSplitFlapSource(source))
+  })
+
+  it('applies a variant and deck directly from a flat row', () => {
+    const result = compileFlapkitBoard(
+      <Board>
+        <Row deck={variantDeck} label="COUNT" variant="orange">
+          <Cell>{4}</Cell>
+        </Row>
+      </Board>,
+    )
+
+    expect(result.source.rows[0]?.values).toEqual({
+      'group-0': { text: '4', variant: 'orange' },
+    })
+    expect(() => resolveSplitFlapSource(result.source)).not.toThrow()
+  })
+
+  it('requires a custom deck for a wide cell', () => {
+    expect(() =>
+      compileFlapkitBoard(
+        <Board>
+          <Row>
+            <WideCell>55</WideCell>
+          </Row>
+        </Board>,
+      ),
+    ).toThrow('requires a custom two-grapheme deck')
+  })
+
+  it('rejects group-level props on a row that contains explicit groups', () => {
+    expect(() =>
+      compileFlapkitBoard(
+        <Board>
+          <Row label="Ignored">
+            <Group>
+              <Cell>A</Cell>
+            </Group>
+          </Row>
+        </Board>,
+      ),
+    ).toThrow('cannot set label, variant, deck, or sequence when it contains Groups')
   })
 
   it('rejects arbitrary elements inside a row', () => {
@@ -93,11 +143,11 @@ describe('Flapkit structural compiler', () => {
             <Cell>A</Cell>
             <Cell>B</Cell>
           </Row>
-          <Row>
-            <WideCell flapDeck={wideDeck}>55</WideCell>
+          <Row deck={wideDeck}>
+            <WideCell>55</WideCell>
           </Row>
         </Board>,
       ),
-    ).toThrow('same Field, Cell, and WideCell structure')
+    ).toThrow('same Group, Cell, and WideCell structure')
   })
 })

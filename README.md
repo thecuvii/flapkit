@@ -43,60 +43,61 @@ does not need to contain Flapkit-specific CSS.
 
 ## Composition
 
-The package keeps content, motion, composition, and visual treatment separate:
+The compound API keeps content, motion, sound, and visual treatment separate:
 
 ```text
-Source → Motion Effect → Board or Grid
-                    ├→ optional Sound
-                    └→ independently imported Look on an ancestor
+Root ── motion adapter
+ ├── Board
+ │    ├── Header
+ │    └── Row ── Group ── Cell / WideCell
+ └── optional sound
 ```
 
 ```tsx
 import * as stylex from '@stylexjs/stylex'
-import { SplitFlapBoard, type SplitFlapSource } from '@thecuvii/flapkit'
-import { SplitFlapRiffle } from '@thecuvii/flapkit/riffle'
+import * as Flapkit from '@thecuvii/flapkit'
+import { riffle } from '@thecuvii/flapkit/riffle'
 import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
 
-const source: SplitFlapSource = {
-  columns: [
-    { id: 'time', label: 'TIME', cells: 5 },
-    { id: 'status', label: 'STATUS', cells: 11 },
-  ],
-  rows: [
-    { id: 'cx251', values: { time: '06:45', status: 'ON TIME' } },
-    {
-      id: 'jl708',
-      highlighted: true,
-      values: {
-        time: '08:20',
-        status: { text: 'BOARDING', tone: 'signalYellow' },
-      },
-    },
-  ],
-}
+const statusDeck = Flapkit.createSplitFlapDeck(' BOARDING', ['white', 'yellow'])
 
 export function Departures() {
   return (
     <section {...stylex.props(airportBoardLook)}>
-      <SplitFlapRiffle source={source}>
-        <SplitFlapBoard>
-          <span>Departures</span>
-        </SplitFlapBoard>
-      </SplitFlapRiffle>
+      <Flapkit.Root motion={riffle()}>
+        <Flapkit.Board>
+          <Flapkit.Header>Departures</Flapkit.Header>
+          <Flapkit.Row highlighted>
+            <Flapkit.Group label="TIME">
+              {[...'08:20'].map((character, index) => (
+                <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+              ))}
+            </Flapkit.Group>
+            <Flapkit.Group deck={statusDeck} label="STATUS" variant="yellow">
+              {[...'BOARDING'].map((character, index) => (
+                <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+              ))}
+            </Flapkit.Group>
+          </Flapkit.Row>
+        </Flapkit.Board>
+      </Flapkit.Root>
     </section>
   )
 }
 ```
 
-Riffle provides lightweight, randomized rapid flipping for dense boards. Import
-`SplitFlapCascade` from `@thecuvii/flapkit/cascade` for higher-fidelity CSS 3D
-motion that cascades across rows. Import
-`SplitFlapGrid` from the root when the composition should contain only the
-cassette grid without the board frame or header.
+Use a flat `Row` when the whole row shares one label, deck, sequence, and
+variant. Add `Group` only when adjacent horizontal regions need different
+settings. `Row` and `Group` IDs are optional; provide stable IDs when items can
+reorder.
 
-Changing `source` values updates only cassettes whose resolved deck positions
-changed. Keeping row IDs, column IDs, and column structure stable preserves the
-mechanical state between updates.
+Riffle provides lightweight, randomized rapid flipping for dense boards. Pass
+`cascade()` from `@thecuvii/flapkit/cascade` for higher-fidelity CSS 3D motion
+that cascades across rows.
+
+Changing cell values updates only cassettes whose resolved deck positions
+changed. Stable optional row and group IDs preserve mechanical identity when
+their order changes.
 
 ## Unicode decks
 
@@ -106,21 +107,20 @@ is segmented with `Intl.Segmenter`, so combining marks and emoji sequences are
 not split across cells.
 
 ```tsx
-import { createSplitFlapDeck, type SplitFlapSource } from '@thecuvii/flapkit'
+import * as Flapkit from '@thecuvii/flapkit'
+import { riffle } from '@thecuvii/flapkit/riffle'
 
-const localDeck = createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗')
+const localDeck = Flapkit.createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗')
 
-const source: SplitFlapSource = {
-  columns: [
-    {
-      id: 'local',
-      label: 'LOCAL',
-      cells: 4,
-      flapDeck: localDeck,
-    },
-  ],
-  rows: [{ id: 'one', values: { local: '東京出発' } }],
-}
+<Flapkit.Root motion={riffle()}>
+  <Flapkit.Board>
+    <Flapkit.Row deck={localDeck} label="LOCAL">
+      {[...'東京出発'].map((character, index) => (
+        <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+      ))}
+    </Flapkit.Row>
+  </Flapkit.Board>
+</Flapkit.Root>
 ```
 
 Each grapheme resolves to one independently driven character cell. Every cell
@@ -129,27 +129,20 @@ has its own upper and lower split-flap leaves.
 ## Double-width cassettes
 
 Some displays use a single cassette whose leaves are wide enough to carry two
-graphemes. Use `cassetteSpan: 2` with a custom deck of two-grapheme positions:
+graphemes. Use `WideCell` with a custom deck of two-grapheme positions:
 
 ```tsx
-const source: SplitFlapSource = {
-  columns: [
-    {
-      id: 'number',
-      label: 'NUMBER',
-      cells: 2,
-      cassetteSpan: 2,
-      flapDeck: createSplitFlapDeck(['  ', '14', '05', '55', '30']),
-    },
-  ],
-  rows: [{ id: 'one', values: { number: '1405' } }],
-}
+const numberDeck = Flapkit.createSplitFlapDeck(['  ', '14', '05', '55', '30'])
+
+<Flapkit.Row deck={numberDeck} label="NUMBER">
+  <Flapkit.WideCell>14</Flapkit.WideCell>
+  <Flapkit.WideCell>05</Flapkit.WideCell>
+</Flapkit.Row>
 ```
 
 This renders two double-width cassettes: `[14] [05]`. Each cassette has one
-leaf stack, one deck position, one motion state, and one sound event. The
-column's `cells` count remains the number of independently driven cassettes;
-`cassetteSpan` only changes each cassette's width and graphemes per deck position.
+leaf stack, one deck position, one motion state, and one sound event. A Group
+cannot mix `Cell` and `WideCell`; place different widths in adjacent Groups.
 
 ## Looks and CSS customization
 
@@ -170,7 +163,7 @@ import { splitFlapLook } from '@thecuvii/flapkit/look'
 
 export const customLook = stylex.createTheme(splitFlapLook, {
   glyphFontFamily: "'Arial Narrow', sans-serif",
-  glyphWarm: '#f5efe0',
+  glyphWhite: '#f5efe0',
   topFaceColor: '#171918',
   bottomFaceColor: '#111312',
 })
@@ -183,10 +176,10 @@ surface, and frame design.
 ## Sound
 
 Sound is optional and ships without audio assets. Supply URLs owned by the
-consumer and render `SplitFlapSound` inside the motion effect:
+consumer and pass the sound element to `Root`:
 
 ```tsx
-import { SplitFlapSound } from '@thecuvii/flapkit/sound'
+import { mechanicalSound } from '@thecuvii/flapkit/sound'
 
 const soundBank = {
   clicks: ['/audio/flap-1.mp3', '/audio/flap-2.mp3'],
@@ -195,10 +188,13 @@ const soundBank = {
 
 function BoardWithSound() {
   return (
-    <SplitFlapRiffle source={source}>
-      <SplitFlapBoard />
-      <SplitFlapSound bank={soundBank} />
-    </SplitFlapRiffle>
+    <Flapkit.Root motion={riffle()} sound={mechanicalSound({ bank: soundBank })}>
+      <Flapkit.Board>
+        <Flapkit.Row>
+          <Flapkit.Cell>A</Flapkit.Cell>
+        </Flapkit.Row>
+      </Flapkit.Board>
+    </Flapkit.Root>
   )
 }
 ```

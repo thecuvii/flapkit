@@ -35,25 +35,25 @@ describe('split-flap source resolution', () => {
     expect(resolved.cells[0].targetIndex).toBe(characters.indexOf(value))
   })
 
-  it('normalizes custom decks and resolves custom tones', () => {
-    const deck = createSplitFlapDeck(' ab', ['warmWhite', 'signalYellow'])
+  it('normalizes custom decks and resolves custom variants', () => {
+    const deck = createSplitFlapDeck(' ab', ['white', 'yellow'])
     const resolved = resolveSplitFlapSource(
       sourceFor(
         { id: 'value', label: 'Value', cells: 1, flapDeck: deck },
-        { text: 'b', tone: 'signalYellow' },
+        { text: 'b', variant: 'yellow' },
       ),
     )
 
     expect(deck).toEqual([
-      { character: ' ', tone: 'warmWhite' },
-      { character: 'A', tone: 'warmWhite' },
-      { character: 'B', tone: 'warmWhite' },
-      { character: 'A', tone: 'signalYellow' },
-      { character: 'B', tone: 'signalYellow' },
+      { character: ' ', variant: 'white' },
+      { character: 'A', variant: 'white' },
+      { character: 'B', variant: 'white' },
+      { character: 'A', variant: 'yellow' },
+      { character: 'B', variant: 'yellow' },
     ])
     expect(resolved.cells[0]).toMatchObject({
       character: 'b',
-      tone: 'signalYellow',
+      variant: 'yellow',
       targetIndex: 4,
     })
   })
@@ -89,8 +89,8 @@ describe('split-flap source resolution', () => {
     )
 
     expect(deck).toEqual([
-      { character: ' ', tone: 'warmWhite' },
-      { character: 'ß', tone: 'warmWhite' },
+      { character: ' ', variant: 'white' },
+      { character: 'ß', variant: 'white' },
     ])
     expect(resolved.targetIndices).toEqual([1])
   })

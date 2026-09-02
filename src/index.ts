@@ -7,19 +7,20 @@ export {
 export {
   Board,
   Cell,
-  Field,
+  Group,
   Header,
   Root,
   Row,
   WideCell,
   type BoardProps,
   type CellProps,
-  type FieldProps,
+  type GroupProps,
   type HeaderProps,
   type MotionAdapter,
   type RootProps,
   type RowProps,
-  type SoundAdapter,
+  type Variant,
+  type WideCellProps,
 } from './flapkit'
 export {
   createSplitFlapDeck,
@@ -27,7 +28,7 @@ export {
   splitFlapCharacters,
   splitFlapNumericCharacters,
   splitFlapPunctuationCharacters,
-  splitFlapTones,
+  splitFlapVariants,
   type SplitFlapCassetteSpan,
   type SplitFlapColumn,
   type SplitFlapDeck,
@@ -35,7 +36,7 @@ export {
   type SplitFlapRow,
   type SplitFlapSequence,
   type SplitFlapSource,
-  type SplitFlapTone,
+  type SplitFlapVariant,
   type SplitFlapValue,
 } from './split-flap.source'
 export {

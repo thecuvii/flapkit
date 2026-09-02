@@ -227,11 +227,11 @@ export function PerformancePage() {
                 </Flapkit.Header>
                 {rows.map((row, rowIndex) => (
                   <Flapkit.Row key={`row-${rowIndex}`}>
-                    <Flapkit.Field label="LOCAL">
+                    <Flapkit.Group label="LOCAL">
                       {row.map((cell, columnIndex) => (
                         <Flapkit.Cell key={columnIndex}>{cell}</Flapkit.Cell>
                       ))}
-                    </Flapkit.Field>
+                    </Flapkit.Group>
                   </Flapkit.Row>
                 ))}
               </Flapkit.Board>

@@ -20,7 +20,7 @@ export type SplitFlapMaterial = {
   leafThickness: number
   leafVariation: boolean
   leafWearVariation: number
-  ochreOrangeGlyphColor: string
+  orangeGlyphColor: string
   patinaStrength: number
   seamOpacity: number
   seamShadow: number
@@ -31,9 +31,9 @@ export type SplitFlapMaterial = {
   specularStrength: number
   stackedSideShadow: number
   stackedTopShadow: number
-  signalYellowGlyphColor: string
+  yellowGlyphColor: string
   topFaceColor: string
-  warmWhiteGlyphColor: string
+  whiteGlyphColor: string
 }
 
 export const defaultSplitFlapMaterial: SplitFlapMaterial = {
@@ -56,7 +56,7 @@ export const defaultSplitFlapMaterial: SplitFlapMaterial = {
   leafThickness: 0.24,
   leafVariation: true,
   leafWearVariation: 0.65,
-  ochreOrangeGlyphColor: '#cf9138',
+  orangeGlyphColor: '#cf9138',
   patinaStrength: 0.8,
   seamOpacity: 0.78,
   seamShadow: 1,
@@ -67,9 +67,9 @@ export const defaultSplitFlapMaterial: SplitFlapMaterial = {
   specularStrength: 0.82,
   stackedSideShadow: 2,
   stackedTopShadow: 2,
-  signalYellowGlyphColor: '#e4c22f',
+  yellowGlyphColor: '#e4c22f',
   topFaceColor: '#282921',
-  warmWhiteGlyphColor: '#e8e5d7',
+  whiteGlyphColor: '#e8e5d7',
 }
 
 export type SplitFlapStyle = Omit<
@@ -84,11 +84,11 @@ export type SplitFlapStyle = Omit<
   '--split-flap-face-bottom'?: string
   '--split-flap-face-top'?: string
   '--split-flap-glyph-opacity'?: number
-  '--split-flap-glyph-ochre'?: string
+  '--split-flap-glyph-orange'?: string
   '--split-flap-glyph-size'?: string
-  '--split-flap-glyph-signal'?: string
+  '--split-flap-glyph-yellow'?: string
   '--split-flap-glyph-tracking'?: string
-  '--split-flap-glyph-warm'?: string
+  '--split-flap-glyph-white'?: string
   '--split-flap-glyph-width'?: number
   '--split-flap-glyph-y'?: string
   '--split-flap-highlight-face'?: string
@@ -122,11 +122,11 @@ export function splitFlapMaterialStyle(material: SplitFlapMaterial): SplitFlapSt
     '--split-flap-face-bottom': material.bottomFaceColor,
     '--split-flap-face-top': material.topFaceColor,
     '--split-flap-glyph-opacity': material.glyphOpacity,
-    '--split-flap-glyph-ochre': material.ochreOrangeGlyphColor,
+    '--split-flap-glyph-orange': material.orangeGlyphColor,
     '--split-flap-glyph-size': `${material.glyphSize}cqw`,
-    '--split-flap-glyph-signal': material.signalYellowGlyphColor,
+    '--split-flap-glyph-yellow': material.yellowGlyphColor,
     '--split-flap-glyph-tracking': `${material.glyphTracking}em`,
-    '--split-flap-glyph-warm': material.warmWhiteGlyphColor,
+    '--split-flap-glyph-white': material.whiteGlyphColor,
     '--split-flap-glyph-width': material.glyphWidth,
     '--split-flap-glyph-y': `${material.glyphY}cqw`,
     '--split-flap-highlight-face': material.highlightFaceColor,

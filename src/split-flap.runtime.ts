@@ -2,7 +2,7 @@ import {
   splitFlapGraphemes,
   type ResolvedSplitFlapCell,
   type SplitFlapPosition,
-  type SplitFlapTone,
+  type SplitFlapVariant,
 } from './split-flap.source'
 import type {
   SplitFlapMechanicalEvent,
@@ -204,14 +204,16 @@ function setGlyph(element: HTMLSpanElement, character: string) {
   if (element.textContent !== glyph) element.textContent = glyph
 }
 
-export function splitFlapToneVariable(tone: SplitFlapTone, lower: boolean) {
-  const toneName = tone === 'ochreOrange' ? 'ochre' : tone === 'signalYellow' ? 'signal' : 'warm'
-  return `var(--split-flap-glyph-${toneName}-${lower ? 'bottom' : 'top'})`
+export function splitFlapVariantVariable(variant: SplitFlapVariant, lower: boolean) {
+  return `var(--split-flap-glyph-${variant}-${lower ? 'bottom' : 'top'})`
 }
 
 function setGlyphPosition(element: HTMLSpanElement, position: SplitFlapPosition, lower: boolean) {
   setGlyph(element, position.character)
-  element.style.setProperty(activeGlyphColorProperty, splitFlapToneVariable(position.tone, lower))
+  element.style.setProperty(
+    activeGlyphColorProperty,
+    splitFlapVariantVariable(position.variant, lower),
+  )
 }
 
 export class SplitFlapMotionController implements SplitFlapMechanicalEventSource {
@@ -683,7 +685,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     view.root.dataset.displayedCharacter =
       position.character.trim() === '' ? 'blank' : position.character
     view.root.dataset.splitFlapPhase = phase
-    view.root.dataset.tone = position.tone
+    view.root.dataset.variant = position.variant
   }
 
   private animatePitchView(runtime: SplitFlapRuntime, view: SplitFlapView, now: number) {
@@ -715,7 +717,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       currentPosition.character.trim() === '' ? 'blank' : currentPosition.character
     view.root.dataset.splitFlapPhase =
       delay > 0 ? 'waiting' : runtime.finalPitch ? 'settle' : 'riffle'
-    view.root.dataset.tone = currentPosition.tone
+    view.root.dataset.variant = currentPosition.variant
 
     if (view.compact) {
       this.setLowerMotionShadow(view, '0.52', 'translate3d(0, 0, 0) scaleY(0.78)')

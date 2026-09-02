@@ -3,12 +3,12 @@
 // Board and grid renderers for the Flapkit component model.
 
 import { memo, useId, type CSSProperties, type ReactNode } from 'react'
-import { MotionCanvas } from './flapkit.canvas'
-import { BoardRow } from './flapkit.cassette'
-import { classProps, styles } from './flapkit.classes'
-import { useSplitFlap } from './flapkit.context'
-import { cssValue } from './flapkit.css-values'
-import type { ResolvedSplitFlapSource } from './flapkit.source'
+import { useSplitFlap } from '../motion/provider'
+import type { ResolvedSplitFlapSource } from '../layout'
+import { MotionCanvas } from './canvas'
+import { BoardRow } from './cassette'
+import { classProps, styles } from './classes'
+import { cssValue } from './css-values'
 
 function splitFlapColumnTracks(layout: ResolvedSplitFlapSource) {
   return layout.columns

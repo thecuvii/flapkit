@@ -27,8 +27,8 @@
       "import": "./dist/sound/index.js"
     },
     "./flapkit.css": "./dist/styles/flapkit.css",
-    "./looks/airport.css": "./dist/styles/looks/airport.css",
-    "./looks/industrial.css": "./dist/styles/looks/industrial.css"
+    "./airport.css": "./dist/styles/airport.css",
+    "./industrial.css": "./dist/styles/industrial.css"
   },
   "scripts": {
     "build": "vp pack",

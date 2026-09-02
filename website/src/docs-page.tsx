@@ -210,7 +210,7 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
           <CodeBlock html={highlightedCode.installation} />
           <p>
             Import <code>@thecuvii/flapkit/flapkit.css</code> and one look stylesheet, such as{' '}
-            <code>@thecuvii/flapkit/looks/airport.css</code>, from your application.
+            <code>@thecuvii/flapkit/airport.css</code>, from your application.
           </p>
         </section>
 
@@ -321,8 +321,8 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
             <code>@thecuvii/flapkit/cascade</code>
             <code>@thecuvii/flapkit/sound</code>
             <code>@thecuvii/flapkit/flapkit.css</code>
-            <code>@thecuvii/flapkit/looks/airport.css</code>
-            <code>@thecuvii/flapkit/looks/industrial.css</code>
+            <code>@thecuvii/flapkit/airport.css</code>
+            <code>@thecuvii/flapkit/industrial.css</code>
           </div>
           <a className="readme-link" href="https://github.com/thecuvii/flapkit#readme">
             Full API reference on GitHub <span aria-hidden="true">↗</span>

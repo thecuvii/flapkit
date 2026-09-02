@@ -7,7 +7,7 @@ export const docsCode = {
     code: `import * as Flapkit from '@thecuvii/flapkit'
 import { riffle } from '@thecuvii/flapkit/riffle'
 import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/looks/airport.css'
+import '@thecuvii/flapkit/airport.css'
 
 <Flapkit.Root motion={riffle()}>
   <Flapkit.Board aria-label="Package status" className="flapkit-airport">
@@ -24,7 +24,7 @@ import '@thecuvii/flapkit/looks/airport.css'
     code: `import * as Flapkit from '@thecuvii/flapkit'
 import { cascade } from '@thecuvii/flapkit/cascade'
 import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/looks/airport.css'
+import '@thecuvii/flapkit/airport.css'
 
 <Flapkit.Root motion={cascade()}>
   <Flapkit.Board aria-label="Package status" className="flapkit-airport">
@@ -41,7 +41,7 @@ import '@thecuvii/flapkit/looks/airport.css'
     code: `import * as Flapkit from '@thecuvii/flapkit'
 import { riffle } from '@thecuvii/flapkit/riffle'
 import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/looks/airport.css'
+import '@thecuvii/flapkit/airport.css'
 
 const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 
@@ -60,7 +60,7 @@ const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭�
     code: `import * as Flapkit from '@thecuvii/flapkit'
 import { riffle } from '@thecuvii/flapkit/riffle'
 import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/looks/airport.css'
+import '@thecuvii/flapkit/airport.css'
 
 export function Departures() {
   return (

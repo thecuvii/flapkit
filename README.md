@@ -28,7 +28,7 @@ Root ── motion adapter
 import * as Flapkit from '@thecuvii/flapkit'
 import { riffle } from '@thecuvii/flapkit/riffle'
 import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/looks/airport.css'
+import '@thecuvii/flapkit/airport.css'
 
 const statusDeck = Flapkit.createDeck(' BOARDING', ['white', 'yellow'])
 
@@ -121,7 +121,7 @@ Flapkit's structural classes.
 
 ```tsx
 import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/looks/industrial.css'
+import '@thecuvii/flapkit/industrial.css'
 
 export function Operations() {
   return (
@@ -187,8 +187,8 @@ for custom integrations.
 - `@thecuvii/flapkit/cascade`
 - `@thecuvii/flapkit/sound`
 - `@thecuvii/flapkit/flapkit.css`
-- `@thecuvii/flapkit/looks/airport.css`
-- `@thecuvii/flapkit/looks/industrial.css`
+- `@thecuvii/flapkit/airport.css`
+- `@thecuvii/flapkit/industrial.css`
 
 ## Development
 

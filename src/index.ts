@@ -17,9 +17,5 @@ export {
   type RowProps,
   type Variant,
   type WideCellProps,
-} from './flapkit'
-export {
-  createSplitFlapDeck as createDeck,
-  type SplitFlapDeck as Deck,
-  type SplitFlapSequence as Sequence,
-} from './flapkit.source'
+} from './components'
+export { createDeck, type Deck, type Sequence } from './deck'

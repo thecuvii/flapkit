@@ -1,14 +1,7 @@
-import {
-  splitFlapGraphemes,
-  type ResolvedSplitFlapCell,
-  type SplitFlapPosition,
-  type SplitFlapVariant,
-} from './flapkit.source'
+import { splitFlapGraphemes, type Position, type Variant } from '../deck'
+import { type ResolvedSplitFlapCell } from '../layout'
 // Motion controller shared by the Riffle and Cascade adapters.
-import type {
-  SplitFlapMechanicalEvent,
-  SplitFlapMechanicalEventSource,
-} from './flapkit.sound-engine'
+import type { SplitFlapMechanicalEvent, SplitFlapMechanicalEventSource } from '../sound/engine'
 
 export type SplitFlapMotionVariant = 'riffle' | 'cascade'
 
@@ -165,7 +158,7 @@ export type SplitFlapRuntime = {
   index: number
   pan: number
   pitchStart: number
-  positions: readonly SplitFlapPosition[]
+  positions: readonly Position[]
   rowIndex: number
   running: boolean
   targetIndex: number
@@ -205,11 +198,11 @@ function setGlyph(element: HTMLSpanElement, character: string) {
   if (element.textContent !== glyph) element.textContent = glyph
 }
 
-export function splitFlapVariantVariable(variant: SplitFlapVariant, lower: boolean) {
+export function splitFlapVariantVariable(variant: Variant, lower: boolean) {
   return `var(--flapkit-glyph-${variant}-${lower ? 'bottom' : 'top'})`
 }
 
-function setGlyphPosition(element: HTMLSpanElement, position: SplitFlapPosition, lower: boolean) {
+function setGlyphPosition(element: HTMLSpanElement, position: Position, lower: boolean) {
   setGlyph(element, position.character)
   element.style.setProperty(
     activeGlyphColorProperty,

@@ -1,55 +1,30 @@
 'use client'
 
 import { Children, Fragment, isValidElement, type ReactElement, type ReactNode } from 'react'
-import type { BoardViewProps, GridViewProps } from './flapkit.board'
 import {
-  splitFlapGraphemes,
-  type SplitFlapCassetteSpan,
-  type SplitFlapDeck,
-  type SplitFlapSequence,
-  type SplitFlapSource,
-  type SplitFlapVariant,
-} from './flapkit.source'
-
-export type Variant = SplitFlapVariant
-
-export type BoardProps = Omit<BoardViewProps, 'children'> & { children: ReactNode }
-export type GridProps = GridViewProps & { children: ReactNode }
-
-export type HeaderProps = { children: ReactNode }
-export type RowProps = {
-  children: ReactNode
-  className?: string
-  deck?: SplitFlapDeck
-  highlighted?: boolean
-  id?: string
-  label?: string
-  sequence?: SplitFlapSequence
-  variant?: Variant
-}
-export type GroupProps = {
-  children: ReactNode
-  className?: string
-  deck?: SplitFlapDeck
-  id?: string
-  label?: string
-  sequence?: SplitFlapSequence
-  variant?: Variant
-}
-
-export type CellProps = {
-  children: number | string
-  className?: string
-  deck?: SplitFlapDeck
-  sequence?: SplitFlapSequence
-}
-
-export type WideCellProps = CellProps
+  Board,
+  Cell,
+  Grid,
+  Group,
+  Header,
+  Row,
+  WideCell,
+  type BoardProps,
+  type CellProps,
+  type GridProps,
+  type GroupProps,
+  type HeaderProps,
+  type RowProps,
+  type Variant,
+} from './components'
+import { splitFlapGraphemes, type Deck, type Sequence } from './deck'
+import { type SplitFlapCassetteSpan, type SplitFlapSource } from './layout'
+import type { BoardViewProps } from './render/board'
 
 type CellDescriptor = {
   className?: string
-  deck?: SplitFlapDeck
-  sequence?: SplitFlapSequence
+  deck?: Deck
+  sequence?: Sequence
   span: SplitFlapCassetteSpan
   text: string
 }
@@ -78,27 +53,6 @@ export type CompiledBoardPresentation = {
     groups: Array<{ className?: string; cells: Array<{ className?: string }> }>
   }>
 }
-
-/** Structural marker consumed by Root before rendering. */
-export const Board: (props: BoardProps) => null = () => null
-
-/** Frameless structural marker consumed by Root before rendering. */
-export const Grid: (props: GridProps) => null = () => null
-
-/** Structural marker consumed by Root before rendering. */
-export const Header: (props: HeaderProps) => null = () => null
-
-/** Structural marker consumed by Root before rendering. */
-export const Row: (props: RowProps) => null = () => null
-
-/** A horizontal region of adjacent cassettes sharing one label and variant. */
-export const Group: (props: GroupProps) => null = () => null
-
-/** One independently driven, single-grapheme cassette. */
-export const Cell: (props: CellProps) => null = () => null
-
-/** One independently driven cassette whose leaves carry two graphemes. */
-export const WideCell: (props: WideCellProps) => null = () => null
 
 function componentName(element: ReactElement) {
   if (typeof element.type === 'string') return element.type
@@ -164,7 +118,7 @@ function cellDescriptor(
   }
 }
 
-function deckSignature(deck: SplitFlapDeck | undefined) {
+function deckSignature(deck: Deck | undefined) {
   return deck?.map(({ character, variant }) => `${variant}:${character}`).join('\u001f') ?? ''
 }
 

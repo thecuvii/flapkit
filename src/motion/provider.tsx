@@ -3,16 +3,16 @@
 // Runtime providers used by Flapkit motion adapters.
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { CompiledBoardPresentation } from './flapkit.structure'
-import { splitFlapSpecularStrength } from './flapkit.constants'
-import { SplitFlapMotionController, type MotionTuning } from './flapkit.runtime'
+import type { CompiledBoardPresentation } from '../compiler'
 import {
   resolveSplitFlapSource,
   type ResolvedSplitFlapSource,
   type SplitFlapSource,
-} from './flapkit.source'
+} from '../layout'
+import { splitFlapSpecularStrength } from './constants'
+import { SplitFlapMotionController, type MotionTuning } from './runtime'
 
-export type SplitFlapCascadeMotion = {
+export type CascadeMotion = {
   cadenceVariationPct: number
   finalReboundDeg: number
   finalSettleMs: number
@@ -22,7 +22,7 @@ export type SplitFlapCascadeMotion = {
   withinRowJitterMs: number
 }
 
-export type SplitFlapRiffleMotion = {
+export type RiffleMotion = {
   cadenceVariationPct: number
   finalReboundDeg: number
   finalSettleMs: number
@@ -30,7 +30,7 @@ export type SplitFlapRiffleMotion = {
   startSpreadMs: number
 }
 
-export const defaultSplitFlapCascadeMotion: SplitFlapCascadeMotion = {
+export const defaultCascadeMotion: CascadeMotion = {
   cadenceVariationPct: 6,
   finalReboundDeg: 2,
   finalSettleMs: 260,
@@ -40,7 +40,7 @@ export const defaultSplitFlapCascadeMotion: SplitFlapCascadeMotion = {
   withinRowJitterMs: 16,
 }
 
-export const defaultSplitFlapRiffleMotion: SplitFlapRiffleMotion = {
+export const defaultRiffleMotion: RiffleMotion = {
   cadenceVariationPct: 4,
   finalReboundDeg: 2,
   finalSettleMs: 260,
@@ -169,12 +169,8 @@ function CascadeEffect({
   presentation,
   motion: motionOverrides,
   source,
-}: SplitFlapEffectProps &
-  SplitFlapPresentationProps & { motion?: Partial<SplitFlapCascadeMotion> }) {
-  const motion = useMemo(
-    () => ({ ...defaultSplitFlapCascadeMotion, ...motionOverrides }),
-    [motionOverrides],
-  )
+}: SplitFlapEffectProps & SplitFlapPresentationProps & { motion?: Partial<CascadeMotion> }) {
+  const motion = useMemo(() => ({ ...defaultCascadeMotion, ...motionOverrides }), [motionOverrides])
   const tuning = useMemo<MotionTuning>(
     () => ({
       cadenceVariationPct: motion.cadenceVariationPct,
@@ -203,17 +199,13 @@ function RiffleEffect({
   presentation,
   motion: motionOverrides,
   source,
-}: SplitFlapEffectProps &
-  SplitFlapPresentationProps & { motion?: Partial<SplitFlapRiffleMotion> }) {
-  const motion = useMemo(
-    () => ({ ...defaultSplitFlapRiffleMotion, ...motionOverrides }),
-    [motionOverrides],
-  )
+}: SplitFlapEffectProps & SplitFlapPresentationProps & { motion?: Partial<RiffleMotion> }) {
+  const motion = useMemo(() => ({ ...defaultRiffleMotion, ...motionOverrides }), [motionOverrides])
   const tuning = useMemo<MotionTuning>(
     () => ({
       cadenceVariationPct: motion.cadenceVariationPct,
       finalSettleMs: motion.finalSettleMs,
-      maximumConcurrentCassettes: defaultSplitFlapCascadeMotion.maximumConcurrentCassettes,
+      maximumConcurrentCassettes: defaultCascadeMotion.maximumConcurrentCassettes,
       pitchMs: motion.riffleMs,
       reboundDeg: motion.finalReboundDeg,
       rowDelayMs: 0,
@@ -233,15 +225,13 @@ function RiffleEffect({
 }
 
 export function CascadeProvider(
-  props: SplitFlapEffectProps &
-    SplitFlapPresentationProps & { motion?: Partial<SplitFlapCascadeMotion> },
+  props: SplitFlapEffectProps & SplitFlapPresentationProps & { motion?: Partial<CascadeMotion> },
 ) {
   return <CascadeEffect {...props} />
 }
 
 export function RiffleProvider(
-  props: SplitFlapEffectProps &
-    SplitFlapPresentationProps & { motion?: Partial<SplitFlapRiffleMotion> },
+  props: SplitFlapEffectProps & SplitFlapPresentationProps & { motion?: Partial<RiffleMotion> },
 ) {
   return <RiffleEffect {...props} />
 }

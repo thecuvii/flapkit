@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/looks/airport.css'
-import '@thecuvii/flapkit/looks/industrial.css'
+import '@thecuvii/flapkit/airport.css'
+import '@thecuvii/flapkit/industrial.css'
 import '../../styles.css'
 
 export const Route = createRootRoute({

@@ -1,53 +1,27 @@
-// Declarative source model compiled from Flapkit compound components.
-export const splitFlapVariants = ['white', 'yellow', 'orange'] as const
+// Internal layout model compiled from Flapkit compound components.
+import {
+  createDeck,
+  normalizeDeckCharacter,
+  splitFlapCharacters,
+  splitFlapGraphemes,
+  splitFlapNumericCharacters,
+  splitFlapPunctuationCharacters,
+  type Deck,
+  type Sequence,
+  type Variant,
+} from './deck'
 
-export type SplitFlapVariant = (typeof splitFlapVariants)[number]
-
-export type SplitFlapSequence = 'alphanumeric' | 'numeric' | 'punctuation'
 export type SplitFlapCassetteSpan = 1 | 2
 
-export type SplitFlapPosition = {
-  character: string
-  variant: SplitFlapVariant
-}
-
-export type SplitFlapDeck = readonly SplitFlapPosition[]
-
-export const splitFlapCharacters = Array.from(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-./:')
-export const splitFlapNumericCharacters = Array.from(' 0123456789')
-export const splitFlapPunctuationCharacters = Array.from(' :./-')
-
-const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
-
-/** Splits text into displayable characters without breaking emoji or combining marks. */
-export function splitFlapGraphemes(value: string) {
-  return Array.from(graphemeSegmenter.segment(value), ({ segment }) => segment)
-}
-
-export function createSplitFlapDeck(
-  characters: string | readonly string[],
-  variants: readonly SplitFlapVariant[] = ['white'],
-): SplitFlapDeck {
-  const normalizedCharacters = (
-    typeof characters === 'string' ? splitFlapGraphemes(characters) : characters
-  ).map(normalizeSplitFlapText)
-
-  return variants.flatMap((variant, variantIndex) =>
-    normalizedCharacters
-      .filter((character) => variantIndex === 0 || character.trim() !== '')
-      .map((character) => ({ character, variant })),
-  )
-}
-
 export type SplitFlapColumn = {
-  cassetteFlapDecks?: readonly (SplitFlapDeck | undefined)[]
+  cassetteFlapDecks?: readonly (Deck | undefined)[]
   /** Number of standard character-cell widths occupied by each cassette. */
   cassetteSpan?: SplitFlapCassetteSpan
   /** Number of independently driven cassettes in this column. */
   cells: number
-  cassetteSequences?: readonly SplitFlapSequence[]
-  flapDeck?: SplitFlapDeck
-  flapSequence?: SplitFlapSequence
+  cassetteSequences?: readonly Sequence[]
+  flapDeck?: Deck
+  flapSequence?: Sequence
   id: string
   label: string
 }
@@ -56,7 +30,7 @@ export type SplitFlapValue =
   | string
   | {
       text: string
-      variant?: SplitFlapVariant
+      variant?: Variant
     }
 
 export type SplitFlapRow = {
@@ -81,8 +55,8 @@ export type ResolvedSplitFlapCell = {
   columnId: string
   columnIndex: number
   columnOffset: number
-  flapDeck: SplitFlapDeck
-  flapSequence: SplitFlapSequence
+  flapDeck: Deck
+  flapSequence: Sequence
   homeIndex: number
   id: string
   index: number
@@ -91,7 +65,7 @@ export type ResolvedSplitFlapCell = {
   span: SplitFlapCassetteSpan
   targetIndex: number
   trackIndex: number
-  variant: SplitFlapVariant
+  variant: Variant
 }
 
 export type ResolvedSplitFlapSource = {
@@ -104,18 +78,10 @@ export type ResolvedSplitFlapSource = {
   targetIndices: readonly number[]
 }
 
-const builtInDecks: Readonly<Record<SplitFlapSequence, SplitFlapDeck>> = {
-  alphanumeric: createSplitFlapDeck(splitFlapCharacters),
-  numeric: createSplitFlapDeck(splitFlapNumericCharacters),
-  punctuation: createSplitFlapDeck(splitFlapPunctuationCharacters),
-}
-
-function normalizeSplitFlapText(text: string) {
-  const graphemes = splitFlapGraphemes(text)
-  if (graphemes.length === 0) return ' '
-  return graphemes
-    .map((grapheme) => (/^[a-z]$/.test(grapheme) ? grapheme.toUpperCase() : grapheme))
-    .join('')
+const builtInDecks: Readonly<Record<Sequence, Deck>> = {
+  alphanumeric: createDeck(splitFlapCharacters),
+  numeric: createDeck(splitFlapNumericCharacters),
+  punctuation: createDeck(splitFlapPunctuationCharacters),
 }
 
 function assertUniqueIds(items: readonly { id: string }[], kind: 'column' | 'row') {
@@ -129,8 +95,8 @@ function assertUniqueIds(items: readonly { id: string }[], kind: 'column' | 'row
 }
 
 function resolveSplitFlapDeck(
-  deck: SplitFlapDeck | undefined,
-  sequence: SplitFlapSequence,
+  deck: Deck | undefined,
+  sequence: Sequence,
   cassetteSpan: SplitFlapCassetteSpan,
   columnId: string,
 ) {
@@ -144,7 +110,7 @@ function resolveSplitFlapDeck(
   }
 
   const positions = deck.map((position) => ({
-    character: normalizeSplitFlapText(position.character),
+    character: normalizeDeckCharacter(position.character),
     variant: position.variant,
   }))
   const invalidPosition = positions.find(
@@ -158,13 +124,8 @@ function resolveSplitFlapDeck(
   return positions
 }
 
-function targetPositionIndex(
-  deck: SplitFlapDeck,
-  character: string,
-  variant: SplitFlapVariant,
-  cellId: string,
-) {
-  const normalizedCharacter = normalizeSplitFlapText(character)
+function targetPositionIndex(deck: Deck, character: string, variant: Variant, cellId: string) {
+  const normalizedCharacter = normalizeDeckCharacter(character)
   const exactIndex = deck.findIndex(
     (position) => position.character === normalizedCharacter && position.variant === variant,
   )
@@ -184,7 +145,7 @@ function targetPositionIndex(
   )
 }
 
-function splitFlapDeckKey(deck: SplitFlapDeck | undefined) {
+function splitFlapDeckKey(deck: Deck | undefined) {
   return deck?.map((position) => `${position.character}:${position.variant}`).join(',') ?? ''
 }
 

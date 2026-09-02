@@ -1,4 +1,4 @@
-// Framework-independent sound engine for Flapkit motion events.
+// Framework-independent engine for Flapkit motion sounds.
 export interface SplitFlapMechanicalEvent {
   /** Scheduled impact time on the same monotonic clock used by `now`. */
   at: number

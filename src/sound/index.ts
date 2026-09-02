@@ -1,5 +1,5 @@
 import { createElement, type ReactElement } from 'react'
-import { SplitFlapSound, type SplitFlapSoundProps } from '../flapkit.sound'
+import { SplitFlapSound, type SplitFlapSoundProps } from './adapter'
 
 export {
   SplitFlapSoundEngine as SoundEngine,
@@ -9,7 +9,7 @@ export {
   type SplitFlapSoundBank as SoundBank,
   type SplitFlapSoundEngineOptions as SoundEngineOptions,
   type SplitFlapSoundTuning as SoundTuning,
-} from '../flapkit.sound-engine'
+} from './engine'
 
 export type SoundOptions = SplitFlapSoundProps
 

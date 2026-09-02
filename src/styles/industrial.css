@@ -1,4 +1,4 @@
-@layer flapkit.looks {
+@layer flapkit {
   :where(.flapkit-industrial) {
     color: #f1f1ed;
     font-family: var(--flapkit-glyph-font-family);

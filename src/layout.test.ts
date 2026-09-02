@@ -1,15 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  createSplitFlapDeck,
-  resolveSplitFlapSource,
+  createDeck,
   splitFlapCharacters,
   splitFlapGraphemes,
   splitFlapNumericCharacters,
   splitFlapPunctuationCharacters,
-  type SplitFlapColumn,
-  type SplitFlapSource,
-} from './flapkit.source'
+} from './deck'
+import { resolveSplitFlapSource, type SplitFlapColumn, type SplitFlapSource } from './layout'
 
 function sourceFor(
   column: SplitFlapColumn,
@@ -36,7 +34,7 @@ describe('Flapkit source resolution', () => {
   })
 
   it('normalizes custom decks and resolves custom variants', () => {
-    const deck = createSplitFlapDeck(' ab', ['white', 'yellow'])
+    const deck = createDeck(' ab', ['white', 'yellow'])
     const resolved = resolveSplitFlapSource(
       sourceFor(
         { id: 'value', label: 'Value', cells: 1, flapDeck: deck },
@@ -59,7 +57,7 @@ describe('Flapkit source resolution', () => {
   })
 
   it('uses the blank position for missing and unsupported target characters', () => {
-    const deck = createSplitFlapDeck(' AB')
+    const deck = createDeck(' AB')
     const missing = resolveSplitFlapSource(
       sourceFor({ id: 'value', label: 'Value', cells: 1, flapDeck: deck }, ''),
     )
@@ -72,7 +70,7 @@ describe('Flapkit source resolution', () => {
   })
 
   it('supports custom Unicode grapheme decks and values', () => {
-    const deck = createSplitFlapDeck([' ', '東', '京', 'が', '🛫'])
+    const deck = createDeck([' ', '東', '京', 'が', '🛫'])
     const resolved = resolveSplitFlapSource(
       sourceFor({ id: 'value', label: 'Value', cells: 4, flapDeck: deck }, '東京が🛫'),
     )
@@ -83,7 +81,7 @@ describe('Flapkit source resolution', () => {
   })
 
   it('preserves Unicode graphemes whose uppercase form expands', () => {
-    const deck = createSplitFlapDeck([' ', 'ß'])
+    const deck = createDeck([' ', 'ß'])
     const resolved = resolveSplitFlapSource(
       sourceFor({ id: 'value', label: 'Value', cells: 1, flapDeck: deck }, 'ß'),
     )
@@ -98,16 +96,13 @@ describe('Flapkit source resolution', () => {
   it('throws when a custom deck cannot fall back to blank', () => {
     expect(() =>
       resolveSplitFlapSource(
-        sourceFor(
-          { id: 'value', label: 'Value', cells: 1, flapDeck: createSplitFlapDeck('AB') },
-          'Z',
-        ),
+        sourceFor({ id: 'value', label: 'Value', cells: 1, flapDeck: createDeck('AB') }, 'Z'),
       ),
     ).toThrow('Split-flap deck for "row:value:0" has no blank fallback position')
   })
 
   it('selects decks and sequences per cassette before column defaults', () => {
-    const secondDeck = createSplitFlapDeck(' B')
+    const secondDeck = createDeck(' B')
     const resolved = resolveSplitFlapSource(
       sourceFor(
         {
@@ -140,7 +135,7 @@ describe('Flapkit source resolution', () => {
           label: 'Value',
           cells: 1,
           cassetteSpan: 2,
-          flapDeck: createSplitFlapDeck(['  ', 'AB']),
+          flapDeck: createDeck(['  ', 'AB']),
         },
         'AB',
       ),
@@ -167,7 +162,7 @@ describe('Flapkit source resolution', () => {
           label: 'Value',
           cells: 2,
           cassetteSpan: 2,
-          flapDeck: createSplitFlapDeck(['  ', 'AB', 'CD']),
+          flapDeck: createDeck(['  ', 'AB', 'CD']),
         },
         'ABCD',
       ),
@@ -195,7 +190,7 @@ describe('Flapkit source resolution', () => {
             label: 'Value',
             cells: 1,
             cassetteSpan: 2,
-            flapDeck: createSplitFlapDeck([' ', 'AB']),
+            flapDeck: createDeck([' ', 'AB']),
           },
           'AB',
         ),

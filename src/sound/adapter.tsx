@@ -1,11 +1,7 @@
 // React bridge between Root and the framework-independent sound engine.
 import { useEffect, useRef } from 'react'
-import { useSplitFlapController } from './flapkit.context'
-import {
-  SplitFlapSoundEngine,
-  type SplitFlapSoundBank,
-  type SplitFlapSoundTuning,
-} from './flapkit.sound-engine'
+import { useSplitFlapController } from '../motion/provider'
+import { SplitFlapSoundEngine, type SplitFlapSoundBank, type SplitFlapSoundTuning } from './engine'
 
 export type SplitFlapSoundProps = Partial<SplitFlapSoundTuning> & {
   bank: SplitFlapSoundBank

@@ -3,7 +3,7 @@
 // Canvas renderer used by the Riffle adapter.
 
 import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { useSplitFlap } from './flapkit.context'
+import { useSplitFlap } from '../motion/provider'
 import {
   glyphOffsetValues,
   lowerGlyphXOffset,
@@ -12,7 +12,7 @@ import {
   splitFlapLeafBrightnessVariation,
   splitFlapLeafThickness,
   splitFlapSpareLeafCount,
-} from './flapkit.constants'
+} from '../motion/constants'
 import {
   activeGlyphColorProperty,
   signedLeafNoise,
@@ -20,9 +20,9 @@ import {
   type SplitFlapCanvasRenderer,
   type MotionTuning,
   type SplitFlapRuntime,
-} from './flapkit.runtime'
-import { classProps, styles } from './flapkit.classes'
-import { splitFlapGraphemes, splitFlapVariants, type SplitFlapVariant } from './flapkit.source'
+} from '../motion/runtime'
+import { splitFlapGraphemes, splitFlapVariants, type Variant } from '../deck'
+import { classProps, styles } from './classes'
 
 type CanvasCassetteGeometry = {
   baseline: number
@@ -60,7 +60,7 @@ type CanvasCellVisual = {
   bottomBrightness: number
   bottomFaceColor: string
   characters: readonly string[]
-  glyphColors: Record<SplitFlapVariant, { bottom: string; top: string }>
+  glyphColors: Record<Variant, { bottom: string; top: string }>
   glyphOffset: number
   span: number
   topBrightness: number

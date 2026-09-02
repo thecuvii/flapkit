@@ -12,20 +12,17 @@ import {
   splitFlapLeafBrightnessVariation,
   splitFlapReferenceTracks,
   splitFlapSpareLeafCount,
-} from './flapkit.constants'
-import { cssValue as splitFlapLook } from './flapkit.css-values'
+} from '../motion/constants'
 import {
   activeGlyphColorProperty,
   signedLeafNoise,
   stackShiftProperty,
   type SplitFlapMotionController,
-} from './flapkit.runtime'
-import type {
-  ResolvedSplitFlapCell,
-  ResolvedSplitFlapSource,
-  SplitFlapVariant,
-} from './flapkit.source'
-import { classProps, glyphOffsets, styles } from './flapkit.classes'
+} from '../motion/runtime'
+import type { Variant } from '../deck'
+import type { ResolvedSplitFlapCell, ResolvedSplitFlapSource } from '../layout'
+import { classProps, glyphOffsets, styles } from './classes'
+import { cssValue as splitFlapLook } from './css-values'
 
 function splitFlapColumnTracks(layout: ResolvedSplitFlapSource) {
   return layout.columns
@@ -195,7 +192,7 @@ const FlapCell = memo(function FlapCell({
   const highlightGlyphPercent = highlighted ? 70 : 0
   const topFaceColor = `color-mix(in srgb, ${splitFlapLook.topFaceColor} ${100 - highlightFacePercent}%, ${splitFlapLook.highlightFace} ${highlightFacePercent}%)`
   const bottomFaceColor = `color-mix(in srgb, ${splitFlapLook.bottomFaceColor} ${100 - highlightFacePercent}%, ${splitFlapLook.highlightFace} ${highlightFacePercent}%)`
-  const glyphColorsForVariant = (variant: SplitFlapVariant) => {
+  const glyphColorsForVariant = (variant: Variant) => {
     const baseColor =
       variant === 'orange'
         ? splitFlapLook.glyphOrange
@@ -208,7 +205,7 @@ const FlapCell = memo(function FlapCell({
       top,
     }
   }
-  const variantGlyphColors: Record<SplitFlapVariant, { bottom: string; top: string }> = {
+  const variantGlyphColors: Record<Variant, { bottom: string; top: string }> = {
     orange: glyphColorsForVariant('orange'),
     white: glyphColorsForVariant('white'),
     yellow: glyphColorsForVariant('yellow'),

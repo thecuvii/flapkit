@@ -1,4 +1,4 @@
-/** Stable classes shared by Flapkit's renderers and stylesheet. */
+/** Stable class names shared by the renderers and stylesheet. */
 export const styles = {
   board: 'flapkit-board',
   boardContent: 'flapkit-board-content',

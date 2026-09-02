@@ -5,8 +5,8 @@ import {
   SplitFlapMotionController,
   type MotionTuning,
   type SplitFlapRuntime,
-} from './flapkit.runtime'
-import { resolveSplitFlapSource } from './flapkit.source'
+} from './runtime'
+import { resolveSplitFlapSource } from '../layout'
 
 const cascadeMotion: MotionTuning = {
   cadenceVariationPct: 0,

@@ -1,18 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { createSplitFlapDeck, resolveSplitFlapSource } from './flapkit.source'
-import {
-  Board,
-  Cell,
-  compileFlapkitBoard,
-  Grid,
-  Group,
-  Header,
-  Row,
-  WideCell,
-} from './flapkit.structure'
+import { createDeck } from './deck'
+import { resolveSplitFlapSource } from './layout'
+import { Board, Cell, Grid, Group, Header, Row, WideCell } from './components'
+import { compileFlapkitBoard } from './compiler'
 
-const wideDeck = createSplitFlapDeck(['  ', '14', '55'])
-const variantDeck = createSplitFlapDeck(' 45', ['white', 'yellow', 'orange'])
+const wideDeck = createDeck(['  ', '14', '55'])
+const variantDeck = createDeck(' 45', ['white', 'yellow', 'orange'])
 
 describe('Flapkit structural compiler', () => {
   it('compiles adjacent groups, variants, and wide cells into the source model', () => {

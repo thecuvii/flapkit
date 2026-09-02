@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { SplitFlapSoundEngine, type SplitFlapMechanicalEvent } from './flapkit.sound-engine'
+import { SplitFlapSoundEngine, type SplitFlapMechanicalEvent } from './engine'
 
 const fake = <T>(value: unknown) => value as T
 class Param {

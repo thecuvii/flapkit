@@ -1,4 +1,4 @@
-@layer flapkit.looks {
+@layer flapkit {
   :where(.flapkit-airport) {
     color: #e8e5d7;
     font-family: var(--flapkit-glyph-font-family);

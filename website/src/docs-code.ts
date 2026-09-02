@@ -5,11 +5,10 @@ export const docsCode = {
   },
   usageRiffle: {
     code: `import * as Flapkit from '@thecuvii/flapkit'
-import { riffle } from '@thecuvii/flapkit/riffle'
 import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 
-<Flapkit.Root motion={riffle()}>
+<Flapkit.Root motion={Flapkit.riffle()}>
   <Flapkit.Board aria-label="Package status" className="flapkit-airport">
     <Flapkit.Row label="STATUS">
       {[...'IN TRANSIT'].map((character, index) => (
@@ -22,11 +21,10 @@ import '@thecuvii/flapkit/airport.css'
   },
   usageCascade: {
     code: `import * as Flapkit from '@thecuvii/flapkit'
-import { cascade } from '@thecuvii/flapkit/cascade'
 import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 
-<Flapkit.Root motion={cascade()}>
+<Flapkit.Root motion={Flapkit.cascade()}>
   <Flapkit.Board aria-label="Package status" className="flapkit-airport">
     <Flapkit.Row label="STATUS">
       {[...'IN TRANSIT'].map((character, index) => (
@@ -39,13 +37,12 @@ import '@thecuvii/flapkit/airport.css'
   },
   usageUnicode: {
     code: `import * as Flapkit from '@thecuvii/flapkit'
-import { riffle } from '@thecuvii/flapkit/riffle'
 import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 
 const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 
-<Flapkit.Root motion={riffle()}>
+<Flapkit.Root motion={Flapkit.riffle()}>
   <Flapkit.Board aria-label="Local service" className="flapkit-airport">
     <Flapkit.Row deck={localDeck} label="LOCAL">
       {[...'東京出発'].map((character, index) => (
@@ -58,13 +55,12 @@ const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭�
   },
   composition: {
     code: `import * as Flapkit from '@thecuvii/flapkit'
-import { riffle } from '@thecuvii/flapkit/riffle'
 import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 
 export function Departures() {
   return (
-    <Flapkit.Root motion={riffle()}>
+    <Flapkit.Root motion={Flapkit.riffle()}>
       <Flapkit.Board className="flapkit-airport departures-board">
         <Flapkit.Header>Departures</Flapkit.Header>
         <Flapkit.Row label="STATUS">
@@ -78,19 +74,35 @@ export function Departures() {
     language: 'tsx',
   },
   customization: {
-    code: `<Flapkit.Row className="font-mono">
-  <Flapkit.Cell className="text-xl font-bold">A</Flapkit.Cell>
-</Flapkit.Row>
-`,
+    code: `import * as Flapkit from '@thecuvii/flapkit'
+import '@thecuvii/flapkit/flapkit.css'
+import '@thecuvii/flapkit/industrial.css'
+
+<Flapkit.Root motion={Flapkit.cascade()}>
+  <Flapkit.Board className="flapkit-industrial operations-board">
+    <Flapkit.Row className="font-mono" label="STATUS">
+      <Flapkit.Cell className="text-xl font-bold">A</Flapkit.Cell>
+    </Flapkit.Row>
+  </Flapkit.Board>
+</Flapkit.Root>`,
     language: 'tsx',
   },
   sound: {
     code: `import * as Flapkit from '@thecuvii/flapkit'
-import { riffle } from '@thecuvii/flapkit/riffle'
 import { mechanicalSound } from '@thecuvii/flapkit/sound'
+import '@thecuvii/flapkit/flapkit.css'
+import '@thecuvii/flapkit/airport.css'
 
-<Flapkit.Root motion={riffle()} sound={mechanicalSound({ bank: soundBank })}>
-  <Flapkit.Board>
+const soundBank = {
+  clicks: ['/audio/flap-1.mp3'],
+  settles: ['/audio/flap-settle.mp3'],
+}
+
+<Flapkit.Root
+  motion={Flapkit.riffle()}
+  sound={mechanicalSound({ bank: soundBank })}
+>
+  <Flapkit.Board className="flapkit-airport">
     <Flapkit.Row><Flapkit.Cell>A</Flapkit.Cell></Flapkit.Row>
   </Flapkit.Board>
 </Flapkit.Root>`,

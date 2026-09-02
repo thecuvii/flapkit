@@ -14,14 +14,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./riffle": {
-      "types": "./dist/riffle/index.d.ts",
-      "import": "./dist/riffle/index.js"
-    },
-    "./cascade": {
-      "types": "./dist/cascade/index.d.ts",
-      "import": "./dist/cascade/index.js"
-    },
     "./sound": {
       "types": "./dist/sound/index.d.ts",
       "import": "./dist/sound/index.js"

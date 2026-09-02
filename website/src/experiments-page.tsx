@@ -1,6 +1,4 @@
 import * as Flapkit from '@thecuvii/flapkit'
-import { cascade } from '@thecuvii/flapkit/cascade'
-import { riffle } from '@thecuvii/flapkit/riffle'
 import { useState, type ReactNode } from 'react'
 
 const unicodeDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
@@ -88,7 +86,7 @@ export function ExperimentsPage() {
           title="Randomized rapid flipping"
           description="Canvas-assisted motion spreads starts across the board and stays lightweight on dense layouts."
         >
-          <Flapkit.Root motion={riffle()}>
+          <Flapkit.Root motion={Flapkit.riffle()}>
             <Flapkit.Board className="flapkit-airport">
               <Flapkit.Header>Departures</Flapkit.Header>
               <Flapkit.Row id="one">{DepartureRow(preset)}</Flapkit.Row>
@@ -102,7 +100,7 @@ export function ExperimentsPage() {
           title="Row-staggered 3D leaves"
           description="CSS 3D cassettes move in a controlled row cascade with per-cell cadence variation."
         >
-          <Flapkit.Root motion={cascade()}>
+          <Flapkit.Root motion={Flapkit.cascade()}>
             <Flapkit.Board className="flapkit-industrial">
               <Flapkit.Header>Departures</Flapkit.Header>
               <Flapkit.Row id="one">{DepartureRow(preset)}</Flapkit.Row>
@@ -117,7 +115,7 @@ export function ExperimentsPage() {
           description="Each CJK grapheme occupies one independently driven character cell with its own upper and lower leaves."
         >
           <div className="unicode-demo">
-            <Flapkit.Root motion={riffle()}>
+            <Flapkit.Root motion={Flapkit.riffle()}>
               <Flapkit.Grid
                 aria-label="Two independent Unicode character cells"
                 className="flapkit-airport"
@@ -142,7 +140,7 @@ export function ExperimentsPage() {
           description="Each double-width cassette has one deck and one motion state while every leaf position carries two graphemes."
         >
           <div className="wide-demo">
-            <Flapkit.Root motion={riffle()}>
+            <Flapkit.Root motion={Flapkit.riffle()}>
               <Flapkit.Grid
                 aria-label="One double-width and one single-width numeric cassette"
                 className="flapkit-airport"

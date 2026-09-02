@@ -26,7 +26,6 @@ Root ── motion adapter
 
 ```tsx
 import * as Flapkit from '@thecuvii/flapkit'
-import { riffle } from '@thecuvii/flapkit/riffle'
 import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 
@@ -34,7 +33,7 @@ const statusDeck = Flapkit.createDeck(' BOARDING', ['white', 'yellow'])
 
 export function Departures() {
   return (
-    <Flapkit.Root motion={riffle()}>
+    <Flapkit.Root motion={Flapkit.riffle()}>
       <Flapkit.Board className="flapkit-airport departures-board">
         <Flapkit.Header>Departures</Flapkit.Header>
         <Flapkit.Row highlighted>
@@ -60,9 +59,9 @@ variant. Add `Group` only when adjacent horizontal regions need different
 settings. `Row` and `Group` IDs are optional; provide stable IDs when items can
 reorder.
 
-Riffle provides lightweight, randomized rapid flipping for dense boards. Pass
-`cascade()` from `@thecuvii/flapkit/cascade` for higher-fidelity CSS 3D motion
-that cascades across rows.
+`Flapkit.riffle()` provides lightweight, randomized rapid flipping for dense
+boards. Use `Flapkit.cascade()` for higher-fidelity CSS 3D motion that cascades
+across rows.
 
 Changing cell values updates only cassettes whose resolved deck positions
 changed. Stable optional row and group IDs preserve mechanical identity when
@@ -77,11 +76,10 @@ not split across cells.
 
 ```tsx
 import * as Flapkit from '@thecuvii/flapkit'
-import { riffle } from '@thecuvii/flapkit/riffle'
 
 const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 
-<Flapkit.Root motion={riffle()}>
+<Flapkit.Root motion={Flapkit.riffle()}>
   <Flapkit.Board>
     <Flapkit.Row deck={localDeck} label="LOCAL">
       {[...'東京出発'].map((character, index) => (
@@ -120,16 +118,19 @@ Looks are separate CSS subpaths. Apply their scoped class directly to the
 Flapkit's structural classes.
 
 ```tsx
+import * as Flapkit from '@thecuvii/flapkit'
 import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/industrial.css'
 
 export function Operations() {
   return (
-    <Flapkit.Board className="flapkit-industrial operations-board">
-      <Flapkit.Row className="font-mono" label="STATUS">
-        <Flapkit.Cell className="text-xl font-bold">A</Flapkit.Cell>
-      </Flapkit.Row>
-    </Flapkit.Board>
+    <Flapkit.Root motion={Flapkit.cascade()}>
+      <Flapkit.Board className="flapkit-industrial operations-board">
+        <Flapkit.Row className="font-mono" label="STATUS">
+          <Flapkit.Cell className="text-xl font-bold">A</Flapkit.Cell>
+        </Flapkit.Row>
+      </Flapkit.Board>
+    </Flapkit.Root>
   )
 }
 ```
@@ -156,6 +157,7 @@ Sound is optional and ships without audio assets. Supply URLs owned by the
 consumer and pass the sound element to `Root`:
 
 ```tsx
+import * as Flapkit from '@thecuvii/flapkit'
 import { mechanicalSound } from '@thecuvii/flapkit/sound'
 
 const soundBank = {
@@ -165,7 +167,7 @@ const soundBank = {
 
 function BoardWithSound() {
   return (
-    <Flapkit.Root motion={riffle()} sound={mechanicalSound({ bank: soundBank })}>
+    <Flapkit.Root motion={Flapkit.riffle()} sound={mechanicalSound({ bank: soundBank })}>
       <Flapkit.Board>
         <Flapkit.Row>
           <Flapkit.Cell>A</Flapkit.Cell>
@@ -183,8 +185,6 @@ for custom integrations.
 ## Package subpaths
 
 - `@thecuvii/flapkit`
-- `@thecuvii/flapkit/riffle`
-- `@thecuvii/flapkit/cascade`
 - `@thecuvii/flapkit/sound`
 - `@thecuvii/flapkit/flapkit.css`
 - `@thecuvii/flapkit/airport.css`

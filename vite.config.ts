@@ -20,8 +20,6 @@ export default defineConfig({
     dts: true,
     entry: [
       'src/index.ts',
-      'src/riffle/index.ts',
-      'src/cascade/index.ts',
       'src/sound/index.ts',
       'src/styles/flapkit.css',
       'src/styles/airport.css',

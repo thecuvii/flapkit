@@ -1,6 +1,4 @@
 import * as Flapkit from '@thecuvii/flapkit'
-import { cascade } from '@thecuvii/flapkit/cascade'
-import { riffle } from '@thecuvii/flapkit/riffle'
 import { useState, type KeyboardEvent } from 'react'
 import type { HighlightedDocsCode } from './docs-code'
 
@@ -87,7 +85,7 @@ function CodeBlock({ html }: { html: string }) {
 function ComponentPreview() {
   return (
     <div className="component-preview">
-      <Flapkit.Root motion={riffle()}>{PreviewGrid({})}</Flapkit.Root>
+      <Flapkit.Root motion={Flapkit.riffle()}>{PreviewGrid({})}</Flapkit.Root>
     </div>
   )
 }
@@ -123,7 +121,7 @@ function UsagePreview({
   }
 
   const preview = (
-    <Flapkit.Root motion={activeTab === 'cascade' ? cascade() : riffle()}>
+    <Flapkit.Root motion={activeTab === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}>
       {activeTab === 'cascade' ? (
         <Flapkit.Grid
           aria-label="Cascade package status"
@@ -269,11 +267,11 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
           <p>Both adapters drive the same component structure and preserve the same visuals.</p>
           <div className="option-list">
             <div>
-              <code>@thecuvii/flapkit/riffle</code>
+              <code>riffle()</code>
               <span>Lightweight randomized flipping, suitable for dense boards.</span>
             </div>
             <div>
-              <code>@thecuvii/flapkit/cascade</code>
+              <code>cascade()</code>
               <span>CSS 3D leaf motion that cascades across rows.</span>
             </div>
           </div>
@@ -317,8 +315,6 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
           <h2>API</h2>
           <div className="api-list">
             <code>@thecuvii/flapkit</code>
-            <code>@thecuvii/flapkit/riffle</code>
-            <code>@thecuvii/flapkit/cascade</code>
             <code>@thecuvii/flapkit/sound</code>
             <code>@thecuvii/flapkit/flapkit.css</code>
             <code>@thecuvii/flapkit/airport.css</code>

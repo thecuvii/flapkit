@@ -1,6 +1,4 @@
 import * as Flapkit from '@thecuvii/flapkit'
-import { cascade } from '@thecuvii/flapkit/cascade'
-import { riffle } from '@thecuvii/flapkit/riffle'
 import {
   Profiler,
   useCallback,
@@ -211,7 +209,10 @@ export function PerformancePage() {
   const frameRef = useRef(0)
   const size = sizes[sizeIndex]!
   const running = runStatus.phase !== 'idle'
-  const motion = useMemo(() => (motionKind === 'riffle' ? riffle() : cascade()), [motionKind])
+  const motion = useMemo(
+    () => (motionKind === 'riffle' ? Flapkit.riffle() : Flapkit.cascade()),
+    [motionKind],
+  )
 
   useEffect(
     () => () => {

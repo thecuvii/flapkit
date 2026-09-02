@@ -3,12 +3,8 @@
 import { useMemo, type ReactElement, type ReactNode } from 'react'
 import { compileFlapkitBoard } from './compiler'
 import type { Deck, Sequence, Variant as DeckVariant } from './deck'
-import {
-  CascadeProvider,
-  RiffleProvider,
-  type CascadeMotion,
-  type RiffleMotion,
-} from './motion/provider'
+import type { MotionAdapter } from './motion'
+import { CascadeProvider, RiffleProvider } from './motion/provider'
 import { BoardView, type BoardViewProps, GridView, type GridViewProps } from './render/board'
 
 export type BoardProps = Omit<BoardViewProps, 'children'> & { children: ReactNode }
@@ -62,10 +58,6 @@ export const Cell: (props: CellProps) => null = () => null
 
 /** One independently driven cassette whose leaves carry two graphemes. */
 export const WideCell: (props: WideCellProps) => null = () => null
-
-export type MotionAdapter =
-  | { readonly kind: 'cascade'; readonly options: Partial<CascadeMotion> }
-  | { readonly kind: 'riffle'; readonly options: Partial<RiffleMotion> }
 
 export type RootProps = {
   children: ReactNode

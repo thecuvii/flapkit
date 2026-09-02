@@ -1,7 +1,7 @@
 'use client'
 
 import { Children, Fragment, isValidElement, type ReactElement, type ReactNode } from 'react'
-import type { SplitFlapBoardProps } from './split-flap.board'
+import type { BoardViewProps, GridViewProps } from './flapkit.board'
 import {
   splitFlapGraphemes,
   type SplitFlapCassetteSpan,
@@ -9,15 +9,17 @@ import {
   type SplitFlapSequence,
   type SplitFlapSource,
   type SplitFlapVariant,
-} from './split-flap.source'
+} from './flapkit.source'
 
 export type Variant = SplitFlapVariant
 
-export type BoardProps = Omit<SplitFlapBoardProps, 'children'> & { children: ReactNode }
+export type BoardProps = Omit<BoardViewProps, 'children'> & { children: ReactNode }
+export type GridProps = GridViewProps & { children: ReactNode }
 
 export type HeaderProps = { children: ReactNode }
 export type RowProps = {
   children: ReactNode
+  className?: string
   deck?: SplitFlapDeck
   highlighted?: boolean
   id?: string
@@ -27,6 +29,7 @@ export type RowProps = {
 }
 export type GroupProps = {
   children: ReactNode
+  className?: string
   deck?: SplitFlapDeck
   id?: string
   label?: string
@@ -36,6 +39,7 @@ export type GroupProps = {
 
 export type CellProps = {
   children: number | string
+  className?: string
   deck?: SplitFlapDeck
   sequence?: SplitFlapSequence
 }
@@ -43,6 +47,7 @@ export type CellProps = {
 export type WideCellProps = CellProps
 
 type CellDescriptor = {
+  className?: string
   deck?: SplitFlapDeck
   sequence?: SplitFlapSequence
   span: SplitFlapCassetteSpan
@@ -51,20 +56,34 @@ type CellDescriptor = {
 
 type GroupDescriptor = {
   cells: CellDescriptor[]
+  className?: string
   id: string
   label: string
   variant: Variant
 }
 
 export type CompiledBoard = {
-  boardProps: Omit<SplitFlapBoardProps, 'children'>
+  boardProps: Omit<BoardViewProps, 'children'>
+  frame: boolean
   header?: ReactNode
+  presentation: CompiledBoardPresentation
+  presentationSignature: string
   source: SplitFlapSource
   sourceSignature: string
 }
 
+export type CompiledBoardPresentation = {
+  rows: Array<{
+    className?: string
+    groups: Array<{ className?: string; cells: Array<{ className?: string }> }>
+  }>
+}
+
 /** Structural marker consumed by Root before rendering. */
 export const Board: (props: BoardProps) => null = () => null
+
+/** Frameless structural marker consumed by Root before rendering. */
+export const Grid: (props: GridProps) => null = () => null
 
 /** Structural marker consumed by Root before rendering. */
 export const Header: (props: HeaderProps) => null = () => null
@@ -137,6 +156,7 @@ function cellDescriptor(
     throw new Error('Flapkit.WideCell requires a custom two-grapheme deck on itself or its Group')
   }
   return {
+    className: props.className,
     deck,
     sequence,
     span,
@@ -196,6 +216,7 @@ function groupDescriptor(
   }
   return {
     cells,
+    className: props.className,
     id: props.id ?? `group-${groupIndex}`,
     label: props.label ?? '',
     variant: props.variant ?? 'white',
@@ -242,28 +263,35 @@ function rowGroups(row: ReactElement<RowProps>, rowIndex: number) {
 /** Purely compiles structural components into the current source model. */
 export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
   const rootChildren = structuralElements(children, 'Flapkit.Root')
-  if (rootChildren.length !== 1 || rootChildren[0]?.type !== Board) {
-    throw new Error('Flapkit.Root requires exactly one Flapkit.Board child')
+  if (
+    rootChildren.length !== 1 ||
+    (rootChildren[0]?.type !== Board && rootChildren[0]?.type !== Grid)
+  ) {
+    throw new Error('Flapkit.Root requires exactly one Flapkit.Board or Flapkit.Grid child')
   }
 
-  const boardElement = rootChildren[0] as ReactElement<BoardProps>
+  const boardElement = rootChildren[0] as ReactElement<BoardProps | GridProps>
+  const frame = boardElement.type === Board
   const { children: boardChildren, ...boardProps } = boardElement.props
-  const parts = structuralElements(boardChildren, 'Flapkit.Board')
+  const owner = frame ? 'Flapkit.Board' : 'Flapkit.Grid'
+  const parts = structuralElements(boardChildren, owner)
   const headers = parts.filter((part) => part.type === Header)
   const rowElements = parts.filter((part) => part.type === Row) as ReactElement<RowProps>[]
   const invalidPart = parts.find((part) => part.type !== Header && part.type !== Row)
   if (invalidPart) {
     throw new Error(
-      `Flapkit.Board only accepts Flapkit.Header or Flapkit.Row; received ${componentName(invalidPart)}`,
+      `${owner} only accepts Flapkit.Header or Flapkit.Row; received ${componentName(invalidPart)}`,
     )
   }
   if (headers.length > 1) throw new Error('Flapkit.Board accepts at most one Flapkit.Header')
-  if (rowElements.length === 0) throw new Error('Flapkit.Board requires at least one Flapkit.Row')
+  if (!frame && headers.length > 0) throw new Error('Flapkit.Grid does not accept Flapkit.Header')
+  if (rowElements.length === 0) throw new Error(`${owner} requires at least one Flapkit.Row`)
 
   const rows = rowElements.map((row, rowIndex) => ({
     groups: rowGroups(row, rowIndex),
     highlighted: row.props.highlighted,
     id: row.props.id ?? `row-${rowIndex}`,
+    className: row.props.className,
   }))
   const firstRow = rows[0]!
   const topology = firstRow.groups.map((group) => group.cells.map(cellTopologySignature).join('|'))
@@ -306,10 +334,22 @@ export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
     ),
   }))
   const source = { columns, rows: sourceRows }
+  const presentation = {
+    rows: rows.map((row) => ({
+      className: row.className,
+      groups: row.groups.map((group) => ({
+        className: group.className,
+        cells: group.cells.map((cell) => ({ className: cell.className })),
+      })),
+    })),
+  }
 
   return {
-    boardProps,
+    boardProps: boardProps as Omit<BoardViewProps, 'children'>,
+    frame,
     header: headers[0] ? (headers[0].props as HeaderProps).children : undefined,
+    presentation,
+    presentationSignature: JSON.stringify(presentation),
     source,
     sourceSignature: JSON.stringify(source),
   }

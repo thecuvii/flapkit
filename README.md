@@ -6,40 +6,11 @@ independently importable looks, Unicode decks, and multi-cell cassettes.
 ## Install
 
 ```sh
-pnpm add @thecuvii/flapkit @stylexjs/stylex
+pnpm add @thecuvii/flapkit
 ```
 
-React 19 and StyleX 0.19 are peer dependencies. Flapkit publishes ESM with
-StyleX authoring calls intact, so the consuming application must compile the
-package and extract its CSS. Flapkit does not inject styles at runtime.
-
-For Vite, configure `@stylexjs/unplugin` to compile Flapkit with the application:
-
-```ts
-// vite.config.ts
-import stylex from '@stylexjs/unplugin'
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
-
-export default defineConfig({
-  plugins: [
-    stylex.vite({
-      externalPackages: ['@thecuvii/flapkit'],
-      runtimeInjection: false,
-      useCSSLayers: true,
-    } as Parameters<typeof stylex.vite>[0] & { externalPackages: string[] }),
-    react(),
-  ],
-})
-```
-
-The intersection only fills a missing `externalPackages` declaration in
-`@stylexjs/unplugin@0.19`; it is a documented runtime option. Remove the cast
-once the plugin's exported type includes it.
-
-The application must import at least one CSS file so Vite has a CSS asset for
-the extracted StyleX rules. This can be the app's normal global stylesheet; it
-does not need to contain Flapkit-specific CSS.
+React 19 is a peer dependency. Import the structural stylesheet and one look;
+Flapkit does not inject styles at runtime.
 
 ## Composition
 
@@ -54,34 +25,32 @@ Root ── motion adapter
 ```
 
 ```tsx
-import * as stylex from '@stylexjs/stylex'
 import * as Flapkit from '@thecuvii/flapkit'
 import { riffle } from '@thecuvii/flapkit/riffle'
-import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
+import '@thecuvii/flapkit/flapkit.css'
+import '@thecuvii/flapkit/looks/airport.css'
 
-const statusDeck = Flapkit.createSplitFlapDeck(' BOARDING', ['white', 'yellow'])
+const statusDeck = Flapkit.createDeck(' BOARDING', ['white', 'yellow'])
 
 export function Departures() {
   return (
-    <section {...stylex.props(airportBoardLook)}>
-      <Flapkit.Root motion={riffle()}>
-        <Flapkit.Board>
-          <Flapkit.Header>Departures</Flapkit.Header>
-          <Flapkit.Row highlighted>
-            <Flapkit.Group label="TIME">
-              {[...'08:20'].map((character, index) => (
-                <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
-              ))}
-            </Flapkit.Group>
-            <Flapkit.Group deck={statusDeck} label="STATUS" variant="yellow">
-              {[...'BOARDING'].map((character, index) => (
-                <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
-              ))}
-            </Flapkit.Group>
-          </Flapkit.Row>
-        </Flapkit.Board>
-      </Flapkit.Root>
-    </section>
+    <Flapkit.Root motion={riffle()}>
+      <Flapkit.Board className="flapkit-airport departures-board">
+        <Flapkit.Header>Departures</Flapkit.Header>
+        <Flapkit.Row highlighted>
+          <Flapkit.Group label="TIME">
+            {[...'08:20'].map((character, index) => (
+              <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+            ))}
+          </Flapkit.Group>
+          <Flapkit.Group deck={statusDeck} label="STATUS" variant="yellow">
+            {[...'BOARDING'].map((character, index) => (
+              <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+            ))}
+          </Flapkit.Group>
+        </Flapkit.Row>
+      </Flapkit.Board>
+    </Flapkit.Root>
   )
 }
 ```
@@ -110,7 +79,7 @@ not split across cells.
 import * as Flapkit from '@thecuvii/flapkit'
 import { riffle } from '@thecuvii/flapkit/riffle'
 
-const localDeck = Flapkit.createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗')
+const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 
 <Flapkit.Root motion={riffle()}>
   <Flapkit.Board>
@@ -132,7 +101,7 @@ Some displays use a single cassette whose leaves are wide enough to carry two
 graphemes. Use `WideCell` with a custom deck of two-grapheme positions:
 
 ```tsx
-const numberDeck = Flapkit.createSplitFlapDeck(['  ', '14', '05', '55', '30'])
+const numberDeck = Flapkit.createDeck(['  ', '14', '05', '55', '30'])
 
 <Flapkit.Row deck={numberDeck} label="NUMBER">
   <Flapkit.WideCell>14</Flapkit.WideCell>
@@ -146,32 +115,40 @@ cannot mix `Cell` and `WideCell`; place different widths in adjacent Groups.
 
 ## Looks and CSS customization
 
-Looks are separate tree-shakeable subpaths and are never re-exported from the
-root:
+Looks are separate CSS subpaths. Apply their scoped class directly to the
+`Board` or `Grid` styling host; `className` is preserved alongside
+Flapkit's structural classes.
 
 ```tsx
-import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
-import { industrialWallLook } from '@thecuvii/flapkit/looks/industrial'
+import '@thecuvii/flapkit/flapkit.css'
+import '@thecuvii/flapkit/looks/industrial.css'
+
+export function Operations() {
+  return (
+    <Flapkit.Board className="flapkit-industrial operations-board">
+      <Flapkit.Row className="font-mono" label="STATUS">
+        <Flapkit.Cell className="text-xl font-bold">A</Flapkit.Cell>
+      </Flapkit.Row>
+    </Flapkit.Board>
+  )
+}
 ```
 
-Create a custom StyleX theme from the public variable contract when a product
-needs a different visual system:
+Font family, weight, and style inherit from `Board`, `Row`, and `Group`; size can
+be set directly on `Cell`. Ordinary classes and Tailwind utilities work without
+a Flapkit-specific API.
+For non-inheritable surfaces, scope CSS to your class and the rendered
+`data-slot` anatomy:
 
-```tsx
-import * as stylex from '@stylexjs/stylex'
-import { splitFlapLook } from '@thecuvii/flapkit/look'
+```css
+.operations-board {
+  max-width: 100%;
+}
 
-export const customLook = stylex.createTheme(splitFlapLook, {
-  glyphFontFamily: "'Arial Narrow', sans-serif",
-  glyphWhite: '#f5efe0',
-  topFaceColor: '#171918',
-  bottomFaceColor: '#111312',
-})
+.operations-board [data-part='face'] {
+  filter: saturate(0.9);
+}
 ```
-
-Use the effect's `material` prop for per-instance wear, cavity, seam, stack,
-highlight, and glyph tuning. Use a Look for reusable geometry, typography,
-surface, and frame design.
 
 ## Sound
 
@@ -200,7 +177,7 @@ function BoardWithSound() {
 ```
 
 The React adapter unlocks audio on the first pointer or keyboard gesture. The
-framework-independent `SplitFlapSoundEngine` is exported from the same subpath
+framework-independent `SoundEngine` is exported from the same subpath
 for custom integrations.
 
 ## Package subpaths
@@ -209,9 +186,9 @@ for custom integrations.
 - `@thecuvii/flapkit/riffle`
 - `@thecuvii/flapkit/cascade`
 - `@thecuvii/flapkit/sound`
-- `@thecuvii/flapkit/look`
-- `@thecuvii/flapkit/looks/airport`
-- `@thecuvii/flapkit/looks/industrial`
+- `@thecuvii/flapkit/flapkit.css`
+- `@thecuvii/flapkit/looks/airport.css`
+- `@thecuvii/flapkit/looks/industrial.css`
 
 ## Development
 

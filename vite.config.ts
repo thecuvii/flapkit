@@ -15,8 +15,7 @@ export default defineConfig({
   },
   pack: {
     deps: {
-      // StyleX calls must remain in the package for the consumer's compiler.
-      neverBundle: ['@stylexjs/stylex', 'react', 'react/jsx-runtime'],
+      neverBundle: ['react', 'react/jsx-runtime'],
     },
     dts: true,
     entry: [
@@ -24,9 +23,9 @@ export default defineConfig({
       'src/riffle/index.ts',
       'src/cascade/index.ts',
       'src/sound/index.ts',
-      'src/split-flap-look.stylex.ts',
-      'src/looks/airport.look.stylex.ts',
-      'src/looks/industrial.look.stylex.ts',
+      'src/styles/flapkit.css',
+      'src/styles/looks/airport.css',
+      'src/styles/looks/industrial.css',
     ],
     format: ['esm'],
     platform: 'neutral',

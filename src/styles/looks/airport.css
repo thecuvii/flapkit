@@ -1,0 +1,206 @@
+@layer flapkit.looks {
+  :where(.flapkit-airport) {
+    color: #e8e5d7;
+    font-family: var(--flapkit-glyph-font-family);
+    font-stretch: normal;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: var(--flapkit-glyph-font-weight);
+    font-feature-settings: normal;
+    --flapkit-axle-background:
+      linear-gradient(
+        90deg,
+        rgba(3, 4, 2, 0.98) 0%,
+        rgba(73, 72, 58, 0.34) 34%,
+        rgba(11, 12, 9, 0.96) 72%,
+        rgba(2, 3, 1, 0.98) 100%
+      ),
+      radial-gradient(ellipse at 42% 31%, rgba(211, 204, 168, 0.1) 0 14%, transparent 34%);
+    --flapkit-axle-height: 1.48cqw;
+    --flapkit-axle-opacity: 0.9;
+    --flapkit-axle-shadow:
+      0 0 0 0.025cqw rgba(194, 187, 150, 0.07), 0.04cqw 0 0.08cqw rgba(188, 181, 145, 0.05) inset,
+      -0.08cqw 0 0.14cqw rgba(0, 0, 0, 0.78) inset, 0 0 0.1cqw rgba(0, 0, 0, 0.68);
+    --flapkit-axle-width: 0.56cqw;
+    --flapkit-board-background-color: #22231e;
+    --flapkit-board-background-image:
+      radial-gradient(ellipse 90% 55% at 34% -8%, rgba(215, 211, 178, 0.038), transparent 62%),
+      radial-gradient(circle at 82% 74%, rgba(8, 9, 7, 0.2), transparent 44%),
+      linear-gradient(104deg, #1b1c18 0%, #25261f 44%, #1c1d19 100%);
+    --flapkit-board-shadow:
+      0 0 0 1px #080906, 0 1px 0 rgba(210, 207, 176, 0.06) inset,
+      1px 0 0 rgba(210, 207, 176, 0.025) inset, 0 -2px 4px rgba(0, 0, 0, 0.46) inset,
+      0 5px 13px rgba(0, 0, 0, 0.7), 0 22px 54px rgba(0, 0, 0, 0.38);
+    --flapkit-board-unit: 8.2px;
+    --flapkit-bottom-face-color: #25261e;
+    --flapkit-bottom-face-shadow:
+      0 0.02cqw 0 rgba(224, 216, 177, 0.018) inset, 0 -0.09cqw 0.14cqw rgba(0, 0, 0, 0.19) inset,
+      0.05cqw 0.15cqw 0.22cqw rgba(0, 0, 0, 0.32);
+    --flapkit-bottom-face-surface: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.108) 0%,
+      rgba(0, 0, 0, 0.026) 34%,
+      transparent 70%,
+      rgba(214, 207, 170, 0.02) 100%
+    );
+    --flapkit-cassette-background-color: #1e211d;
+    --flapkit-cassette-background-image:
+      radial-gradient(ellipse 82% 46% at 28% 10%, rgba(213, 207, 172, 0.026), transparent 72%),
+      linear-gradient(180deg, #22241f 0%, #191b17 100%);
+    --flapkit-cassette-radius: 0.03cqw;
+    --flapkit-cassette-shadow:
+      -0.025cqw 0 0 rgba(207, 202, 172, 0.045), 0.07cqw 0 0.12cqw rgba(0, 0, 0, 0.55),
+      0 0 0 0.035cqw rgba(5, 6, 4, 0.94) inset;
+    --flapkit-cavity-bottom: 7%;
+    --flapkit-cavity-color: #11120e;
+    --flapkit-cavity-left: 8%;
+    --flapkit-cavity-right: 8%;
+    --flapkit-cavity-shadow:
+      0 0.22cqw 0.38cqw rgba(0, 0, 0, 0.52) inset, 0.12cqw 0 0.22cqw rgba(0, 0, 0, 0.26) inset,
+      0 -0.05cqw 0.08cqw rgba(211, 204, 167, 0.02) inset;
+    --flapkit-cavity-top: 17%;
+    --flapkit-cell-height: 34.733px;
+    --flapkit-cell-track: 20.58px;
+    --flapkit-compact-cover-detail:
+      linear-gradient(
+        180deg,
+        transparent 0%,
+        transparent 16.45%,
+        rgba(211, 206, 177, 0.035) 16.72%,
+        rgba(0, 0, 0, 0.3) 17.18%,
+        transparent 17.95%
+      ),
+      linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 7.28%,
+        rgba(211, 206, 177, 0.025) 7.7%,
+        rgba(0, 0, 0, 0.26) 8.3%,
+        transparent 9.15%,
+        transparent 90.85%,
+        rgba(0, 0, 0, 0.28) 91.7%,
+        transparent 92.7%
+      ),
+      linear-gradient(
+        0deg,
+        transparent 0%,
+        transparent 6.25%,
+        rgba(0, 0, 0, 0.38) 7.15%,
+        transparent 8.1%
+      );
+    --flapkit-compact-half-cell: 5.83cqw;
+    --flapkit-compact-hardware-background:
+      radial-gradient(
+        ellipse at 42% 31%,
+        rgba(211, 204, 168, 0.1) 0 10%,
+        rgba(60, 59, 48, 0.5) 20%,
+        rgba(10, 11, 8, 0.98) 68%,
+        rgba(2, 3, 1, 0.98) 100%
+      ),
+      radial-gradient(
+        ellipse at 42% 31%,
+        rgba(211, 204, 168, 0.1) 0 10%,
+        rgba(60, 59, 48, 0.5) 20%,
+        rgba(10, 11, 8, 0.98) 68%,
+        rgba(2, 3, 1, 0.98) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(4 5 3 / calc(0.98 * var(--compact-seam-base-opacity) * var(--compact-seam-visibility)))
+          0%,
+        rgba(
+            9 10 7 / calc(0.94 * var(--compact-seam-base-opacity) * var(--compact-seam-visibility))
+          )
+          38%,
+        rgba(5 6 4 / calc(var(--compact-seam-base-opacity) * var(--compact-seam-visibility))) 78%,
+        rgba(3 4 3 / calc(0.97 * var(--compact-seam-base-opacity) * var(--compact-seam-visibility)))
+          100%
+      );
+    --flapkit-compact-hardware-position: calc(8% + 0.3cqw) 55%, calc(92% - 0.3cqw) 55%, center 55%;
+    --flapkit-compact-hardware-size:
+      0.56cqw 1.48cqw, 0.56cqw 1.48cqw, calc(84% - 0.2cqw) var(--compact-seam-height);
+    --flapkit-cover-bottom-background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.22) 0,
+      transparent 0.12cqw
+    );
+    --flapkit-cover-bottom-shadow:
+      0 -0.04cqw 0.07cqw rgba(0, 0, 0, 0.3), 0 0.12cqw 0.2cqw rgba(0, 0, 0, 0.58);
+    --flapkit-cover-left-background: linear-gradient(
+      90deg,
+      transparent calc(100% - 0.05cqw),
+      rgba(211, 206, 177, 0.035) 100%
+    );
+    --flapkit-cover-left-shadow:
+      -0.025cqw 0 0 rgba(207, 202, 172, 0.04), 0.04cqw 0 0.07cqw rgba(0, 0, 0, 0.26);
+    --flapkit-cover-right-background: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.18) 0,
+      transparent 0.1cqw
+    );
+    --flapkit-cover-right-shadow: -0.04cqw 0 0.07cqw rgba(0, 0, 0, 0.28);
+    --flapkit-cover-top-background: linear-gradient(
+      180deg,
+      transparent calc(100% - 0.05cqw),
+      rgba(211, 206, 177, 0.035) 100%
+    );
+    --flapkit-cover-top-shadow:
+      0 -0.025cqw 0 rgba(211, 206, 177, 0.035), 0 0.05cqw 0.07cqw rgba(0, 0, 0, 0.3);
+    --flapkit-face-inset-x: 0.12cqw;
+    --flapkit-face-inset-y: 0.18cqw;
+    --flapkit-face-radius: 0.03cqw;
+    --flapkit-frame-bottom: 25.83px;
+    --flapkit-frame-left: 27.06px;
+    --flapkit-frame-right: 25.83px;
+    --flapkit-frame-top: 16.81px;
+    --flapkit-glyph-font-family: GeistSans, 'Arial Narrow', Arial, sans-serif;
+    --flapkit-glyph-font-weight: 600;
+    --flapkit-glyph-orange: #cf9138;
+    --flapkit-glyph-opacity: 0.94;
+    --flapkit-glyph-yellow: #e4c22f;
+    --flapkit-glyph-size: 9.55cqw;
+    --flapkit-glyph-tracking: 0.025em;
+    --flapkit-glyph-white: currentColor;
+    --flapkit-glyph-width: 0.62;
+    --flapkit-glyph-y: 0.15cqw;
+    --flapkit-grid-background-color: #0c0d0b;
+    --flapkit-grid-background-image: linear-gradient(
+      90deg,
+      rgba(207, 202, 172, 0.012),
+      transparent 22%,
+      rgba(0, 0, 0, 0.08) 78%,
+      rgba(0, 0, 0, 0.18)
+    );
+    --flapkit-grid-shadow:
+      0.14cqw 0.16cqw 0.3cqw rgba(0, 0, 0, 0.38) inset,
+      -0.06cqw -0.06cqw 0 rgba(214, 207, 170, 0.015) inset;
+    --flapkit-header-height: 47.56px;
+    --flapkit-highlight-face: #3b3d31;
+    --flapkit-highlight-glyph: #fff2c8;
+    --flapkit-label-font-family: GeistSans, 'Arial Narrow', Arial, sans-serif;
+    --flapkit-leaf-thickness: 0.24cqw;
+    --flapkit-row-background-color: #151713;
+    --flapkit-row-background-image: linear-gradient(
+      180deg,
+      rgba(214, 208, 174, 0.018) 0,
+      transparent 0.18cqw,
+      rgba(0, 0, 0, 0.07) 100%
+    );
+    --flapkit-row-shadow:
+      0 0.05cqw 0 rgba(214, 208, 174, 0.016) inset, 0 0.1cqw 0.18cqw rgba(0, 0, 0, 0.26) inset,
+      0 -0.06cqw 0.12cqw rgba(0, 0, 0, 0.18) inset, 0 0.16cqw 0.24cqw rgba(0, 0, 0, 0.34);
+    --flapkit-seam-opacity: 0.78;
+    --flapkit-seam-thickness: 0.22cqw;
+    --flapkit-title-only-header-height: 25.5px;
+    --flapkit-top-face-color: #282921;
+    --flapkit-top-face-shadow:
+      0 0.03cqw 0 rgba(224, 216, 177, 0.035) inset, 0 -0.07cqw 0.12cqw rgba(0, 0, 0, 0.18) inset,
+      0.05cqw 0.13cqw 0.2cqw rgba(0, 0, 0, 0.29);
+    --flapkit-top-face-surface: linear-gradient(
+      180deg,
+      rgba(224, 216, 177, 0.032) 0%,
+      transparent 38%,
+      rgba(0, 0, 0, 0.082) 100%
+    );
+  }
+}

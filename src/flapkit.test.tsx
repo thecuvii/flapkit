@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { createSplitFlapDeck, resolveSplitFlapSource } from './split-flap.source'
-import { Board, Cell, compileFlapkitBoard, Group, Header, Row, WideCell } from './flapkit.structure'
+import { createSplitFlapDeck, resolveSplitFlapSource } from './flapkit.source'
+import {
+  Board,
+  Cell,
+  compileFlapkitBoard,
+  Grid,
+  Group,
+  Header,
+  Row,
+  WideCell,
+} from './flapkit.structure'
 
 const wideDeck = createSplitFlapDeck(['  ', '14', '55'])
 const variantDeck = createSplitFlapDeck(' 45', ['white', 'yellow', 'orange'])
@@ -81,6 +90,20 @@ describe('Flapkit structural compiler', () => {
     expect(resolveSplitFlapSource(result.source)).toEqual(resolveSplitFlapSource(source))
   })
 
+  it('compiles a frameless grid through the same component model', () => {
+    const result = compileFlapkitBoard(
+      <Grid aria-label="Status">
+        <Row>
+          <Cell>A</Cell>
+        </Row>
+      </Grid>,
+    )
+
+    expect(result.frame).toBe(false)
+    expect(result.boardProps).toEqual({ 'aria-label': 'Status' })
+    expect(result.header).toBeUndefined()
+  })
+
   it('applies a variant and deck directly from a flat row', () => {
     const result = compileFlapkitBoard(
       <Board>
@@ -94,6 +117,28 @@ describe('Flapkit structural compiler', () => {
       'group-0': { text: '4', variant: 'orange' },
     })
     expect(() => resolveSplitFlapSource(result.source)).not.toThrow()
+  })
+
+  it('keeps presentation class names out of source identity', () => {
+    const compile = (className: string) =>
+      compileFlapkitBoard(
+        <Board>
+          <Row className={`row-${className}`}>
+            <Group className={`group-${className}`}>
+              <Cell className={`cell-${className}`}>A</Cell>
+            </Group>
+          </Row>
+        </Board>,
+      )
+    const first = compile('first')
+    const second = compile('second')
+
+    expect(second.source).toEqual(first.source)
+    expect(second.sourceSignature).toBe(first.sourceSignature)
+    expect(second.presentation).not.toEqual(first.presentation)
+    expect(resolveSplitFlapSource(second.source).layoutKey).toBe(
+      resolveSplitFlapSource(first.source).layoutKey,
+    )
   })
 
   it('requires a custom deck for a wide cell', () => {

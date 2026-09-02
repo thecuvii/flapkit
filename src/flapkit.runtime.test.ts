@@ -5,8 +5,8 @@ import {
   SplitFlapMotionController,
   type MotionTuning,
   type SplitFlapRuntime,
-} from './split-flap.runtime'
-import { resolveSplitFlapSource } from './split-flap.source'
+} from './flapkit.runtime'
+import { resolveSplitFlapSource } from './flapkit.source'
 
 const cascadeMotion: MotionTuning = {
   cadenceVariationPct: 0,
@@ -28,7 +28,7 @@ function cells(value: string, count = value.length || 1) {
   })
 }
 
-describe('SplitFlapMotionController', () => {
+describe('Flapkit motion controller', () => {
   let now = 0
   let nextFrameId = 1
   let frames = new Map<number, FrameRequestCallback>()

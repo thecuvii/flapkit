@@ -1,7 +1,5 @@
-import * as stylex from '@stylexjs/stylex'
 import * as Flapkit from '@thecuvii/flapkit'
 import { cascade } from '@thecuvii/flapkit/cascade'
-import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
 import { riffle } from '@thecuvii/flapkit/riffle'
 import {
   Profiler,
@@ -444,27 +442,25 @@ export function PerformancePage() {
       <MeasuredRuns samples={samples} />
 
       <section ref={stageRef} className="performance-stage" aria-label="Benchmark board">
-        <div {...stylex.props(airportBoardLook)}>
-          <Profiler id="flapkit-bench" onRender={handleRender}>
-            <Flapkit.Root motion={motion}>
-              <Flapkit.Board aria-label={`${size.label} benchmark board`}>
-                <Flapkit.Header>
-                  {motionKind.toUpperCase()} · {size.label}
-                </Flapkit.Header>
-                {rows.map((row, rowIndex) => (
-                  <Flapkit.Row key={`row-${rowIndex}`}>
-                    <Flapkit.Group label="LOCAL">
-                      {row.map((cell, columnIndex) => (
-                        <Flapkit.Cell key={columnIndex}>{cell}</Flapkit.Cell>
-                      ))}
-                    </Flapkit.Group>
-                  </Flapkit.Row>
-                ))}
-              </Flapkit.Board>
-            </Flapkit.Root>
-            <CommitProbe revision={revision} onCommit={handleCommit} />
-          </Profiler>
-        </div>
+        <Profiler id="flapkit-bench" onRender={handleRender}>
+          <Flapkit.Root motion={motion}>
+            <Flapkit.Board aria-label={`${size.label} benchmark board`} className="flapkit-airport">
+              <Flapkit.Header>
+                {motionKind.toUpperCase()} · {size.label}
+              </Flapkit.Header>
+              {rows.map((row, rowIndex) => (
+                <Flapkit.Row key={`row-${rowIndex}`}>
+                  <Flapkit.Group label="LOCAL">
+                    {row.map((cell, columnIndex) => (
+                      <Flapkit.Cell key={columnIndex}>{cell}</Flapkit.Cell>
+                    ))}
+                  </Flapkit.Group>
+                </Flapkit.Row>
+              ))}
+            </Flapkit.Board>
+          </Flapkit.Root>
+          <CommitProbe revision={revision} onCommit={handleCommit} />
+        </Profiler>
       </section>
 
       <p className="performance-note">

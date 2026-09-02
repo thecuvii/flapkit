@@ -1,6 +1,7 @@
 'use client'
 
-import * as stylex from '@stylexjs/stylex'
+// DOM cassette renderer shared by the motion adapters.
+
 import { memo, useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react'
 import {
   activeLeafClearance,
@@ -8,24 +9,23 @@ import {
   lowerGlyphXOffset,
   spareLeafStep,
   spareLeafXOffsets,
+  splitFlapLeafBrightnessVariation,
   splitFlapReferenceTracks,
-} from './split-flap.constants'
-import { splitFlapLook } from './split-flap-look.stylex'
-import type { SplitFlapMaterial } from './split-flap.material'
+  splitFlapSpareLeafCount,
+} from './flapkit.constants'
+import { cssValue as splitFlapLook } from './flapkit.css-values'
 import {
   activeGlyphColorProperty,
   signedLeafNoise,
   stackShiftProperty,
   type SplitFlapMotionController,
-} from './split-flap.runtime'
+} from './flapkit.runtime'
 import type {
   ResolvedSplitFlapCell,
   ResolvedSplitFlapSource,
   SplitFlapVariant,
-} from './split-flap.source'
-import { styles, glyphOffsets } from './split-flap.styles'
-
-type CellTuning = SplitFlapMaterial
+} from './flapkit.source'
+import { classProps, glyphOffsets, styles } from './flapkit.classes'
 
 function splitFlapColumnTracks(layout: ResolvedSplitFlapSource) {
   return layout.columns
@@ -37,7 +37,7 @@ function WideGlyphParts({ compact = false }: { compact?: boolean }) {
   return (
     <>
       <span
-        {...stylex.props(
+        {...classProps(
           styles.wideGlyphPart,
           compact && styles.compactWideGlyphPart,
           styles.wideGlyphPartLeft,
@@ -45,7 +45,7 @@ function WideGlyphParts({ compact = false }: { compact?: boolean }) {
         data-split-flap-glyph-part="0"
       />
       <span
-        {...stylex.props(
+        {...classProps(
           styles.wideGlyphPart,
           compact && styles.compactWideGlyphPart,
           styles.wideGlyphPartRight,
@@ -60,22 +60,22 @@ function WideRetainers() {
   return (
     <>
       <span
-        {...stylex.props(styles.wideRetainer, styles.wideRetainerOuterLeft)}
+        {...classProps(styles.wideRetainer, styles.wideRetainerOuterLeft)}
         data-position="outer-left"
         data-slot="retainer"
       />
       <span
-        {...stylex.props(styles.wideRetainer, styles.wideRetainerInnerLeft)}
+        {...classProps(styles.wideRetainer, styles.wideRetainerInnerLeft)}
         data-position="inner-left"
         data-slot="retainer"
       />
       <span
-        {...stylex.props(styles.wideRetainer, styles.wideRetainerInnerRight)}
+        {...classProps(styles.wideRetainer, styles.wideRetainerInnerRight)}
         data-position="inner-right"
         data-slot="retainer"
       />
       <span
-        {...stylex.props(styles.wideRetainer, styles.wideRetainerOuterRight)}
+        {...classProps(styles.wideRetainer, styles.wideRetainerOuterRight)}
         data-position="outer-right"
         data-slot="retainer"
       />
@@ -85,19 +85,19 @@ function WideRetainers() {
 
 function CompactHardware({ wide }: { wide: boolean }) {
   return (
-    <span {...stylex.props(styles.compactHardware)} data-slot="hardware">
-      <span {...stylex.props(styles.compactSeam)} data-slot="seam" />
+    <span {...classProps(styles.compactHardware)} data-slot="hardware">
+      <span {...classProps(styles.compactSeam)} data-slot="seam" />
       {wide ? (
         <WideRetainers />
       ) : (
         <>
           <span
-            {...stylex.props(styles.axle, styles.axleLeft)}
+            {...classProps(styles.axle, styles.axleLeft)}
             data-position="left"
             data-slot="retainer"
           />
           <span
-            {...stylex.props(styles.axle, styles.axleRight)}
+            {...classProps(styles.axle, styles.axleRight)}
             data-position="right"
             data-slot="retainer"
           />
@@ -128,7 +128,7 @@ function FaceGlyph({
 }) {
   return (
     <span
-      {...stylex.props(
+      {...classProps(
         styles.glyphHalf,
         lower ? styles.bottomGlyphHalf : styles.topGlyphHalf,
         moving && styles.movingGlyphHalf,
@@ -137,7 +137,7 @@ function FaceGlyph({
     >
       <span
         ref={glyphRef}
-        {...stylex.props(styles.glyph, glyphOffset, wide && styles.wideGlyphCarrier)}
+        {...classProps(styles.glyph, glyphOffset, wide && styles.wideGlyphCarrier)}
         data-split-flap-wide-glyph={wide || undefined}
         style={
           {
@@ -161,13 +161,13 @@ const FlapCell = memo(function FlapCell({
   controller,
   detailed = false,
   highlighted,
-  tuning,
+  className,
 }: {
   cell: ResolvedSplitFlapCell
   controller: SplitFlapMotionController
   detailed?: boolean
   highlighted: boolean
-  tuning: CellTuning
+  className?: string
 }) {
   const { index } = cell
   const [css3dMotion, setCss3dMotion] = useState(false)
@@ -191,8 +191,8 @@ const FlapCell = memo(function FlapCell({
     return controller.subscribeCssCassette(index, setCss3dMotion)
   }, [controller, detailed, index])
 
-  const highlightFacePercent = highlighted ? Math.round(tuning.highlightFaceStrength * 100) : 0
-  const highlightGlyphPercent = highlighted ? Math.round(tuning.highlightGlyphStrength * 100) : 0
+  const highlightFacePercent = highlighted ? 12 : 0
+  const highlightGlyphPercent = highlighted ? 70 : 0
   const topFaceColor = `color-mix(in srgb, ${splitFlapLook.topFaceColor} ${100 - highlightFacePercent}%, ${splitFlapLook.highlightFace} ${highlightFacePercent}%)`
   const bottomFaceColor = `color-mix(in srgb, ${splitFlapLook.bottomFaceColor} ${100 - highlightFacePercent}%, ${splitFlapLook.highlightFace} ${highlightFacePercent}%)`
   const glyphColorsForVariant = (variant: SplitFlapVariant) => {
@@ -216,24 +216,22 @@ const FlapCell = memo(function FlapCell({
   const glyphColor = variantGlyphColors.white.top
   const bottomGlyphColor = variantGlyphColors.white.bottom
   const variantGlyphStyle = {
-    '--split-flap-glyph-orange-bottom': variantGlyphColors.orange.bottom,
-    '--split-flap-glyph-orange-top': variantGlyphColors.orange.top,
-    '--split-flap-glyph-yellow-bottom': variantGlyphColors.yellow.bottom,
-    '--split-flap-glyph-yellow-top': variantGlyphColors.yellow.top,
-    '--split-flap-glyph-white-bottom': variantGlyphColors.white.bottom,
-    '--split-flap-glyph-white-top': variantGlyphColors.white.top,
+    '--flapkit-glyph-orange-bottom': variantGlyphColors.orange.bottom,
+    '--flapkit-glyph-orange-top': variantGlyphColors.orange.top,
+    '--flapkit-glyph-yellow-bottom': variantGlyphColors.yellow.bottom,
+    '--flapkit-glyph-yellow-top': variantGlyphColors.yellow.top,
+    '--flapkit-glyph-white-bottom': variantGlyphColors.white.bottom,
+    '--flapkit-glyph-white-top': variantGlyphColors.white.top,
   } as CSSProperties
   const glyphStyle = {
-    fontSize: splitFlapLook.glyphSize,
-    letterSpacing: splitFlapLook.glyphTracking,
     opacity: splitFlapLook.glyphOpacity,
     transformOrigin: '50% 0%',
     width: `calc(${cell.span} * 10cqw)`,
   }
-  const wearStrength = Math.min(tuning.patinaStrength, 2)
-  const wearVariation = tuning.leafVariation ? tuning.leafWearVariation : 0
-  const brightnessVariation = tuning.leafVariation ? tuning.leafBrightnessVariation : 0
-  const spareLeafCount = Math.max(2, Math.min(3, Math.round(tuning.spareLeafCount)))
+  const wearStrength = 0.8
+  const wearVariation = 0.65
+  const brightnessVariation = splitFlapLeafBrightnessVariation
+  const spareLeafCount = splitFlapSpareLeafCount
   const topWearNoise = signedLeafNoise(index, 17)
   const bottomWearNoise = signedLeafNoise(index, 43)
   const topWearStrength = Math.max(
@@ -275,33 +273,24 @@ const FlapCell = memo(function FlapCell({
     `${bottomScratchImage}, ` +
     `radial-gradient(ellipse 72% 46% at ${bottomMottleX}% ${bottomMottleY}%, rgba(0, 0, 0, ${0.03 * bottomWearStrength}) 0%, transparent 74%), ` +
     splitFlapLook.bottomFaceSurface
-  const cavityGeometryDepth = 0.52 * tuning.cavityDepth
+  const cavityGeometryDepth = 0.52
   const seamBackground =
     `linear-gradient(90deg, rgba(4 5 3 / calc(0.98 * ${splitFlapLook.seamOpacity})) 0%, ` +
     `rgba(9 10 7 / calc(0.94 * ${splitFlapLook.seamOpacity})) 38%, ` +
     `rgba(5 6 4 / ${splitFlapLook.seamOpacity}) 78%, ` +
     `rgba(3 4 3 / calc(0.97 * ${splitFlapLook.seamOpacity})) 100%)`
   const upperSeamShadow =
-    `linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, ${0.035 * tuning.seamShadow}) 42%, ` +
-    `rgba(0, 0, 0, ${0.13 * tuning.seamShadow}) 100%)`
+    'linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.035) 42%, rgba(0, 0, 0, 0.13) 100%)'
   const lowerSeamShadow =
-    `linear-gradient(180deg, rgba(0, 0, 0, ${0.24 * tuning.seamShadow}) 0%, ` +
-    `rgba(0, 0, 0, ${0.06 * tuning.seamShadow}) 34%, ` +
-    `rgba(179, 173, 137, ${0.025 * tuning.seamShadow}) 62%, transparent 100%)`
+    'linear-gradient(180deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0.06) 34%, rgba(179, 173, 137, 0.025) 62%, transparent 100%)'
   const seamContactShadow =
-    `0.03cqw 0.08cqw 0.14cqw rgba(0, 0, 0, ${0.24 * tuning.seamShadow}), ` +
-    `0 -0.03cqw 0.07cqw rgba(0, 0, 0, ${0.13 * tuning.seamShadow})`
+    '0.03cqw 0.08cqw 0.14cqw rgba(0, 0, 0, 0.24), 0 -0.03cqw 0.07cqw rgba(0, 0, 0, 0.13)'
   const halfSeamThickness = `calc(${splitFlapLook.seamThickness} / 2)`
   const activeLeafReveal = activeLeafClearance + spareLeafStep * Math.max(0, spareLeafCount - 1)
-  const activeBottomInset = tuning.stackedEdges
-    ? `calc(${splitFlapLook.faceInsetY} + ${activeLeafReveal}cqw)`
-    : splitFlapLook.faceInsetY
-  const stackedCoverShadowOpacity = Math.min(0.28 * tuning.stackedTopShadow, 0.46)
-  const bottomFaceBoxShadow = tuning.stackedEdges
-    ? `${splitFlapLook.bottomFaceShadow}, 0 ${0.1 * tuning.stackedTopShadow}cqw ${0.16 * tuning.stackedTopShadow}cqw rgba(0, 0, 0, ${stackedCoverShadowOpacity}), 0 -0.09cqw 0 rgba(190, 182, 143, 0.12) inset`
-    : splitFlapLook.bottomFaceShadow
-  const spareLeafShadowOpacity = Math.min(0.42 * tuning.stackedTopShadow, 0.62)
-  const spareLeafVariation = tuning.leafVariation ? 1 : 0
+  const activeBottomInset = `calc(${splitFlapLook.faceInsetY} + ${activeLeafReveal}cqw)`
+  const bottomFaceBoxShadow = `${splitFlapLook.bottomFaceShadow}, 0 0.2cqw 0.32cqw rgba(0, 0, 0, 0.46), 0 -0.09cqw 0 rgba(190, 182, 143, 0.12) inset`
+  const spareLeafShadowOpacity = 0.62
+  const spareLeafVariation = 1
   const spareLeafRevealScale = 1 + signedLeafNoise(index, 181) * 0.14 * spareLeafVariation
   const spareLeafGroupX = signedLeafNoise(index, 187) * 0.035 * spareLeafVariation
   const spareLeaves = spareLeafXOffsets.slice(0, spareLeafCount).map((baseXOffset, leafIndex) => {
@@ -327,8 +316,8 @@ const FlapCell = memo(function FlapCell({
         (spareLeafRevealScale +
           signedLeafNoise(index, 277 + leafIndex * 31) * 0.035 * spareLeafVariation),
       boxShadow:
-        `0 ${0.045 * tuning.stackedTopShadow * shadowStrength}cqw ` +
-        `${0.065 * tuning.stackedTopShadow * shadowStrength}cqw ` +
+        `0 ${0.09 * shadowStrength}cqw ` +
+        `${0.13 * shadowStrength}cqw ` +
         `rgba(0, 0, 0, ${Math.min(0.72, spareLeafShadowOpacity * shadowStrength)}), ` +
         `0 -0.2cqw 0 rgba(190, 182, 143, ${0.18 * edgeStrength}) inset`,
       brightness,
@@ -348,17 +337,17 @@ const FlapCell = memo(function FlapCell({
         signedLeafNoise(index, 331 + leafIndex * 41) * 0.025 * spareLeafVariation,
     }
   })
-  const sideShadowStrength = Math.max(0, tuning.stackedSideShadow)
+  const sideShadowStrength = 2
   const sideShadowStop = (wall: number, extent: number) =>
     (wall + (extent - wall) * sideShadowStrength).toFixed(3)
-  const bezelTopShadowOpacity = Math.min(0.62 * tuning.stackedTopShadow, 0.86)
+  const bezelTopShadowOpacity = 0.86
   const cassetteBezelBackground =
     `linear-gradient(90deg, rgba(82, 83, 68, 0.5) 0, rgba(5, 6, 4, 0.96) 0.06cqw, ` +
     `rgba(0, 0, 0, 0.42) ${sideShadowStop(0.06, 0.14)}cqw, transparent ${sideShadowStop(0.06, 0.3)}cqw), ` +
     `linear-gradient(270deg, rgba(72, 73, 60, 0.44) 0, rgba(5, 6, 4, 0.94) 0.06cqw, ` +
     `rgba(0, 0, 0, 0.36) ${sideShadowStop(0.06, 0.14)}cqw, transparent ${sideShadowStop(0.06, 0.28)}cqw), ` +
     `linear-gradient(180deg, rgba(4, 5, 3, ${bezelTopShadowOpacity}) 0, ` +
-    `transparent ${0.22 * tuning.stackedTopShadow}cqw), ` +
+    'transparent 0.44cqw), ' +
     'linear-gradient(0deg, rgba(3, 4, 2, 0.88) 0, transparent 0.18cqw)'
   const compactBrightnessLayer = (brightness: number) => {
     const difference = Math.abs(brightness - 1)
@@ -368,40 +357,36 @@ const FlapCell = memo(function FlapCell({
     return `linear-gradient(rgba(${channel}, ${opacity}), rgba(${channel}, ${opacity}))`
   }
   const compactTopFaceBackground = [
-    `linear-gradient(180deg, transparent 0%, transparent calc(50% - ${0.5 + tuning.seamShadow * 0.04}cqw), rgba(0, 0, 0, ${0.1 + tuning.seamShadow * 0.08}) 50%, transparent 50%)`,
+    'linear-gradient(180deg, transparent 0%, transparent calc(50% - 0.54cqw), rgba(0, 0, 0, 0.18) 50%, transparent 50%)',
     compactBrightnessLayer(topBrightness),
     topFaceBackground,
   ].join(', ')
   const compactBottomFaceBackground = [
-    `linear-gradient(180deg, transparent 0%, transparent 50%, rgba(0, 0, 0, ${0.2 + tuning.seamShadow * 0.11}) 50%, transparent calc(50% + ${0.38 + tuning.seamShadow * 0.04}cqw), transparent 100%)`,
+    'linear-gradient(180deg, transparent 0%, transparent 50%, rgba(0, 0, 0, 0.31) 50%, transparent calc(50% + 0.42cqw), transparent 100%)',
     compactBrightnessLayer(bottomBrightness),
     bottomFaceBackground,
   ].join(', ')
   const compactGlyphCarrierStyle = (color: string, lower: boolean, top: string) =>
     ({
       '--compact-glyph-fallback-color': color,
-      '--compact-glyph-font-size': splitFlapLook.glyphSize,
       '--compact-glyph-margin-left': `${glyphOffsetValue}cqw`,
       '--compact-glyph-opacity': splitFlapLook.glyphOpacity,
       '--compact-glyph-top': top,
-      '--compact-glyph-tracking': splitFlapLook.glyphTracking,
       '--compact-glyph-transform': `translateX(-50%)${lower ? ` translateX(${lowerGlyphXOffset}cqw)` : ''} scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
       '--wide-glyph-transform': `${lower ? `translateX(${lowerGlyphXOffset}cqw) ` : ''}scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
       '--compact-glyph-width': `calc(${cell.span} * 10cqw)`,
     }) as CSSProperties
-  const compactSpareLeafLayers = tuning.stackedEdges
-    ? [...spareLeaves]
-        .reverse()
-        .map(({ bottomOffset, brightness, edgeMix, shadowOpacity, xOffset }) => {
-          const darkness = Math.min(28, Math.max(0, (1 - brightness) * 100))
-          const upperColor = `color-mix(in srgb, #24251e ${100 - darkness}%, black)`
-          const middleColor = `color-mix(in srgb, #171812 ${100 - darkness}%, black)`
-          const lowerColor = `color-mix(in srgb, #090a07 ${100 - darkness}%, black)`
-          const edgeColor = `color-mix(in srgb, #585644 ${edgeMix}%, black)`
+  const compactSpareLeafLayers = [...spareLeaves]
+    .reverse()
+    .map(({ bottomOffset, brightness, edgeMix, shadowOpacity, xOffset }) => {
+      const darkness = Math.min(28, Math.max(0, (1 - brightness) * 100))
+      const upperColor = `color-mix(in srgb, #24251e ${100 - darkness}%, black)`
+      const middleColor = `color-mix(in srgb, #171812 ${100 - darkness}%, black)`
+      const lowerColor = `color-mix(in srgb, #090a07 ${100 - darkness}%, black)`
+      const edgeColor = `color-mix(in srgb, #585644 ${edgeMix}%, black)`
 
-          return `linear-gradient(180deg, ${upperColor} 0%, ${middleColor} 86%, ${edgeColor} 91%, ${edgeColor} 93%, ${lowerColor} 96%, rgba(0, 0, 0, ${shadowOpacity}) 100%) calc(50% + ${xOffset}cqw) calc(100% - ${splitFlapLook.faceInsetY} - ${bottomOffset}cqw) / calc(100% - ${splitFlapLook.faceInsetX} - ${splitFlapLook.faceInsetX} + 0.12cqw) calc(50% - ${splitFlapLook.faceInsetY}) no-repeat`
-        })
-    : []
+      return `linear-gradient(180deg, ${upperColor} 0%, ${middleColor} 86%, ${edgeColor} 91%, ${edgeColor} 93%, ${lowerColor} 96%, rgba(0, 0, 0, ${shadowOpacity}) 100%) calc(50% + ${xOffset}cqw) calc(100% - ${splitFlapLook.faceInsetY} - ${bottomOffset}cqw) / calc(100% - ${splitFlapLook.faceInsetX} - ${splitFlapLook.faceInsetX} + 0.12cqw) calc(50% - ${splitFlapLook.faceInsetY}) no-repeat`
+    })
   const compactCavityBackground = [
     ...compactSpareLeafLayers,
     `linear-gradient(180deg, rgba(41, 40, 37, 0.74) 0%, rgba(18, 17, 16, 0.96) 54%, rgba(5, 5, 5, 0.98) 100%) top / 100% ${cavityGeometryDepth}cqw no-repeat`,
@@ -460,13 +445,13 @@ const FlapCell = memo(function FlapCell({
       root: rootRef.current,
       spareLeafPack,
     })
-  }, [controller, css3dMotion, detailed, index, tuning.stackedEdges])
+  }, [controller, css3dMotion, detailed, index])
 
   if (!detailed) {
     return (
       <span
         ref={rootRef}
-        {...stylex.props(styles.cassette, styles.compactCassette)}
+        {...classProps(styles.cassette, styles.compactCassette, className)}
         aria-hidden="true"
         data-slot="cassette"
         data-split-flap-cassette
@@ -483,12 +468,12 @@ const FlapCell = memo(function FlapCell({
       >
         <span
           ref={compactCellRef}
-          {...stylex.props(styles.cell, styles.compactCell)}
+          {...classProps(styles.cell, styles.compactCell)}
           data-slot="cassette-base"
           style={
             {
               '--compact-bezel-background': cassetteBezelBackground,
-              '--compact-bezel-opacity': tuning.stackedEdges ? tuning.stackedEdgeOpacity : 0,
+              '--compact-bezel-opacity': 0.92,
               '--compact-motion-shadow-opacity': 0,
               '--compact-motion-shadow-transform': 'translate3d(0, 0, 0) scaleY(0.45)',
               background: compactCavityBackground,
@@ -499,13 +484,16 @@ const FlapCell = memo(function FlapCell({
         >
           <span
             ref={outgoingLowerRef}
-            {...stylex.props(
+            {...classProps(
               styles.compactGlyphCarrier,
               styles.compactStaticFace,
               styles.compactStaticBottom,
               cell.span === 2 && styles.compactWideGlyphCarrier,
             )}
+            data-part="face"
             data-glyph=""
+            data-face-half="lower"
+            data-face-state="stationary"
             data-slot="stationary-lower"
             data-split-flap-compact-glyph
             data-split-flap-wide-glyph={cell.span === 2 || undefined}
@@ -527,13 +515,16 @@ const FlapCell = memo(function FlapCell({
           </span>
           <span
             ref={arrivingUpperRef}
-            {...stylex.props(
+            {...classProps(
               styles.compactGlyphCarrier,
               styles.compactStaticFace,
               styles.compactStaticTop,
               cell.span === 2 && styles.compactWideGlyphCarrier,
             )}
+            data-part="face"
             data-glyph=""
+            data-face-half="upper"
+            data-face-state="stationary"
             data-slot="stationary-upper"
             data-split-flap-compact-glyph
             data-split-flap-wide-glyph={cell.span === 2 || undefined}
@@ -558,7 +549,7 @@ const FlapCell = memo(function FlapCell({
             <>
               <span
                 ref={compactMovingStackRef}
-                {...stylex.props(styles.compactMovingStack)}
+                {...classProps(styles.compactMovingStack)}
                 data-slot="moving-spare-leaves"
                 style={{
                   background: compactMovingStackBackground,
@@ -567,18 +558,21 @@ const FlapCell = memo(function FlapCell({
               />
               <span
                 ref={movingVaneRef}
-                {...stylex.props(styles.movingVane, styles.compactMovingVane)}
+                {...classProps(styles.movingVane, styles.compactMovingVane)}
                 data-slot="moving-leaf"
               >
                 <span
                   ref={movingFrontGlyphRef}
-                  {...stylex.props(
+                  {...classProps(
                     styles.compactGlyphCarrier,
                     styles.movingVaneFace,
                     styles.compactMovingVaneFace,
                     cell.span === 2 && styles.compactWideGlyphCarrier,
                   )}
+                  data-part="face"
                   data-glyph=""
+                  data-face-half="upper"
+                  data-face-state="moving"
                   data-slot="moving-leaf-front"
                   data-split-flap-compact-glyph
                   data-split-flap-wide-glyph={cell.span === 2 || undefined}
@@ -598,13 +592,16 @@ const FlapCell = memo(function FlapCell({
                 </span>
                 <span
                   ref={movingBackGlyphRef}
-                  {...stylex.props(
+                  {...classProps(
                     styles.compactGlyphCarrier,
                     styles.movingVaneFace,
                     styles.compactMovingVaneFace,
                     cell.span === 2 && styles.compactWideGlyphCarrier,
                   )}
+                  data-part="face"
                   data-glyph=""
+                  data-face-half="lower"
+                  data-face-state="moving"
                   data-slot="moving-leaf-back"
                   data-split-flap-compact-glyph
                   data-split-flap-wide-glyph={cell.span === 2 || undefined}
@@ -634,7 +631,7 @@ const FlapCell = memo(function FlapCell({
   return (
     <span
       ref={rootRef}
-      {...stylex.props(styles.cassette)}
+      {...classProps(styles.cassette, className)}
       aria-hidden="true"
       data-slot="cassette"
       data-split-flap-cassette
@@ -644,75 +641,77 @@ const FlapCell = memo(function FlapCell({
       style={variantGlyphStyle}
     >
       <span
-        {...stylex.props(styles.cell)}
+        {...classProps(styles.cell)}
         data-slot="cassette-base"
         style={{
           backgroundColor: splitFlapLook.cavityColor,
           boxShadow: splitFlapLook.cavityShadow,
         }}
       >
-        <span {...stylex.props(styles.cellScene)} data-slot="leaf-pack">
+        <span {...classProps(styles.cellScene)} data-slot="leaf-pack">
           <span
-            {...stylex.props(styles.cavityBackPlane)}
+            {...classProps(styles.cavityBackPlane)}
             style={{ transform: `translateZ(-${cavityGeometryDepth}cqw)` }}
           />
           <span
-            {...stylex.props(styles.cavityWall, styles.cavityWallTop)}
+            {...classProps(styles.cavityWall, styles.cavityWallTop)}
             style={{ height: `${cavityGeometryDepth}cqw` }}
           />
           <span
-            {...stylex.props(styles.cavityWall, styles.cavityWallRight)}
+            {...classProps(styles.cavityWall, styles.cavityWallRight)}
             style={{ width: `${cavityGeometryDepth}cqw` }}
           />
           <span
-            {...stylex.props(styles.cavityWall, styles.cavityWallBottom)}
+            {...classProps(styles.cavityWall, styles.cavityWallBottom)}
             style={{ height: `${cavityGeometryDepth}cqw` }}
           />
           <span
-            {...stylex.props(styles.cavityWall, styles.cavityWallLeft)}
+            {...classProps(styles.cavityWall, styles.cavityWallLeft)}
             style={{ width: `${cavityGeometryDepth}cqw` }}
           />
-          {tuning.stackedEdges && (
+          <span
+            ref={spareLeafPackRef}
+            {...classProps(styles.spareLeafPack)}
+            style={{
+              opacity: 0.92,
+              transform: `translate3d(0, var(${stackShiftProperty}, 0px), 0)`,
+            }}
+          >
+            {spareLeaves.map(
+              ({
+                bottomOffset,
+                boxShadow,
+                brightness,
+                edgeMix,
+                leafIndex,
+                saturation,
+                xOffset,
+              }) => (
+                <span
+                  key={leafIndex}
+                  {...classProps(styles.spareLeafPlate)}
+                  style={{
+                    bottom: `calc(${splitFlapLook.faceInsetY} + ${bottomOffset}cqw)`,
+                    boxShadow,
+                    backgroundImage: `linear-gradient(180deg, #24251e 0%, #1a1b16 68%, #0b0c09 91%, color-mix(in srgb, #585644 ${edgeMix}%, black) 95.5%, #151610 98%, #080906 100%)`,
+                    filter: `brightness(${brightness.toFixed(3)}) saturate(${saturation.toFixed(3)})`,
+                    height: `calc(50% - ${splitFlapLook.faceInsetY})`,
+                    left: `calc(${splitFlapLook.faceInsetX} - 0.06cqw)`,
+                    right: `calc(${splitFlapLook.faceInsetX} - 0.06cqw)`,
+                    transform: `translateX(${xOffset}cqw)`,
+                    zIndex: leafIndex + 1,
+                  }}
+                />
+              ),
+            )}
+          </span>
+          <span ref={outgoingLowerRef} {...classProps(styles.faceLayer, styles.outgoingLower)}>
             <span
-              ref={spareLeafPackRef}
-              {...stylex.props(styles.spareLeafPack)}
-              style={{
-                opacity: tuning.stackedEdgeOpacity,
-                transform: `translate3d(0, var(${stackShiftProperty}, 0px), 0)`,
-              }}
-            >
-              {spareLeaves.map(
-                ({
-                  bottomOffset,
-                  boxShadow,
-                  brightness,
-                  edgeMix,
-                  leafIndex,
-                  saturation,
-                  xOffset,
-                }) => (
-                  <span
-                    key={leafIndex}
-                    {...stylex.props(styles.spareLeafPlate)}
-                    style={{
-                      bottom: `calc(${splitFlapLook.faceInsetY} + ${bottomOffset}cqw)`,
-                      boxShadow,
-                      backgroundImage: `linear-gradient(180deg, #24251e 0%, #1a1b16 68%, #0b0c09 91%, color-mix(in srgb, #585644 ${edgeMix}%, black) 95.5%, #151610 98%, #080906 100%)`,
-                      filter: `brightness(${brightness.toFixed(3)}) saturate(${saturation.toFixed(3)})`,
-                      height: `calc(50% - ${splitFlapLook.faceInsetY})`,
-                      left: `calc(${splitFlapLook.faceInsetX} - 0.06cqw)`,
-                      right: `calc(${splitFlapLook.faceInsetX} - 0.06cqw)`,
-                      transform: `translateX(${xOffset}cqw)`,
-                      zIndex: leafIndex + 1,
-                    }}
-                  />
-                ),
-              )}
-            </span>
-          )}
-          <span ref={outgoingLowerRef} {...stylex.props(styles.faceLayer, styles.outgoingLower)}>
-            <span
-              {...stylex.props(styles.face, styles.bottomFace)}
+              {...classProps(styles.face, styles.bottomFace)}
+              data-part="face"
+              data-face-half="lower"
+              data-face-state="stationary"
+              data-slot="face"
               style={{
                 backgroundColor: bottomFaceColor,
                 backgroundImage: bottomFaceBackground,
@@ -733,9 +732,13 @@ const FlapCell = memo(function FlapCell({
               wide={cell.span === 2}
             />
           </span>
-          <span ref={arrivingUpperRef} {...stylex.props(styles.faceLayer, styles.arrivingUpper)}>
+          <span ref={arrivingUpperRef} {...classProps(styles.faceLayer, styles.arrivingUpper)}>
             <span
-              {...stylex.props(styles.face, styles.topFace)}
+              {...classProps(styles.face, styles.topFace)}
+              data-part="face"
+              data-face-half="upper"
+              data-face-state="stationary"
+              data-slot="face"
               style={{
                 backgroundColor: topFaceColor,
                 backgroundImage: topFaceBackground,
@@ -757,13 +760,17 @@ const FlapCell = memo(function FlapCell({
               wide={cell.span === 2}
             />
           </span>
-          <span ref={movingVaneRef} {...stylex.props(styles.movingVane)} data-slot="moving-leaf">
+          <span ref={movingVaneRef} {...classProps(styles.movingVane)} data-slot="moving-leaf">
             <span
-              {...stylex.props(styles.movingVaneFace, styles.movingVaneFront)}
+              {...classProps(styles.movingVaneFace, styles.movingVaneFront)}
               style={{ transform: `translateZ(calc(${splitFlapLook.leafThickness} / 2))` }}
             >
               <span
-                {...stylex.props(styles.face, styles.topFace)}
+                {...classProps(styles.face, styles.topFace)}
+                data-part="face"
+                data-face-half="upper"
+                data-face-state="moving"
+                data-slot="face"
                 style={{
                   backgroundColor: topFaceColor,
                   backgroundImage: topFaceBackground,
@@ -786,13 +793,17 @@ const FlapCell = memo(function FlapCell({
               />
             </span>
             <span
-              {...stylex.props(styles.movingVaneFace, styles.movingVaneBack)}
+              {...classProps(styles.movingVaneFace, styles.movingVaneBack)}
               style={{
                 transform: `translateZ(calc(${splitFlapLook.leafThickness} / -2)) rotateX(180deg)`,
               }}
             >
               <span
-                {...stylex.props(styles.face, styles.bottomFace)}
+                {...classProps(styles.face, styles.bottomFace)}
+                data-part="face"
+                data-face-half="lower"
+                data-face-state="moving"
+                data-slot="face"
                 style={{
                   backgroundColor: bottomFaceColor,
                   backgroundImage: bottomFaceBackground,
@@ -813,7 +824,7 @@ const FlapCell = memo(function FlapCell({
                 wide={cell.span === 2}
               />
               <span
-                {...stylex.props(styles.movingVaneSpecular, styles.movingVaneBackSpecular)}
+                {...classProps(styles.movingVaneSpecular, styles.movingVaneBackSpecular)}
                 style={{
                   bottom: activeBottomInset,
                   height: `calc(50% - ${activeBottomInset})`,
@@ -824,7 +835,7 @@ const FlapCell = memo(function FlapCell({
               />
             </span>
             <span
-              {...stylex.props(styles.movingVaneEdge)}
+              {...classProps(styles.movingVaneEdge)}
               style={{
                 height: splitFlapLook.leafThickness,
                 left: splitFlapLook.faceInsetX,
@@ -833,7 +844,7 @@ const FlapCell = memo(function FlapCell({
               }}
             />
             <span
-              {...stylex.props(styles.movingVaneSide, styles.movingVaneSideLeft)}
+              {...classProps(styles.movingVaneSide, styles.movingVaneSideLeft)}
               style={{
                 height: `calc(50% - ${splitFlapLook.faceInsetY})`,
                 left: `calc(${splitFlapLook.faceInsetX} - ${splitFlapLook.leafThickness} / 2)`,
@@ -842,7 +853,7 @@ const FlapCell = memo(function FlapCell({
               }}
             />
             <span
-              {...stylex.props(styles.movingVaneSide, styles.movingVaneSideRight)}
+              {...classProps(styles.movingVaneSide, styles.movingVaneSideRight)}
               style={{
                 height: `calc(50% - ${splitFlapLook.faceInsetY})`,
                 right: `calc(${splitFlapLook.faceInsetX} - ${splitFlapLook.leafThickness} / 2)`,
@@ -853,24 +864,24 @@ const FlapCell = memo(function FlapCell({
           </span>
           <span
             ref={lowerMotionShadowRef}
-            {...stylex.props(styles.motionShadow, styles.lowerMotionShadow)}
+            {...classProps(styles.motionShadow, styles.lowerMotionShadow)}
           />
           <span
-            {...stylex.props(styles.upperSeamShadow)}
+            {...classProps(styles.upperSeamShadow)}
             style={{
               backgroundImage: upperSeamShadow,
               bottom: `calc(50% + ${halfSeamThickness})`,
             }}
           />
           <span
-            {...stylex.props(styles.lowerSeamShadow)}
+            {...classProps(styles.lowerSeamShadow)}
             style={{
               backgroundImage: lowerSeamShadow,
               top: `calc(50% + ${halfSeamThickness})`,
             }}
           />
           <span
-            {...stylex.props(styles.seam)}
+            {...classProps(styles.seam)}
             style={{
               backgroundColor: `rgba(7 8 6 / ${splitFlapLook.seamOpacity})`,
               backgroundImage: seamBackground,
@@ -882,50 +893,51 @@ const FlapCell = memo(function FlapCell({
             <WideRetainers />
           ) : (
             <>
-              <span {...stylex.props(styles.axle, styles.axleLeft)} />
-              <span {...stylex.props(styles.axle, styles.axleRight)} />
+              <span {...classProps(styles.axle, styles.axleLeft)} />
+              <span {...classProps(styles.axle, styles.axleRight)} />
             </>
           )}
-          {tuning.stackedEdges && (
-            <span
-              {...stylex.props(styles.cassetteBezel)}
-              style={{
-                backgroundImage: cassetteBezelBackground,
-                opacity: tuning.stackedEdgeOpacity,
-              }}
-            />
-          )}
+          <span
+            {...classProps(styles.cassetteBezel)}
+            style={{
+              backgroundImage: cassetteBezelBackground,
+              opacity: 0.92,
+            }}
+          />
         </span>
       </span>
-      <span {...stylex.props(styles.cassetteCover, styles.cassetteCoverTop)} data-slot="cover" />
-      <span {...stylex.props(styles.cassetteCover, styles.cassetteCoverRight)} data-slot="cover" />
-      <span {...stylex.props(styles.cassetteCover, styles.cassetteCoverBottom)} data-slot="cover" />
-      <span {...stylex.props(styles.cassetteCover, styles.cassetteCoverLeft)} data-slot="cover" />
+      <span {...classProps(styles.cassetteCover, styles.cassetteCoverTop)} data-slot="cover" />
+      <span {...classProps(styles.cassetteCover, styles.cassetteCoverRight)} data-slot="cover" />
+      <span {...classProps(styles.cassetteCover, styles.cassetteCoverBottom)} data-slot="cover" />
+      <span {...classProps(styles.cassetteCover, styles.cassetteCoverLeft)} data-slot="cover" />
     </span>
   )
 })
 
-export const SplitFlapBoardRow = memo(function SplitFlapBoardRow({
+export const BoardRow = memo(function BoardRow({
   columnGap,
   controller,
   groupGap,
   layout,
   rowIndex,
-  tuning,
+  presentation,
 }: {
   columnGap: number
   controller: SplitFlapMotionController
   groupGap: number
   layout: ResolvedSplitFlapSource
   rowIndex: number
-  tuning: CellTuning
+  presentation?: {
+    className?: string
+    groups: Array<{ className?: string; cells: Array<{ className?: string }> }>
+  }
 }) {
   const row = layout.rows[rowIndex]
   const columnTracks = splitFlapColumnTracks(layout)
 
   return (
     <div
-      {...stylex.props(styles.departureRow)}
+      {...classProps(styles.departureRow, presentation?.className)}
       data-split-flap-row
       data-split-flap-row-id={row.id}
       style={{
@@ -933,21 +945,21 @@ export const SplitFlapBoardRow = memo(function SplitFlapBoardRow({
         gridTemplateColumns: columnTracks,
       }}
     >
-      {layout.columns.map((column) => (
+      {layout.columns.map((column, columnIndex) => (
         <div
           key={column.id}
-          {...stylex.props(styles.departureGroup)}
+          {...classProps(styles.departureGroup, presentation?.groups[columnIndex]?.className)}
           data-split-flap-group={column.id}
         >
           <div
-            {...stylex.props(styles.departureGroupScaleContext)}
+            {...classProps(styles.departureGroupScaleContext)}
             data-split-flap-scale-context
             style={{
               width: `calc(${splitFlapReferenceTracks} * ${splitFlapLook.cellTrack})`,
             }}
           >
             <div
-              {...stylex.props(styles.departureGroupGrid)}
+              {...classProps(styles.departureGroupGrid)}
               style={{
                 columnGap: `${columnGap}cqw`,
                 gridTemplateColumns: `repeat(${column.cells}, minmax(0, 1fr))`,
@@ -963,7 +975,7 @@ export const SplitFlapBoardRow = memo(function SplitFlapBoardRow({
                     cell={cell}
                     controller={controller}
                     highlighted={Boolean(row.highlighted)}
-                    tuning={tuning}
+                    className={presentation?.groups[columnIndex]?.cells[cassetteIndex]?.className}
                   />
                 )
               })}

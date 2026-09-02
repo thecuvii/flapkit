@@ -1,12 +1,9 @@
-export {
-  defaultSplitFlapCascadeMotion,
-  SplitFlapCascade,
-  type SplitFlapCascadeMotion,
-} from '../split-flap.context'
 import type { MotionAdapter } from '../flapkit'
-import type { SplitFlapCascadeMotion } from '../split-flap.context'
+import type { SplitFlapCascadeMotion } from '../flapkit.context'
+
+export type CascadeOptions = Partial<SplitFlapCascadeMotion>
 
 /** Creates a Cascade motion adapter for Flapkit.Root. */
-export function cascade(options: Partial<SplitFlapCascadeMotion> = {}): MotionAdapter {
+export function cascade(options: CascadeOptions = {}): MotionAdapter {
   return { kind: 'cascade', options }
 }

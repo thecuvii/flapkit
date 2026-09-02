@@ -1,13 +1,16 @@
 'use client'
 
+// Runtime providers used by Flapkit motion adapters.
+
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { defaultSplitFlapMaterial, type SplitFlapMaterial } from './split-flap.material'
-import { SplitFlapMotionController, type MotionTuning } from './split-flap.runtime'
+import type { CompiledBoardPresentation } from './flapkit.structure'
+import { splitFlapSpecularStrength } from './flapkit.constants'
+import { SplitFlapMotionController, type MotionTuning } from './flapkit.runtime'
 import {
   resolveSplitFlapSource,
   type ResolvedSplitFlapSource,
   type SplitFlapSource,
-} from './split-flap.source'
+} from './flapkit.source'
 
 export type SplitFlapCascadeMotion = {
   cadenceVariationPct: number
@@ -48,8 +51,8 @@ export const defaultSplitFlapRiffleMotion: SplitFlapRiffleMotion = {
 type SplitFlapContextValue = {
   controller: SplitFlapMotionController
   layout: ResolvedSplitFlapSource
-  material: SplitFlapMaterial
   motion: MotionTuning
+  presentation: CompiledBoardPresentation
 }
 
 const SplitFlapContext = createContext<SplitFlapContextValue | null>(null)
@@ -68,27 +71,34 @@ export function useSplitFlapController() {
 
 function SplitFlapEffectProvider({
   children,
-  material: materialOverrides,
   motion,
+  presentation,
   source,
 }: {
   children: ReactNode
-  material?: Partial<SplitFlapMaterial>
   motion: MotionTuning
+  presentation?: CompiledBoardPresentation
   source: SplitFlapSource
 }) {
-  const material = useMemo(
-    () => ({ ...defaultSplitFlapMaterial, ...materialOverrides }),
-    [materialOverrides],
-  )
   const layout = useMemo(() => resolveSplitFlapSource(source), [source])
+  const emptyPresentation = useMemo<CompiledBoardPresentation>(
+    () => ({
+      rows: layout.rows.map(() => ({
+        groups: layout.columns.map((column) => ({
+          cells: Array.from({ length: column.cells }, () => ({})),
+        })),
+      })),
+    }),
+    [layout.columns, layout.rows],
+  )
+  const resolvedPresentation = presentation ?? emptyPresentation
 
   return (
     <SplitFlapRuntimeProvider
       key={layout.layoutKey}
       layout={layout}
-      material={material}
       motion={motion}
+      presentation={resolvedPresentation}
     >
       {children}
     </SplitFlapRuntimeProvider>
@@ -98,18 +108,18 @@ function SplitFlapEffectProvider({
 function SplitFlapRuntimeProvider({
   children,
   layout,
-  material,
   motion,
+  presentation,
 }: {
   children: ReactNode
   layout: ResolvedSplitFlapSource
-  material: SplitFlapMaterial
   motion: MotionTuning
+  presentation: CompiledBoardPresentation
 }) {
   const [controller] = useState(() => new SplitFlapMotionController(layout.cells))
 
   useEffect(() => {
-    controller.setMotion({ ...motion, specularStrength: material.specularStrength })
+    controller.setMotion({ ...motion, specularStrength: splitFlapSpecularStrength })
     let startFrame = 0
     let prepareFrame = 0
     let cancelled = false
@@ -128,7 +138,7 @@ function SplitFlapRuntimeProvider({
       cancelAnimationFrame(prepareFrame)
       cancelAnimationFrame(startFrame)
     }
-  }, [controller, layout.targetIndices, material.specularStrength, motion])
+  }, [controller, layout.targetIndices, motion])
 
   useEffect(() => () => controller.destroy(), [controller])
 
@@ -136,10 +146,10 @@ function SplitFlapRuntimeProvider({
     () => ({
       controller,
       layout,
-      material,
-      motion: { ...motion, specularStrength: material.specularStrength },
+      motion: { ...motion, specularStrength: splitFlapSpecularStrength },
+      presentation,
     }),
-    [controller, layout, material, motion],
+    [controller, layout, motion, presentation],
   )
 
   return <SplitFlapContext value={value}>{children}</SplitFlapContext>
@@ -147,16 +157,20 @@ function SplitFlapRuntimeProvider({
 
 type SplitFlapEffectProps = {
   children: ReactNode
-  material?: Partial<SplitFlapMaterial>
   source: SplitFlapSource
 }
 
-export function SplitFlapCascade({
+type SplitFlapPresentationProps = {
+  presentation?: CompiledBoardPresentation
+}
+
+function CascadeEffect({
   children,
-  material,
+  presentation,
   motion: motionOverrides,
   source,
-}: SplitFlapEffectProps & { motion?: Partial<SplitFlapCascadeMotion> }) {
+}: SplitFlapEffectProps &
+  SplitFlapPresentationProps & { motion?: Partial<SplitFlapCascadeMotion> }) {
   const motion = useMemo(
     () => ({ ...defaultSplitFlapCascadeMotion, ...motionOverrides }),
     [motionOverrides],
@@ -169,7 +183,7 @@ export function SplitFlapCascade({
       pitchMs: motion.pitchMs,
       reboundDeg: motion.finalReboundDeg,
       rowDelayMs: motion.rowDelayMs,
-      specularStrength: defaultSplitFlapMaterial.specularStrength,
+      specularStrength: splitFlapSpecularStrength,
       startSpreadMs: 0,
       variant: 'cascade',
       withinRowJitterMs: motion.withinRowJitterMs,
@@ -178,18 +192,19 @@ export function SplitFlapCascade({
   )
 
   return (
-    <SplitFlapEffectProvider material={material} motion={tuning} source={source}>
+    <SplitFlapEffectProvider presentation={presentation} motion={tuning} source={source}>
       {children}
     </SplitFlapEffectProvider>
   )
 }
 
-export function SplitFlapRiffle({
+function RiffleEffect({
   children,
-  material,
+  presentation,
   motion: motionOverrides,
   source,
-}: SplitFlapEffectProps & { motion?: Partial<SplitFlapRiffleMotion> }) {
+}: SplitFlapEffectProps &
+  SplitFlapPresentationProps & { motion?: Partial<SplitFlapRiffleMotion> }) {
   const motion = useMemo(
     () => ({ ...defaultSplitFlapRiffleMotion, ...motionOverrides }),
     [motionOverrides],
@@ -202,7 +217,7 @@ export function SplitFlapRiffle({
       pitchMs: motion.riffleMs,
       reboundDeg: motion.finalReboundDeg,
       rowDelayMs: 0,
-      specularStrength: defaultSplitFlapMaterial.specularStrength,
+      specularStrength: splitFlapSpecularStrength,
       startSpreadMs: motion.startSpreadMs,
       variant: 'riffle',
       withinRowJitterMs: 0,
@@ -211,8 +226,22 @@ export function SplitFlapRiffle({
   )
 
   return (
-    <SplitFlapEffectProvider material={material} motion={tuning} source={source}>
+    <SplitFlapEffectProvider presentation={presentation} motion={tuning} source={source}>
       {children}
     </SplitFlapEffectProvider>
   )
+}
+
+export function CascadeProvider(
+  props: SplitFlapEffectProps &
+    SplitFlapPresentationProps & { motion?: Partial<SplitFlapCascadeMotion> },
+) {
+  return <CascadeEffect {...props} />
+}
+
+export function RiffleProvider(
+  props: SplitFlapEffectProps &
+    SplitFlapPresentationProps & { motion?: Partial<SplitFlapRiffleMotion> },
+) {
+  return <RiffleEffect {...props} />
 }

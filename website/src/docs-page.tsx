@@ -1,9 +1,6 @@
-import * as stylex from '@stylexjs/stylex'
-import { createSplitFlapDeck, SplitFlapGrid, type SplitFlapSource } from '@thecuvii/flapkit'
-import { SplitFlapCascade } from '@thecuvii/flapkit/cascade'
-import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
-import { industrialWallLook } from '@thecuvii/flapkit/looks/industrial'
-import { SplitFlapRiffle } from '@thecuvii/flapkit/riffle'
+import * as Flapkit from '@thecuvii/flapkit'
+import { cascade } from '@thecuvii/flapkit/cascade'
+import { riffle } from '@thecuvii/flapkit/riffle'
 import { useState, type KeyboardEvent } from 'react'
 import type { HighlightedDocsCode } from './docs-code'
 
@@ -20,27 +17,35 @@ const navigation = [
   ['API', 'api'],
 ] as const
 
-const previewSource: SplitFlapSource = {
-  columns: [{ id: 'status', label: 'STATUS', cells: 8 }],
-  rows: [
-    { id: 'package', values: { status: 'FLAPKIT' } },
-    { id: 'state', values: { status: 'READY' } },
-  ],
+const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
+
+function cells(text: string, count: number, deck?: Flapkit.Deck) {
+  return Array.from({ length: count }, (_, index) => (
+    <Flapkit.Cell key={index} deck={deck}>
+      {Array.from(text)[index] ?? ' '}
+    </Flapkit.Cell>
+  ))
 }
 
-const unicodePreviewSource: SplitFlapSource = {
-  columns: [
-    {
-      id: 'local',
-      label: 'LOCAL',
-      cells: 4,
-      flapDeck: createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗'),
-    },
-  ],
-  rows: [
-    { id: 'primary', values: { local: '東京出発' } },
-    { id: 'secondary', values: { local: '大阪搭乗' } },
-  ],
+function PreviewGrid({ unicode = false }: { unicode?: boolean }) {
+  return (
+    <Flapkit.Grid
+      aria-label={unicode ? 'Unicode local service' : 'Flapkit ready status'}
+      className="flapkit-airport preview-board"
+    >
+      {unicode ? (
+        <>
+          <Flapkit.Row label="LOCAL">{cells('東京出発', 4, localDeck)}</Flapkit.Row>
+          <Flapkit.Row label="LOCAL">{cells('大阪搭乗', 4, localDeck)}</Flapkit.Row>
+        </>
+      ) : (
+        <>
+          <Flapkit.Row label="STATUS">{cells('FLAPKIT', 8)}</Flapkit.Row>
+          <Flapkit.Row label="STATUS">{cells('READY', 8)}</Flapkit.Row>
+        </>
+      )}
+    </Flapkit.Grid>
+  )
 }
 
 const usageTabs = [
@@ -80,18 +85,9 @@ function CodeBlock({ html }: { html: string }) {
 }
 
 function ComponentPreview() {
-  const lookProps = stylex.props(airportBoardLook)
-
   return (
     <div className="component-preview">
-      <div
-        {...lookProps}
-        className={[lookProps.className, 'preview-board'].filter(Boolean).join(' ')}
-      >
-        <SplitFlapRiffle source={previewSource}>
-          <SplitFlapGrid aria-label="Flapkit ready status" />
-        </SplitFlapRiffle>
-      </div>
+      <Flapkit.Root motion={riffle()}>{PreviewGrid({})}</Flapkit.Root>
     </div>
   )
 }
@@ -103,8 +99,6 @@ function UsagePreview({
   activeTab: UsageTab
   onTabChange: (tab: UsageTab) => void
 }) {
-  const airportProps = stylex.props(airportBoardLook)
-  const industrialProps = stylex.props(industrialWallLook)
   const moveTabFocus = (tab: UsageTab) => {
     onTabChange(tab)
     requestAnimationFrame(() =>
@@ -128,28 +122,21 @@ function UsagePreview({
     moveTabFocus(usageTabs[nextIndex]!.id)
   }
 
-  const preview =
-    activeTab === 'cascade' ? (
-      <div
-        {...industrialProps}
-        className={[industrialProps.className, 'preview-board'].filter(Boolean).join(' ')}
-      >
-        <SplitFlapCascade source={previewSource}>
-          <SplitFlapGrid aria-label="Cascade package status" />
-        </SplitFlapCascade>
-      </div>
-    ) : (
-      <div
-        {...airportProps}
-        className={[airportProps.className, 'preview-board'].filter(Boolean).join(' ')}
-      >
-        <SplitFlapRiffle source={activeTab === 'unicode' ? unicodePreviewSource : previewSource}>
-          <SplitFlapGrid
-            aria-label={activeTab === 'unicode' ? 'Unicode local service' : 'Riffle package status'}
-          />
-        </SplitFlapRiffle>
-      </div>
-    )
+  const preview = (
+    <Flapkit.Root motion={activeTab === 'cascade' ? cascade() : riffle()}>
+      {activeTab === 'cascade' ? (
+        <Flapkit.Grid
+          aria-label="Cascade package status"
+          className="flapkit-industrial preview-board"
+        >
+          <Flapkit.Row label="STATUS">{cells('FLAPKIT', 8)}</Flapkit.Row>
+          <Flapkit.Row label="STATUS">{cells('READY', 8)}</Flapkit.Row>
+        </Flapkit.Grid>
+      ) : (
+        PreviewGrid({ unicode: activeTab === 'unicode' })
+      )}
+    </Flapkit.Root>
+  )
 
   return (
     <div className="usage-demo">
@@ -219,11 +206,11 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
 
         <section id="installation" className="doc-section">
           <h2>Installation</h2>
-          <p>Install Flapkit with StyleX. React 19 and StyleX 0.19 are peer dependencies.</p>
+          <p>Install Flapkit. React 19 is a peer dependency.</p>
           <CodeBlock html={highlightedCode.installation} />
           <p>
-            Flapkit ships ESM and keeps StyleX authoring calls intact. Configure the StyleX plugin
-            to compile <code>@thecuvii/flapkit</code> with your application.
+            Import <code>@thecuvii/flapkit/flapkit.css</code> and one look stylesheet, such as{' '}
+            <code>@thecuvii/flapkit/looks/airport.css</code>, from your application.
           </p>
         </section>
 
@@ -252,7 +239,7 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
           <ul className="anatomy" aria-label="Flapkit component anatomy">
             <li>
               <code>Root</code>
-              <span>Motion, material, and optional sound</span>
+              <span>Motion and optional sound</span>
             </li>
             <li className="anatomy-depth-1">
               <code>Board</code>
@@ -295,8 +282,10 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
         <section id="customization" className="doc-section">
           <h2>Customization</h2>
           <p>
-            Import a tree-shakeable built-in look or create a StyleX theme from the public variable
-            contract.
+            Board, Row, Group, and Cell accept ordinary className values. Font family, weight, and
+            style inherit into glyphs; set responsive size directly on Cell. CSS classes and
+            Tailwind utilities work directly. Use stable anatomy selectors only for non-inheritable
+            surfaces such as faces.
           </p>
           <CodeBlock html={highlightedCode.customization} />
         </section>
@@ -317,7 +306,7 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
             whose resolved deck position changed.
           </p>
           <ul>
-            <li>Tree-shakeable motion engines and looks</li>
+            <li>Tree-shakeable motion engines and independently imported looks</li>
             <li>No runtime style injection</li>
             <li>Controlled cassette concurrency</li>
             <li>Canvas-assisted riffle rendering for dense boards</li>
@@ -330,8 +319,10 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
             <code>@thecuvii/flapkit</code>
             <code>@thecuvii/flapkit/riffle</code>
             <code>@thecuvii/flapkit/cascade</code>
-            <code>@thecuvii/flapkit/look</code>
             <code>@thecuvii/flapkit/sound</code>
+            <code>@thecuvii/flapkit/flapkit.css</code>
+            <code>@thecuvii/flapkit/looks/airport.css</code>
+            <code>@thecuvii/flapkit/looks/industrial.css</code>
           </div>
           <a className="readme-link" href="https://github.com/thecuvii/flapkit#readme">
             Full API reference on GitHub <span aria-hidden="true">↗</span>

@@ -1,12 +1,7 @@
 export {
-  SplitFlapBoard,
-  SplitFlapGrid,
-  type SplitFlapBoardProps,
-  type SplitFlapGridProps,
-} from './split-flap.board'
-export {
   Board,
   Cell,
+  Grid,
   Group,
   Header,
   Root,
@@ -14,6 +9,7 @@ export {
   WideCell,
   type BoardProps,
   type CellProps,
+  type GridProps,
   type GroupProps,
   type HeaderProps,
   type MotionAdapter,
@@ -23,25 +19,7 @@ export {
   type WideCellProps,
 } from './flapkit'
 export {
-  createSplitFlapDeck,
-  splitFlapGraphemes,
-  splitFlapCharacters,
-  splitFlapNumericCharacters,
-  splitFlapPunctuationCharacters,
-  splitFlapVariants,
-  type SplitFlapCassetteSpan,
-  type SplitFlapColumn,
-  type SplitFlapDeck,
-  type SplitFlapPosition,
-  type SplitFlapRow,
-  type SplitFlapSequence,
-  type SplitFlapSource,
-  type SplitFlapVariant,
-  type SplitFlapValue,
-} from './split-flap.source'
-export {
-  defaultSplitFlapMaterial,
-  splitFlapMaterialStyle,
-  type SplitFlapMaterial,
-  type SplitFlapStyle,
-} from './split-flap.material'
+  createSplitFlapDeck as createDeck,
+  type SplitFlapDeck as Deck,
+  type SplitFlapSequence as Sequence,
+} from './flapkit.source'

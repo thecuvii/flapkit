@@ -1,3 +1,4 @@
+// Declarative source model compiled from Flapkit compound components.
 export const splitFlapVariants = ['white', 'yellow', 'orange'] as const
 
 export type SplitFlapVariant = (typeof splitFlapVariants)[number]

@@ -1,14 +1,16 @@
 export const docsCode = {
   installation: {
-    code: 'pnpm add @thecuvii/flapkit @stylexjs/stylex',
+    code: 'pnpm add @thecuvii/flapkit',
     language: 'shell',
   },
   usageRiffle: {
     code: `import * as Flapkit from '@thecuvii/flapkit'
 import { riffle } from '@thecuvii/flapkit/riffle'
+import '@thecuvii/flapkit/flapkit.css'
+import '@thecuvii/flapkit/looks/airport.css'
 
 <Flapkit.Root motion={riffle()}>
-  <Flapkit.Board aria-label="Package status">
+  <Flapkit.Board aria-label="Package status" className="flapkit-airport">
     <Flapkit.Row label="STATUS">
       {[...'IN TRANSIT'].map((character, index) => (
         <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
@@ -21,9 +23,11 @@ import { riffle } from '@thecuvii/flapkit/riffle'
   usageCascade: {
     code: `import * as Flapkit from '@thecuvii/flapkit'
 import { cascade } from '@thecuvii/flapkit/cascade'
+import '@thecuvii/flapkit/flapkit.css'
+import '@thecuvii/flapkit/looks/airport.css'
 
 <Flapkit.Root motion={cascade()}>
-  <Flapkit.Board aria-label="Package status">
+  <Flapkit.Board aria-label="Package status" className="flapkit-airport">
     <Flapkit.Row label="STATUS">
       {[...'IN TRANSIT'].map((character, index) => (
         <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
@@ -36,11 +40,13 @@ import { cascade } from '@thecuvii/flapkit/cascade'
   usageUnicode: {
     code: `import * as Flapkit from '@thecuvii/flapkit'
 import { riffle } from '@thecuvii/flapkit/riffle'
+import '@thecuvii/flapkit/flapkit.css'
+import '@thecuvii/flapkit/looks/airport.css'
 
-const localDeck = Flapkit.createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗')
+const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 
 <Flapkit.Root motion={riffle()}>
-  <Flapkit.Board aria-label="Local service">
+  <Flapkit.Board aria-label="Local service" className="flapkit-airport">
     <Flapkit.Row deck={localDeck} label="LOCAL">
       {[...'東京出発'].map((character, index) => (
         <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
@@ -51,37 +57,31 @@ const localDeck = Flapkit.createSplitFlapDeck(' 東京大阪成田羽田出発�
     language: 'tsx',
   },
   composition: {
-    code: `import * as stylex from '@stylexjs/stylex'
-import * as Flapkit from '@thecuvii/flapkit'
+    code: `import * as Flapkit from '@thecuvii/flapkit'
 import { riffle } from '@thecuvii/flapkit/riffle'
-import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
+import '@thecuvii/flapkit/flapkit.css'
+import '@thecuvii/flapkit/looks/airport.css'
 
 export function Departures() {
   return (
-    <section {...stylex.props(airportBoardLook)}>
-      <Flapkit.Root motion={riffle()}>
-        <Flapkit.Board>
-          <Flapkit.Header>Departures</Flapkit.Header>
-          <Flapkit.Row label="STATUS">
-            <Flapkit.Cell>O</Flapkit.Cell>
-            <Flapkit.Cell>N</Flapkit.Cell>
-          </Flapkit.Row>
-        </Flapkit.Board>
-      </Flapkit.Root>
-    </section>
+    <Flapkit.Root motion={riffle()}>
+      <Flapkit.Board className="flapkit-airport departures-board">
+        <Flapkit.Header>Departures</Flapkit.Header>
+        <Flapkit.Row label="STATUS">
+          <Flapkit.Cell>O</Flapkit.Cell>
+          <Flapkit.Cell>N</Flapkit.Cell>
+        </Flapkit.Row>
+      </Flapkit.Board>
+    </Flapkit.Root>
   )
 }`,
     language: 'tsx',
   },
   customization: {
-    code: `import * as stylex from '@stylexjs/stylex'
-import { splitFlapLook } from '@thecuvii/flapkit/look'
-
-export const customLook = stylex.createTheme(splitFlapLook, {
-  glyphWhite: '#f5efe0',
-  topFaceColor: '#171918',
-  bottomFaceColor: '#111312',
-})`,
+    code: `<Flapkit.Row className="font-mono">
+  <Flapkit.Cell className="text-xl font-bold">A</Flapkit.Cell>
+</Flapkit.Row>
+`,
     language: 'tsx',
   },
   sound: {

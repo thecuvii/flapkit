@@ -1,45 +1,11 @@
-import * as stylex from '@stylexjs/stylex'
-import {
-  createSplitFlapDeck,
-  SplitFlapBoard,
-  SplitFlapGrid,
-  type SplitFlapSource,
-} from '@thecuvii/flapkit'
-import { SplitFlapCascade } from '@thecuvii/flapkit/cascade'
-import { airportBoardLook } from '@thecuvii/flapkit/looks/airport'
-import { industrialWallLook } from '@thecuvii/flapkit/looks/industrial'
-import { SplitFlapRiffle } from '@thecuvii/flapkit/riffle'
+import * as Flapkit from '@thecuvii/flapkit'
+import { cascade } from '@thecuvii/flapkit/cascade'
+import { riffle } from '@thecuvii/flapkit/riffle'
 import { useState, type ReactNode } from 'react'
 
-const columns: SplitFlapSource['columns'] = [
-  { id: 'status', label: 'STATUS', cells: 8 },
-  { id: 'gate', label: 'GATE', cells: 4 },
-]
-
-const unicodeColumns: SplitFlapSource['columns'] = [
-  {
-    id: 'local',
-    label: 'LOCAL',
-    cells: 2,
-    flapDeck: createSplitFlapDeck(' 東京大阪成田羽田出発到着搭乗'),
-  },
-]
-
-const cassetteComparisonColumns: SplitFlapSource['columns'] = [
-  {
-    id: 'double',
-    label: 'DOUBLE',
-    cells: 1,
-    cassetteSpan: 2,
-    flapDeck: createSplitFlapDeck(['  ', '14', '05', '55', '15', '30', '20']),
-  },
-  {
-    id: 'single',
-    label: 'SINGLE',
-    cells: 1,
-    flapDeck: createSplitFlapDeck(' 145302'),
-  },
-]
+const unicodeDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
+const wideDeck = Flapkit.createDeck(['  ', '14', '05', '55', '15', '30', '20'])
+const numericDeck = Flapkit.createDeck(' 145302')
 
 const presets = [
   { status: 'ON TIME', gate: 'A12' },
@@ -50,6 +16,23 @@ const presets = [
 
 const unicodePresets = ['東京', '大阪', '成田', '羽田'] as const
 const widePresets = ['55', '30', '14', '05'] as const
+
+function cells(text: string, count: number, deck?: Flapkit.Deck) {
+  return Array.from({ length: count }, (_, index) => (
+    <Flapkit.Cell key={index} deck={deck}>
+      {Array.from(text)[index] ?? ' '}
+    </Flapkit.Cell>
+  ))
+}
+
+function DepartureRow({ gate, status }: { gate: string; status: string }) {
+  return (
+    <>
+      <Flapkit.Group label="STATUS">{cells(status, 8)}</Flapkit.Group>
+      <Flapkit.Group label="GATE">{cells(gate, 4)}</Flapkit.Group>
+    </>
+  )
+}
 
 function Experiment({
   children,
@@ -80,29 +63,6 @@ export function ExperimentsPage() {
   const [presetIndex, setPresetIndex] = useState(0)
   const preset = presets[presetIndex]!
   const alternatePreset = presets[(presetIndex + 2) % presets.length]!
-  const source: SplitFlapSource = {
-    columns,
-    rows: [
-      { id: 'one', values: preset },
-      { id: 'two', values: alternatePreset },
-    ],
-  }
-  const unicodeSource: SplitFlapSource = {
-    columns: unicodeColumns,
-    rows: [{ id: 'local', values: { local: unicodePresets[presetIndex]! } }],
-  }
-  const cassetteComparisonSource: SplitFlapSource = {
-    columns: cassetteComparisonColumns,
-    rows: [
-      {
-        id: 'comparison',
-        values: {
-          double: widePresets[presetIndex]!,
-          single: widePresets[presetIndex]![0]!,
-        },
-      },
-    ],
-  }
 
   return (
     <main className="experiments-page">
@@ -128,11 +88,13 @@ export function ExperimentsPage() {
           title="Randomized rapid flipping"
           description="Canvas-assisted motion spreads starts across the board and stays lightweight on dense layouts."
         >
-          <div {...stylex.props(airportBoardLook)}>
-            <SplitFlapRiffle source={source}>
-              <SplitFlapBoard>Departures</SplitFlapBoard>
-            </SplitFlapRiffle>
-          </div>
+          <Flapkit.Root motion={riffle()}>
+            <Flapkit.Board className="flapkit-airport">
+              <Flapkit.Header>Departures</Flapkit.Header>
+              <Flapkit.Row id="one">{DepartureRow(preset)}</Flapkit.Row>
+              <Flapkit.Row id="two">{DepartureRow(alternatePreset)}</Flapkit.Row>
+            </Flapkit.Board>
+          </Flapkit.Root>
         </Experiment>
 
         <Experiment
@@ -140,11 +102,13 @@ export function ExperimentsPage() {
           title="Row-staggered 3D leaves"
           description="CSS 3D cassettes move in a controlled row cascade with per-cell cadence variation."
         >
-          <div {...stylex.props(industrialWallLook)}>
-            <SplitFlapCascade source={source}>
-              <SplitFlapBoard>Departures</SplitFlapBoard>
-            </SplitFlapCascade>
-          </div>
+          <Flapkit.Root motion={cascade()}>
+            <Flapkit.Board className="flapkit-industrial">
+              <Flapkit.Header>Departures</Flapkit.Header>
+              <Flapkit.Row id="one">{DepartureRow(preset)}</Flapkit.Row>
+              <Flapkit.Row id="two">{DepartureRow(alternatePreset)}</Flapkit.Row>
+            </Flapkit.Board>
+          </Flapkit.Root>
         </Experiment>
 
         <Experiment
@@ -153,14 +117,17 @@ export function ExperimentsPage() {
           description="Each CJK grapheme occupies one independently driven character cell with its own upper and lower leaves."
         >
           <div className="unicode-demo">
-            <div {...stylex.props(airportBoardLook)}>
-              <SplitFlapRiffle source={unicodeSource}>
-                <SplitFlapGrid
-                  aria-label="Two independent Unicode character cells"
-                  columnGap={2.4}
-                />
-              </SplitFlapRiffle>
-            </div>
+            <Flapkit.Root motion={riffle()}>
+              <Flapkit.Grid
+                aria-label="Two independent Unicode character cells"
+                className="flapkit-airport"
+                columnGap={2.4}
+              >
+                <Flapkit.Row label="LOCAL">
+                  {cells(unicodePresets[presetIndex]!, 2, unicodeDeck)}
+                </Flapkit.Row>
+              </Flapkit.Grid>
+            </Flapkit.Root>
             <div className="demo-labels" aria-hidden="true">
               <span>Cell 1</span>
               <span>Cell 2</span>
@@ -175,11 +142,21 @@ export function ExperimentsPage() {
           description="Each double-width cassette has one deck and one motion state while every leaf position carries two graphemes."
         >
           <div className="wide-demo">
-            <div {...stylex.props(airportBoardLook)}>
-              <SplitFlapRiffle source={cassetteComparisonSource}>
-                <SplitFlapGrid aria-label="One double-width and one single-width numeric cassette" />
-              </SplitFlapRiffle>
-            </div>
+            <Flapkit.Root motion={riffle()}>
+              <Flapkit.Grid
+                aria-label="One double-width and one single-width numeric cassette"
+                className="flapkit-airport"
+              >
+                <Flapkit.Row>
+                  <Flapkit.Group label="DOUBLE" deck={wideDeck}>
+                    <Flapkit.WideCell>{widePresets[presetIndex]!}</Flapkit.WideCell>
+                  </Flapkit.Group>
+                  <Flapkit.Group label="SINGLE" deck={numericDeck}>
+                    <Flapkit.Cell>{widePresets[presetIndex]![0]!}</Flapkit.Cell>
+                  </Flapkit.Group>
+                </Flapkit.Row>
+              </Flapkit.Grid>
+            </Flapkit.Root>
             <div className="cassette-demo-labels" aria-hidden="true">
               <span>Double-width</span>
               <span>Single-width</span>

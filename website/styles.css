@@ -545,17 +545,17 @@ h2 {
   padding-block: 22px 8px;
 }
 
-.unicode-demo > div:first-child,
-.wide-demo > div:first-child {
+.unicode-demo > .flapkit-standalone-grid,
+.wide-demo > .flapkit-standalone-grid {
   margin-block: 72px;
   transform-origin: center;
 }
 
-.unicode-demo > div:first-child {
+.unicode-demo > .flapkit-standalone-grid {
   transform: scale(5);
 }
 
-.wide-demo > div:first-child {
+.wide-demo > .flapkit-standalone-grid {
   transform: scale(4.8);
 }
 

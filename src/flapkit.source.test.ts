@@ -9,7 +9,7 @@ import {
   splitFlapPunctuationCharacters,
   type SplitFlapColumn,
   type SplitFlapSource,
-} from './split-flap.source'
+} from './flapkit.source'
 
 function sourceFor(
   column: SplitFlapColumn,
@@ -21,7 +21,7 @@ function sourceFor(
   }
 }
 
-describe('split-flap source resolution', () => {
+describe('Flapkit source resolution', () => {
   it.each([
     ['alphanumeric', splitFlapCharacters, 'A'],
     ['numeric', splitFlapNumericCharacters, '7'],

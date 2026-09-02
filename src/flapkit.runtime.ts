@@ -3,20 +3,21 @@ import {
   type ResolvedSplitFlapCell,
   type SplitFlapPosition,
   type SplitFlapVariant,
-} from './split-flap.source'
+} from './flapkit.source'
+// Motion controller shared by the Riffle and Cascade adapters.
 import type {
   SplitFlapMechanicalEvent,
   SplitFlapMechanicalEventSource,
-} from './split-flap.sound-engine'
+} from './flapkit.sound-engine'
 
 export type SplitFlapMotionVariant = 'riffle' | 'cascade'
 
 const cssMotionPrewarmMs = 17
 const mechanicalSoundLookaheadMs = 60
 const mechanicalSoundMaxLatenessMs = 34
-export const specularProperty = '--split-flap-specular'
-export const stackShiftProperty = '--split-flap-stack-shift'
-export const activeGlyphColorProperty = '--split-flap-active-glyph-color'
+export const specularProperty = '--flapkit-specular'
+export const stackShiftProperty = '--flapkit-stack-shift'
+export const activeGlyphColorProperty = '--flapkit-active-glyph-color'
 let specularPropertyRegistered = false
 let stackShiftPropertyRegistered = false
 
@@ -205,7 +206,7 @@ function setGlyph(element: HTMLSpanElement, character: string) {
 }
 
 export function splitFlapVariantVariable(variant: SplitFlapVariant, lower: boolean) {
-  return `var(--split-flap-glyph-${variant}-${lower ? 'bottom' : 'top'})`
+  return `var(--flapkit-glyph-${variant}-${lower ? 'bottom' : 'top'})`
 }
 
 function setGlyphPosition(element: HTMLSpanElement, position: SplitFlapPosition, lower: boolean) {

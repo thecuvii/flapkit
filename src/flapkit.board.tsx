@@ -1,18 +1,18 @@
 'use client'
 
-import * as stylex from '@stylexjs/stylex'
+// Board and grid renderers for the Flapkit component model.
+
 import { memo, useId, type CSSProperties, type ReactNode } from 'react'
-import { SplitFlapMotionCanvas } from './split-flap.canvas'
-import { SplitFlapBoardRow } from './split-flap.cassette'
-import { useSplitFlap } from './split-flap.context'
-import { splitFlapLook } from './split-flap-look.stylex'
-import { splitFlapMaterialStyle, type SplitFlapStyle } from './split-flap.material'
-import type { ResolvedSplitFlapSource } from './split-flap.source'
-import { styles } from './split-flap.styles'
+import { MotionCanvas } from './flapkit.canvas'
+import { BoardRow } from './flapkit.cassette'
+import { classProps, styles } from './flapkit.classes'
+import { useSplitFlap } from './flapkit.context'
+import { cssValue } from './flapkit.css-values'
+import type { ResolvedSplitFlapSource } from './flapkit.source'
 
 function splitFlapColumnTracks(layout: ResolvedSplitFlapSource) {
   return layout.columns
-    .map((column) => `calc(${column.cells * column.cassetteSpan} * ${splitFlapLook.cellTrack})`)
+    .map((column) => `calc(${column.cells * column.cassetteSpan} * ${cssValue.cellTrack})`)
     .join(' ')
 }
 
@@ -23,7 +23,7 @@ const BoardGrain = memo(function BoardGrain({ opacity }: { opacity: number }) {
 
   return (
     <svg
-      {...stylex.props(styles.boardGrain)}
+      {...classProps(styles.boardGrain)}
       viewBox="0 0 820 315"
       preserveAspectRatio="none"
       aria-hidden="true"
@@ -60,7 +60,7 @@ const BoardGrain = memo(function BoardGrain({ opacity }: { opacity: number }) {
   )
 })
 
-export type SplitFlapBoardProps = {
+export type BoardViewProps = {
   'aria-label'?: string
   children?: ReactNode
   className?: string
@@ -69,16 +69,16 @@ export type SplitFlapBoardProps = {
   grainOpacity?: number
   rowGap?: number
   showColumnLabels?: boolean
-  style?: SplitFlapStyle
+  style?: CSSProperties
 }
 
-export type SplitFlapGridProps = {
+export type GridViewProps = {
   'aria-label'?: string
   className?: string
   columnGap?: number
   groupGap?: number
   rowGap?: number
-  style?: SplitFlapStyle
+  style?: CSSProperties
 }
 
 function splitFlapGridWidth(layout: ResolvedSplitFlapSource, groupGap: number) {
@@ -86,10 +86,10 @@ function splitFlapGridWidth(layout: ResolvedSplitFlapSource, groupGap: number) {
     (count, column) => count + column.cells * column.cassetteSpan,
     0,
   )
-  return `calc(${trackCount} * ${splitFlapLook.cellTrack} + ${Math.max(0, layout.columns.length - 1) * groupGap} * ${splitFlapLook.boardUnit})`
+  return `calc(${trackCount} * ${cssValue.cellTrack} + ${Math.max(0, layout.columns.length - 1) * groupGap} * ${cssValue.boardUnit})`
 }
 
-function SplitFlapGridContent({
+function GridContent({
   columnGap,
   groupGap,
   rowGap,
@@ -98,55 +98,44 @@ function SplitFlapGridContent({
   groupGap: number
   rowGap: number
 }) {
-  const { controller, layout, material, motion } = useSplitFlap()
-  const canvasGeometryKey = [
-    layout.layoutKey,
-    columnGap,
-    groupGap,
-    rowGap,
-    material.faceInsetX,
-    material.faceInsetY,
-    material.glyphSize,
-    material.glyphY,
-    material.spareLeafCount,
-    Number(material.stackedEdges),
-  ].join(':')
+  const { controller, layout, motion, presentation } = useSplitFlap()
+  const canvasGeometryKey = `${layout.layoutKey}:${columnGap}:${groupGap}:${rowGap}:${JSON.stringify(presentation)}`
 
   return (
     <div
-      {...stylex.props(styles.grid)}
+      {...classProps(styles.grid)}
       aria-hidden="true"
       style={{
         gridTemplateRows: `repeat(${layout.rows.length}, max-content)`,
-        rowGap: `calc(${rowGap} * ${splitFlapLook.boardUnit})`,
+        rowGap: `calc(${rowGap} * ${cssValue.boardUnit})`,
       }}
     >
       {layout.rows.map((row, rowIndex) => (
-        <SplitFlapBoardRow
+        <BoardRow
           key={row.id}
           columnGap={columnGap}
           controller={controller}
           groupGap={groupGap}
           layout={layout}
           rowIndex={rowIndex}
-          tuning={material}
+          presentation={presentation.rows[rowIndex]}
         />
       ))}
-      {motion.variant === 'riffle' && <SplitFlapMotionCanvas geometryKey={canvasGeometryKey} />}
+      {motion.variant === 'riffle' && <MotionCanvas geometryKey={canvasGeometryKey} />}
     </div>
   )
 }
 
-export function SplitFlapGrid({
+export function GridView({
   'aria-label': ariaLabel = 'Split-flap display grid',
   className,
   columnGap = 0.28,
   groupGap = 0.8,
   rowGap = 0.4,
   style,
-}: SplitFlapGridProps) {
-  const { layout, material } = useSplitFlap()
-  const gridProps = stylex.props(styles.standaloneGrid)
+}: GridViewProps) {
+  const { layout } = useSplitFlap()
+  const gridProps = classProps(styles.standaloneGrid)
 
   return (
     <figure
@@ -156,18 +145,17 @@ export function SplitFlapGrid({
       data-slot="split-flap-grid"
       style={
         {
-          ...splitFlapMaterialStyle(material),
           width: splitFlapGridWidth(layout, groupGap),
           ...style,
         } as CSSProperties
       }
     >
-      <SplitFlapGridContent columnGap={columnGap} groupGap={groupGap} rowGap={rowGap} />
+      <GridContent columnGap={columnGap} groupGap={groupGap} rowGap={rowGap} />
     </figure>
   )
 }
 
-export function SplitFlapBoard({
+export function BoardView({
   'aria-label': ariaLabel = 'Split-flap display board',
   children,
   className,
@@ -177,18 +165,18 @@ export function SplitFlapBoard({
   rowGap = 0.4,
   showColumnLabels = true,
   style,
-}: SplitFlapBoardProps) {
-  const { layout, material } = useSplitFlap()
+}: BoardViewProps) {
+  const { layout } = useSplitFlap()
   const hasHeader = children !== undefined && children !== null
   const headerHeight = hasHeader
     ? showColumnLabels
-      ? splitFlapLook.headerHeight
-      : splitFlapLook.titleOnlyHeaderHeight
+      ? cssValue.headerHeight
+      : cssValue.titleOnlyHeaderHeight
     : '0px'
   const columnTracks = splitFlapColumnTracks(layout)
-  const groupGapSize = `calc(${groupGap} * ${splitFlapLook.boardUnit})`
-  const boardWidth = `calc(${splitFlapLook.frameLeft} + ${splitFlapGridWidth(layout, groupGap)} + ${splitFlapLook.frameRight})`
-  const boardProps = stylex.props(styles.board)
+  const groupGapSize = `calc(${groupGap} * ${cssValue.boardUnit})`
+  const boardWidth = `calc(${cssValue.frameLeft} + ${splitFlapGridWidth(layout, groupGap)} + ${cssValue.frameRight})`
+  const boardProps = classProps(styles.board)
 
   return (
     <figure
@@ -196,31 +184,31 @@ export function SplitFlapBoard({
       aria-label={ariaLabel}
       className={[boardProps.className, className].filter(Boolean).join(' ')}
       data-slot="split-flap-board"
-      style={{ ...splitFlapMaterialStyle(material), ...style }}
+      style={style}
     >
       <div
-        {...stylex.props(styles.boardContent)}
+        {...classProps(styles.boardContent)}
         style={
           {
-            '--split-flap-header-height': headerHeight,
+            '--flapkit-rendered-header-height': headerHeight,
             width: boardWidth,
           } as CSSProperties
         }
       >
-        <span {...stylex.props(styles.outerRim)} aria-hidden="true" />
-        <span {...stylex.props(styles.innerRim)} aria-hidden="true" />
-        <span {...stylex.props(styles.boardSheen)} aria-hidden="true" />
+        <span {...classProps(styles.outerRim)} aria-hidden="true" />
+        <span {...classProps(styles.innerRim)} aria-hidden="true" />
+        <span {...classProps(styles.boardSheen)} aria-hidden="true" />
         <BoardGrain opacity={grainOpacity} />
         {hasHeader && (
-          <div {...stylex.props(styles.boardHeader)}>
+          <div {...classProps(styles.boardHeader)}>
             {children}
             {showColumnLabels && (
               <div
-                {...stylex.props(styles.boardColumnLabels)}
+                {...classProps(styles.boardColumnLabels)}
                 style={{ columnGap: groupGapSize, gridTemplateColumns: columnTracks }}
               >
                 {layout.columns.map((column) => (
-                  <span key={column.id} {...stylex.props(styles.boardColumnLabel)}>
+                  <span key={column.id} {...classProps(styles.boardColumnLabel)}>
                     {column.label}
                   </span>
                 ))}
@@ -228,7 +216,7 @@ export function SplitFlapBoard({
             )}
           </div>
         )}
-        <SplitFlapGridContent columnGap={columnGap} groupGap={groupGap} rowGap={rowGap} />
+        <GridContent columnGap={columnGap} groupGap={groupGap} rowGap={rowGap} />
       </div>
     </figure>
   )

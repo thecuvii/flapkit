@@ -1,14 +1,18 @@
 'use client'
 
-import * as stylex from '@stylexjs/stylex'
+// Canvas renderer used by the Riffle adapter.
+
 import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { useSplitFlap } from './split-flap.context'
+import { useSplitFlap } from './flapkit.context'
 import {
   glyphOffsetValues,
   lowerGlyphXOffset,
   spareLeafStep,
   spareLeafXOffsets,
-} from './split-flap.constants'
+  splitFlapLeafBrightnessVariation,
+  splitFlapLeafThickness,
+  splitFlapSpareLeafCount,
+} from './flapkit.constants'
 import {
   activeGlyphColorProperty,
   signedLeafNoise,
@@ -16,9 +20,9 @@ import {
   type SplitFlapCanvasRenderer,
   type MotionTuning,
   type SplitFlapRuntime,
-} from './split-flap.runtime'
-import { splitFlapGraphemes, splitFlapVariants, type SplitFlapVariant } from './split-flap.source'
-import { styles } from './split-flap.styles'
+} from './flapkit.runtime'
+import { classProps, styles } from './flapkit.classes'
+import { splitFlapGraphemes, splitFlapVariants, type SplitFlapVariant } from './flapkit.source'
 
 type CanvasCassetteGeometry = {
   baseline: number
@@ -45,6 +49,9 @@ type CanvasGlyphStyle = {
   family: string
   opacity: number
   size: number
+  stretch: CanvasFontStretch
+  style: string
+  variantCaps: CanvasFontVariantCaps
   weight: string
   width: number
 }
@@ -90,7 +97,10 @@ function getCanvasGlyphAtlas(
   const key = [
     fontSize.toFixed(3),
     glyphStyle.family,
+    glyphStyle.style,
     glyphStyle.weight,
+    glyphStyle.stretch,
+    glyphStyle.variantCaps,
     glyphStyle.width.toFixed(3),
     glyphStyle.opacity.toFixed(3),
     color,
@@ -114,7 +124,9 @@ function getCanvasGlyphAtlas(
 
   if (context) {
     context.scale(canvasGlyphAtlasPixelRatio, canvasGlyphAtlasPixelRatio)
-    context.font = `${glyphStyle.weight} ${fontSize}px ${glyphStyle.family}`
+    context.font = `${glyphStyle.style} ${glyphStyle.weight} ${fontSize}px ${glyphStyle.family}`
+    context.fontStretch = glyphStyle.stretch
+    context.fontVariantCaps = glyphStyle.variantCaps
     context.textAlign = 'center'
     context.textBaseline = 'alphabetic'
     context.fillStyle = color
@@ -362,12 +374,8 @@ function canvasGlyphScaleX(transform: string) {
   }
 }
 
-export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
-  geometryKey,
-}: {
-  geometryKey: string
-}) {
-  const { controller, layout, material: tuning } = useSplitFlap()
+export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geometryKey: string }) {
+  const { controller, layout, presentation } = useSplitFlap()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const staticCanvasRef = useRef<HTMLCanvasElement>(null)
   const staticGlyphIndicesRef = useRef(new Int16Array())
@@ -378,28 +386,17 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
   }, [layout])
   const cellVisualsKey = `${layout.layoutKey}:${layout.rows
     .map((row) => Number(Boolean(row.highlighted)))
-    .join('')}:${JSON.stringify(tuning)}`
+    .join('')}:${JSON.stringify(presentation)}`
   const cellVisuals = useMemo(
     () =>
       layout.cells.map((cell, index) => {
-        const highlighted = Boolean(layout.rows[cell.rowIndex]?.highlighted)
-        const highlightFacePercent = highlighted
-          ? Math.round(tuning.highlightFaceStrength * 100)
-          : 0
-        const highlightGlyphPercent = highlighted
-          ? Math.round(tuning.highlightGlyphStrength * 100)
-          : 0
-        const topFaceColor = `color-mix(in srgb, ${tuning.topFaceColor} ${100 - highlightFacePercent}%, ${tuning.highlightFaceColor} ${highlightFacePercent}%)`
-        const bottomFaceColor = `color-mix(in srgb, ${tuning.bottomFaceColor} ${100 - highlightFacePercent}%, ${tuning.highlightFaceColor} ${highlightFacePercent}%)`
+        const topFaceColor = '#282921'
+        const bottomFaceColor = '#25261e'
         const glyphColors = Object.fromEntries(
           splitFlapVariants.map((variant) => {
             const baseGlyphColor =
-              variant === 'orange'
-                ? tuning.orangeGlyphColor
-                : variant === 'yellow'
-                  ? tuning.yellowGlyphColor
-                  : tuning.whiteGlyphColor
-            const top = `color-mix(in srgb, ${baseGlyphColor} ${100 - highlightGlyphPercent}%, ${tuning.highlightGlyphColor} ${highlightGlyphPercent}%)`
+              variant === 'orange' ? '#cf9138' : variant === 'yellow' ? '#e4c22f' : '#e8e5d7'
+            const top = baseGlyphColor
             return [
               variant,
               {
@@ -411,7 +408,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
         ) as CanvasCellVisual['glyphColors']
 
         return {
-          bottomBrightness: 1 + signedLeafNoise(index, 31) * tuning.leafBrightnessVariation,
+          bottomBrightness: 1 + signedLeafNoise(index, 31) * splitFlapLeafBrightnessVariation,
           bottomFaceColor,
           characters: Array.from(
             new Set(cell.flapDeck.flatMap(({ character }) => splitFlapGraphemes(character))),
@@ -419,19 +416,19 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
           glyphColors,
           glyphOffset: glyphOffsetValues[index % glyphOffsetValues.length],
           span: cell.span,
-          topBrightness: 1 + signedLeafNoise(index, 7) * tuning.leafBrightnessVariation,
+          topBrightness: 1 + signedLeafNoise(index, 7) * splitFlapLeafBrightnessVariation,
           topFaceColor,
         }
       }),
     // Targets create fresh layout arrays, but do not alter these static visuals.
-    // Recompute only when topology, highlighting, or material tuning changes.
+    // Recompute only when topology, highlighting, or presentation changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [cellVisualsKey],
   )
-  const renderConfigRef = useRef({ cellVisuals, tuning })
+  const renderConfigRef = useRef({ cellVisuals })
   useEffect(() => {
-    renderConfigRef.current = { cellVisuals, tuning }
-  }, [cellVisuals, tuning])
+    renderConfigRef.current = { cellVisuals }
+  }, [cellVisuals])
 
   const rendererRef = useRef<SplitFlapCanvasRenderer>(() => undefined)
   useEffect(() => {
@@ -451,7 +448,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
         return
       }
 
-      const { cellVisuals: activeVisuals, tuning: activeTuning } = renderConfigRef.current
+      const { cellVisuals: activeVisuals } = renderConfigRef.current
 
       runtimes.forEach((runtime) => {
         const geometry = geometryRef.current[runtime.index]
@@ -539,14 +536,14 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
           context.restore()
         }
 
-        if (activeTuning.stackedEdges && Math.abs(stackShift) > 0.002) {
+        if (Math.abs(stackShift) > 0.002) {
           const stackMotion = Math.min(1, Math.abs(stackShift) / 0.18)
           const stackTop = bottomFaceY + bottomFaceHeight
           const stackBottom = cellY + cellHeight
           const faceInsetY = topFaceY - cellY
           const spareLeafHeight = cellHeight / 2 - faceInsetY
-          const spareLeafCount = Math.max(2, Math.min(3, Math.round(activeTuning.spareLeafCount)))
-          const spareLeafVariation = activeTuning.leafVariation ? 1 : 0
+          const spareLeafCount = splitFlapSpareLeafCount
+          const spareLeafVariation = 1
           const revealScale = 1 + signedLeafNoise(runtime.index, 181) * 0.14 * spareLeafVariation
 
           context.save()
@@ -574,7 +571,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
               (0.78 + layerProgress * 0.2) *
                 (1 +
                   signedLeafNoise(runtime.index, 191 + leafIndex * 17) *
-                    activeTuning.leafBrightnessVariation *
+                    splitFlapLeafBrightnessVariation *
                     0.7),
             )
             const edgeStrength =
@@ -637,7 +634,7 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
         context.restore()
 
         if (edgeOn > 0.32) {
-          const edgeHeight = Math.max(0.5, activeTuning.leafThickness * unit * edgeOn)
+          const edgeHeight = Math.max(0.5, splitFlapLeafThickness * unit * edgeOn)
           context.globalAlpha = 0.72
           context.fillStyle = edge
           context.fillRect(faceX, seamY - edgeHeight / 2, faceWidth, edgeHeight)
@@ -698,7 +695,14 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
         const lowerFace = cassette.querySelector<HTMLElement>('[data-slot="stationary-lower"]')
         const visual = resolvedVisuals[index]
         if (upperFace && lowerFace && visual) {
-          const visualKey = `${Number(Boolean(activeLayout.rows[cell.rowIndex]?.highlighted))}`
+          const row = cassette.closest<HTMLElement>('[data-split-flap-row]')
+          const group = cassette.closest<HTMLElement>('[data-split-flap-group]')
+          const visualKey = JSON.stringify([
+            row?.className,
+            group?.className,
+            cassette.className,
+            Number(Boolean(activeLayout.rows[cell.rowIndex]?.highlighted)),
+          ])
           let computedVisual = computedVisuals.get(visualKey)
           if (!computedVisual) {
             const upperStyle = getComputedStyle(upperFace)
@@ -774,6 +778,9 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
           family: computedGlyphStyle.fontFamily,
           opacity: Number.parseFloat(computedGlyphStyle.opacity) || 1,
           size: glyphSize,
+          stretch: computedGlyphStyle.fontStretch as CanvasFontStretch,
+          style: computedGlyphStyle.fontStyle,
+          variantCaps: computedGlyphStyle.fontVariantCaps as CanvasFontVariantCaps,
           weight: computedGlyphStyle.fontWeight,
           width: canvasGlyphScaleX(computedGlyphStyle.transform),
         }
@@ -919,13 +926,13 @@ export const SplitFlapMotionCanvas = memo(function SplitFlapMotionCanvas({
     <>
       <canvas
         ref={staticCanvasRef}
-        {...stylex.props(styles.motionCanvas, styles.staticMotionCanvas)}
+        {...classProps(styles.motionCanvas, styles.staticMotionCanvas)}
         aria-hidden="true"
         data-split-flap-static-canvas
       />
       <canvas
         ref={canvasRef}
-        {...stylex.props(styles.motionCanvas)}
+        {...classProps(styles.motionCanvas)}
         aria-hidden="true"
         data-split-flap-motion-canvas
       />

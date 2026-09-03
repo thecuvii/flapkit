@@ -29,11 +29,6 @@ const navigation = [
   },
 ] as const
 
-const labLinks = [
-  ['Examples', '/experiments'],
-  ['Bench', '/performance'],
-] as const
-
 const sectionMeta = [
   { id: 'introduction', index: '01', title: 'Introduction' },
   { id: 'quick-start', index: '02', title: 'Quick start' },
@@ -484,26 +479,21 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
                     ))}
                   </div>
                 ))}
-                <div className="nav-group">
-                  <p>Lab</p>
-                  {labLinks.map(([label, href]) => (
-                    <a key={href} href={href}>
-                      {label}
-                    </a>
-                  ))}
-                  <a className="github-link" href="https://github.com/thecuvii/flapkit">
-                    GitHub <span aria-hidden="true">↗</span>
-                  </a>
-                </div>
               </nav>
               <div className="sidebar-stamp">
-                <i className="hatch" aria-hidden="true" />
-                <p className="sidebar-coords" aria-label="Made in Shenzhen">
-                  22.5431° N
-                  <br />
-                  114.0579° E
-                </p>
-                <p className="sidebar-version">0.0.0</p>
+                <div className="sidebar-stamp-loc">
+                  <i className="hatch" aria-hidden="true" />
+                  <p className="sidebar-coords" aria-label="Made in Shenzhen">
+                    22.5431° N
+                    <br />
+                    114.0579° E
+                  </p>
+                </div>
+                <div className="sidebar-stamp-meta">
+                  <p className="sidebar-version">0.0.0</p>
+                  <p>MIT</p>
+                  <a href="https://github.com/thecuvii/flapkit">GitHub</a>
+                </div>
               </div>
             </div>
           </aside>
@@ -515,12 +505,31 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
                 data-index="01"
                 data-title="Introduction"
               >
-                <h1>
-                  <span>Mechanical displays.</span>
-                  <br />
-                  For <em>React.</em>
-                </h1>
-                <code className="install-line">pnpm add @thecuvii/flapkit</code>
+                <div className="intro-stamp">
+                  <i className="hatch" aria-hidden="true" />
+                  <svg
+                    className="intro-stamp-mark"
+                    aria-hidden="true"
+                    viewBox="0 0 16 16"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fill="currentColor"
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M6.364 0L0 6.364h9.636V16L16 9.636V0z"
+                    />
+                  </svg>
+                  <h1>
+                    <span>Mechanical displays.</span>
+                    <br />
+                    For <em>React.</em>
+                  </h1>
+                  <div className="intro-stamp-foot">
+                    <span className="intro-stamp-deps">Zero dependency</span>
+                    <code className="install-line">pnpm add @thecuvii/flapkit</code>
+                  </div>
+                </div>
                 <Exhibit className="hero-exhibit" look="airport" motion="riffle" deck="A–Z">
                   <Flapkit.Root motion={Flapkit.riffle()}>
                     <Flapkit.Board

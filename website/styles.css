@@ -14,12 +14,11 @@
   --leader: radial-gradient(circle, oklch(1 0 0 / 0.22) 0.6px, transparent 0.9px);
   --safety: oklch(0.655 0.174 var(--hue));
   --safety-deep: oklch(0.72 0.15 var(--hue));
-  --flare: oklch(0.746 0.162 var(--flare-hue));
+  --flare: oklch(0.88 0.155 var(--flare-hue));
   --surface: oklch(0.356 0 0);
   --panel: oklch(0.341 0 0);
   --on-ink: oklch(0.34 0.01 99.2);
   --ink-hover: oklch(0.8 0.014 var(--cream-hue));
-  --grain: oklch(0.856 0.015 var(--cream-hue) / 0.06);
   --mark: oklch(0.856 0.015 var(--cream-hue));
   --deck-yellow: oklch(0.72 0.14 75);
   --deck-yellow-ink: oklch(0.78 0.12 75);
@@ -37,6 +36,7 @@
   --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
   --stripes: url('/bg-stripes.svg');
+  --grain-image: url('/grain.svg');
 
   /* One grid unit rules every horizontal measure. Snapped to 8px so lines stay crisp. */
   --u: round(down, clamp(64px, 6vw, 96px), 8px);
@@ -62,7 +62,7 @@
   :root {
     --safety: oklch(0.655 0.192 var(--hue));
     --safety-deep: oklch(0.72 0.168 var(--hue));
-    --flare: oklch(0.746 0.178 var(--flare-hue));
+    --flare: oklch(0.88 0.17 var(--flare-hue));
     --deck-orange: oklch(0.655 0.192 var(--hue));
     --deck-orange-fill: oklch(0.655 0.192 var(--hue));
     --deck-yellow: oklch(0.72 0.155 75);
@@ -140,22 +140,14 @@ a:focus-visible {
   transform: skewX(-20deg);
 }
 
-.docs-grain {
+.page-grain {
   position: fixed;
   inset: 0;
-  z-index: 3;
-  grid-column: 1;
-  grid-row: 1;
+  z-index: 999;
   pointer-events: none;
-  color: var(--grain);
-  opacity: 0.22;
+  background-image: var(--grain-image);
+  opacity: 0.2;
   mix-blend-mode: overlay;
-}
-
-.docs-grain svg {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 
 .docs-frame {
@@ -327,9 +319,11 @@ a:focus-visible {
 }
 
 .sidebar nav a::before {
-  width: 8px;
-  height: 8px;
-  border: 1px solid var(--rule-strong);
+  width: 4px;
+  height: 4px;
+  justify-self: center;
+  border-radius: 50%;
+  background: oklch(0.5 0 0);
   content: '';
 }
 
@@ -339,27 +333,19 @@ a:focus-visible {
 }
 
 .sidebar nav a.is-active::before {
-  border-color: var(--safety);
+  width: 8px;
+  height: 8px;
+  border-radius: 0;
   background: var(--safety);
 }
 
-.sidebar nav .github-link {
-  grid-template-columns: 8px auto auto;
-  column-gap: 6px;
-}
-
-.sidebar nav .github-link::before {
-  margin-right: 2px;
-}
-
-.github-link > span {
-  color: var(--flare);
-}
-
-/* Location stamp: hatch, coordinates, version. Rows sit on the u/4 baseline. */
+/* Location stamp: hatch + coords left, version / licence / GitHub right. */
 .sidebar-stamp {
   display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: end;
   gap: var(--u4);
+  width: 100%;
   margin: auto 0 0;
   color: var(--faint);
   font-family: var(--font-mono);
@@ -367,6 +353,25 @@ a:focus-visible {
   font-weight: 620;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.sidebar-stamp-loc,
+.sidebar-stamp-meta {
+  display: grid;
+  gap: calc(var(--u4) / 2);
+}
+
+.sidebar-stamp-meta {
+  justify-items: end;
+  text-align: end;
+}
+
+.sidebar-stamp-meta p {
+  margin: 0;
+}
+
+.sidebar-stamp a:hover {
+  color: var(--ink);
 }
 
 .sidebar-stamp .hatch {
@@ -420,37 +425,112 @@ p {
   text-wrap: balance;
 }
 
+.intro-stamp {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% + 4 * var(--u));
+  min-width: 0;
+  min-height: calc(var(--u) * 4);
+  margin-inline: calc(-2 * var(--u));
+  padding: var(--u4);
+  background: var(--safety);
+  color: var(--flare);
+  box-shadow: none;
+  filter: none;
+}
+
+.intro-stamp::before {
+  position: absolute;
+  top: var(--u4);
+  left: var(--u4);
+  color: var(--flare);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 620;
+  line-height: 1;
+  content: '+';
+}
+
+.intro-stamp-mark {
+  position: absolute;
+  top: var(--u4);
+  right: var(--u4);
+  width: 16px;
+  height: 16px;
+  color: var(--flare);
+}
+
+.intro-stamp .hatch {
+  position: absolute;
+  top: calc(var(--u4) + 1px);
+  left: calc(var(--u4) * 2);
+  background: repeating-linear-gradient(
+    -60deg,
+    var(--flare) 0 2px,
+    transparent 2px 7px
+  );
+}
+
+.introduction h1 {
+  margin-top: calc(var(--u) / 2);
+  margin-bottom: auto;
+  color: var(--flare);
+}
+
 .introduction h1 span {
   white-space: nowrap;
 }
 
 .introduction h1 em {
-  position: relative;
   font-style: normal;
+  font-weight: 750;
 }
 
-.introduction h1 em::after {
-  position: absolute;
-  right: 0;
-  bottom: -0.02em;
-  width: 2.2em;
-  height: 3px;
-  display: block;
-  background: var(--safety);
+.intro-stamp-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--u4);
+  min-width: 0;
+}
+
+.intro-stamp-deps {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--type-meta);
+  font-weight: 620;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.intro-stamp-deps::before {
+  width: 6px;
+  height: 6px;
+  border: 1px solid currentColor;
   content: '';
 }
 
-.install-line {
-  display: block;
-  margin-top: 20px;
-  color: var(--faint);
+.intro-stamp .install-line {
+  min-width: 0;
+  color: var(--flare);
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 450;
-  letter-spacing: -0.02em;
+  font-size: var(--type-meta);
+  font-weight: 620;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  overflow-wrap: anywhere;
+  text-align: end;
+  text-transform: uppercase;
 }
 
 .docs-well h2 {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -480,13 +560,86 @@ p {
   content: '';
 }
 
+@property --fill-a {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+@property --stroke-a {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
 .section-index {
-  color: var(--safety);
+  --fill-a: 1;
+  --stroke-a: 1;
+  position: absolute;
+  right: 100%;
+  bottom: 0;
+  margin-right: var(--u4);
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  aspect-ratio: 1;
+  border: 2px solid color-mix(in oklch, var(--safety) calc(var(--stroke-a) * 100%), transparent);
+  background: color-mix(in oklch, var(--safety) calc(var(--fill-a) * 100%), transparent);
+  color: color-mix(in oklch, var(--flare) calc(var(--fill-a) * 100%), transparent);
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 650;
+  font-size: 28px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.08em;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  animation: section-boot 800ms step-end both;
+}
+
+@keyframes section-boot {
+  0% {
+    --fill-a: 0;
+    --stroke-a: 0;
+  }
+  25% {
+    --fill-a: 0;
+    --stroke-a: 0.5;
+  }
+  33.75% {
+    --fill-a: 0;
+    --stroke-a: 0;
+  }
+  41.25% {
+    --fill-a: 0;
+    --stroke-a: 1;
+  }
+  50% {
+    --fill-a: 0;
+    --stroke-a: 0.5;
+  }
+  58.75% {
+    --fill-a: 0;
+    --stroke-a: 1;
+  }
+  66.25% {
+    --fill-a: 0.5;
+    --stroke-a: 1;
+  }
+  75% {
+    --fill-a: 0;
+    --stroke-a: 1;
+  }
+  83.75% {
+    --fill-a: 1;
+    --stroke-a: 1;
+  }
+  91.25% {
+    --fill-a: 0.5;
+    --stroke-a: 1;
+  }
+  100% {
+    --fill-a: 1;
+    --stroke-a: 1;
+  }
 }
 
 .docs-well h3 {
@@ -498,7 +651,6 @@ p {
 }
 
 .doc-section > p {
-  max-width: 65ch;
   margin: 0 0 var(--u4);
   color: var(--muted);
   font-size: 16px;
@@ -858,6 +1010,14 @@ p {
   text-transform: uppercase;
 }
 
+.principle-scrubber > label,
+.principle-scrubber > output {
+  display: flex;
+  align-items: flex-end;
+  height: 16px;
+  line-height: 1;
+}
+
 .principle-copy {
   max-width: 360px;
 }
@@ -961,7 +1121,7 @@ p {
 .principle-scrubber {
   display: grid;
   grid-template-columns: 1fr auto;
-  align-items: center;
+  align-items: end;
   gap: calc(var(--u4) / 2) 18px;
   padding: var(--u4) 24px;
 }
@@ -1719,6 +1879,11 @@ p {
     display: none;
   }
 
+  .intro-stamp {
+    width: 100%;
+    margin-inline: 0;
+  }
+
   .docs-well > *::after {
     bottom: 0;
     height: 0;
@@ -1787,7 +1952,6 @@ p {
     display: none;
   }
 
-  .github-link,
   .sidebar-stamp {
     display: none;
   }
@@ -1914,8 +2078,22 @@ p {
     padding-top: 44px;
   }
 
+  .intro-stamp-foot {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .intro-stamp .install-line {
+    text-align: start;
+  }
+
   .docs-well h1 {
     font-size: 35px;
+  }
+
+  .section-index {
+    position: static;
+    margin-right: 0;
   }
 
   .principle-scrubber {
@@ -1963,5 +2141,9 @@ p {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .section-index {
+    animation: none;
   }
 }

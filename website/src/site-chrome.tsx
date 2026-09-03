@@ -4,14 +4,6 @@ export function SiteFrame({ children }: { children: ReactNode }) {
   return (
     <div className="docs-shell">
       <div className="docs-grid" aria-hidden="true" />
-      <div className="docs-grain" aria-hidden="true">
-        <svg>
-          <filter id="docs-noise-fx">
-            <feTurbulence baseFrequency="0.8" numOctaves="2" stitchTiles="stitch" />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#docs-noise-fx)" />
-        </svg>
-      </div>
       <div className="docs-frame">
         <div className="docs-band" aria-hidden="true" />
         {children}

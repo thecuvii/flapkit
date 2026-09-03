@@ -45,6 +45,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <HeadContent />
       </head>
       <body>
+        <div className="page-grain" aria-hidden="true" />
         {children}
         <Scripts />
       </body>

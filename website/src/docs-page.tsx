@@ -395,7 +395,14 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
 
       <main className="docs-content">
         <section id="introduction" className="doc-section introduction">
-          <h1>Introduction</h1>
+          <div className="introduction-heading">
+            <h1>
+              <span>Mechanical displays.</span>
+              <br />
+              For <em>React.</em>
+            </h1>
+            <code>pnpm add @thecuvii/flapkit</code>
+          </div>
           <p className="lead">
             Composable split-flap displays with physical motion, custom looks, Unicode decks, and
             optional mechanical sound.

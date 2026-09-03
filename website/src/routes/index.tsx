@@ -10,7 +10,7 @@ const getHighlightedDocsCode = createServerFn({ method: 'GET' }).handler(async (
       key,
       await codeToHtml(snippet.code, {
         lang: snippet.language,
-        theme: 'github-dark-default',
+        theme: 'github-light-default',
       }),
     ]),
   )

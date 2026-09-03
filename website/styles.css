@@ -112,19 +112,32 @@ a:focus-visible {
   overflow-x: clip;
 }
 
+/*
+ * Vertical grid lines only. Horizontal structure comes from the content rules
+ * (section, meta, band), which sit on a u/4 baseline, so no line ever falls
+ * mid-text.
+ */
 .docs-grid {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 0;
-  grid-column: 1;
-  grid-row: 1;
   pointer-events: none;
-  background-image:
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-    linear-gradient(var(--grid) 1px, transparent 1px);
-  background-size: var(--u) var(--u);
+  background-image: linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: var(--u) 100%;
   background-position: 0 0;
-  mask-image: linear-gradient(to bottom, black 70%, transparent);
+}
+
+/* Hatched swatch: the "specimen" mark used in the sidebar stamp and exhibit margins */
+.hatch {
+  display: inline-block;
+  width: calc(var(--u) / 3);
+  height: 12px;
+  background: repeating-linear-gradient(
+    -60deg,
+    var(--ink) 0 2px,
+    transparent 2px 7px
+  );
+  transform: skewX(-20deg);
 }
 
 .docs-grain {
@@ -211,7 +224,10 @@ a:focus-visible {
   grid-template-columns: subgrid;
 }
 
-/* Full-bleed section rule with square markers where it crosses the column lines */
+/*
+ * Full-bleed section rule. Markers follow the same rule as the exhibit meta
+ * line: hollow square where it enters the column, filled square where it leaves.
+ */
 .docs-well > *::after {
   position: absolute;
   right: 0;
@@ -219,6 +235,7 @@ a:focus-visible {
   left: calc(-1 * var(--sidebar-width));
   height: 7px;
   background:
+    linear-gradient(var(--paper), var(--paper)) calc(var(--col-left) - 2px) 1px / 5px 5px no-repeat,
     linear-gradient(var(--ink), var(--ink)) calc(var(--col-left) - 3px) 0 / 7px 7px no-repeat,
     linear-gradient(var(--ink), var(--ink)) calc(var(--col-left) + var(--well-center) - 3px) 0 / 7px
       7px no-repeat,
@@ -339,7 +356,10 @@ a:focus-visible {
   color: var(--flare);
 }
 
-.sidebar-version {
+/* Location stamp: hatch, coordinates, version. Rows sit on the u/4 baseline. */
+.sidebar-stamp {
+  display: grid;
+  gap: var(--u4);
   margin: auto 0 0;
   color: var(--faint);
   font-family: var(--font-mono);
@@ -347,6 +367,21 @@ a:focus-visible {
   font-weight: 620;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.sidebar-stamp .hatch {
+  margin-left: 4px;
+  opacity: 0.6;
+}
+
+.sidebar-coords {
+  margin: 0;
+  line-height: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar-version {
+  margin: 0;
 }
 
 .sidebar-version::after {
@@ -361,13 +396,13 @@ a:focus-visible {
 }
 
 .doc-section:last-child {
-  padding-bottom: 10rem;
+  padding-bottom: calc(var(--u) * 2);
 }
 
 .introduction {
   min-height: 100dvh;
   align-content: center;
-  padding-top: 48px;
+  padding-top: calc(var(--u) / 2);
 }
 
 h1,
@@ -417,23 +452,22 @@ p {
 
 .docs-well h2 {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 14px;
-  margin: 0 0 18px;
+  margin: 0 0 var(--u4);
   font-size: 20px;
   font-weight: 620;
   letter-spacing: -0.03em;
-  line-height: 1.2;
+  line-height: var(--u4);
   text-wrap: balance;
 }
 
 .docs-well h2::before {
   flex: none;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   align-self: center;
   border: 1px solid var(--safety);
-  rotate: 45deg;
   content: '';
 }
 
@@ -456,24 +490,25 @@ p {
 }
 
 .docs-well h3 {
-  margin: 0 0 10px;
+  margin: 0 0 calc(var(--u4) / 2);
   font-size: 13px;
   font-weight: 620;
   letter-spacing: -0.01em;
+  line-height: var(--u4);
 }
 
 .doc-section > p {
   max-width: 65ch;
-  margin: 0 0 20px;
+  margin: 0 0 var(--u4);
   color: var(--muted);
   font-size: 16px;
   font-weight: 430;
   letter-spacing: -0.006em;
-  line-height: 1.75;
+  line-height: var(--u4);
 }
 
 .doc-section > p + p {
-  margin-top: 18px;
+  margin-top: var(--u4);
 }
 
 .doc-section p code {
@@ -499,13 +534,13 @@ p {
   clip-path: inset(2px);
 }
 
-/* Small tiles sit on the column lines, like the stray blocks on a grid poster */
+/*
+ * Margin notes. Both sit on the first baseline row of the stage, flush to the
+ * column line: hatch on the left, exhibit index on the right.
+ */
 .exhibit-aside::after {
   position: absolute;
-  width: calc(var(--u) / 3);
-  height: 6px;
-  background: var(--ink);
-  opacity: 0.55;
+  top: var(--u4);
   content: '';
 }
 
@@ -514,8 +549,12 @@ p {
 }
 
 .exhibit-aside:first-child::after {
-  top: var(--u4);
-  right: 0;
+  right: var(--u4);
+  width: calc(var(--u) / 3);
+  height: 12px;
+  background: repeating-linear-gradient(-60deg, var(--ink) 0 2px, transparent 2px 7px);
+  opacity: 0.6;
+  transform: skewX(-20deg);
 }
 
 .exhibit-aside:nth-child(3) {
@@ -523,19 +562,24 @@ p {
 }
 
 .exhibit-aside:nth-child(3)::after {
-  bottom: var(--u4);
-  left: 0;
-  background: var(--flare);
-  opacity: 1;
+  left: var(--u4);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: var(--type-meta);
+  font-weight: 620;
+  letter-spacing: 0.08em;
+  line-height: 12px;
+  content: '0' counter(exhibit, decimal-leading-zero);
 }
 
+/* Stage is always a whole number of units tall */
 .exhibit-stage {
   position: relative;
   grid-column: 2;
   grid-row: 1;
   width: var(--exhibit-span);
   min-width: 0;
-  min-height: 168px;
+  min-height: calc(var(--u) * 3);
   display: grid;
   place-items: center;
   overflow-x: auto;
@@ -571,11 +615,14 @@ p {
   background-repeat: no-repeat;
 }
 
+/* Meta row is one unit tall unless a footer control needs more */
 .exhibit-meta {
   position: relative;
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: subgrid;
+  align-content: center;
+  min-height: var(--u);
 }
 
 .exhibit-meta > * {
@@ -590,25 +637,16 @@ p {
   height: var(--band);
 }
 
-/* Tick ruler across the center column, exhibit number at its end */
+/* Tick ruler across the center column, one tick per u/4 */
 .exhibit-band::after {
   grid-column: 2;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding-bottom: 4px;
   background: repeating-linear-gradient(
       90deg,
       var(--rule-strong) 0 1px,
       transparent 1px var(--u4)
     )
     0 0 / 100% 6px no-repeat;
-  color: var(--faint);
-  font-family: var(--font-mono);
-  font-size: var(--type-meta);
-  font-weight: 620;
-  letter-spacing: 0.08em;
-  content: '0' counter(exhibit, decimal-leading-zero);
+  content: '';
 }
 
 .docs-well .exhibit-meta::before,
@@ -637,30 +675,30 @@ p {
   margin-top: calc(var(--u) / 2);
 }
 
-.hero-exhibit .exhibit-stage {
-  min-height: calc(var(--u) * 2.5);
-  padding: calc(var(--u) / 2) 0;
-}
-
+/* 3 rows x 10px + 2 x 12px gap = 54px; padding makes it exactly one unit */
 .spec-strip {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: var(--exhibit-span);
-  padding: 1.5rem 0;
+  margin: 0;
+  padding: calc((var(--u) - 54px) / 2) 0;
 }
 
-/* Diamonds where the meta rule crosses the center column edges */
+/*
+ * Intersection markers. Same rule everywhere a horizontal rule crosses a column
+ * line: hollow square on the left edge, filled square on the right.
+ */
 .spec-strip::before,
 .spec-strip::after {
   position: absolute;
   top: -4px;
   width: 7px;
   height: 7px;
+  box-sizing: border-box;
   background: var(--paper);
-  border: 1px solid var(--rule-strong);
-  rotate: 45deg;
+  border: 1px solid var(--ink);
   content: '';
 }
 
@@ -671,7 +709,6 @@ p {
 .spec-strip::after {
   right: -4px;
   background: var(--ink);
-  border-color: var(--ink);
 }
 
 .spec-strip > div {
@@ -717,11 +754,14 @@ p {
   width: max-content;
 }
 
+/* Footer controls take a second whole unit */
 .exhibit .choice-switch,
 .exhibit .choice-row {
   width: var(--exhibit-span);
-  margin: 18px auto 0;
-  justify-content: center;
+  min-height: var(--u);
+  display: grid;
+  align-content: center;
+  margin: 0 auto;
 }
 
 .choice-row {
@@ -922,24 +962,97 @@ p {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 10px 18px;
-  padding: 20px 24px 22px;
+  gap: calc(var(--u4) / 2) 18px;
+  padding: var(--u4) 24px;
+}
+
+.principle-scrubber > output {
+  color: var(--safety);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .principle-controls {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 40px;
+  grid-template-columns: minmax(0, 1fr) 24px;
   align-items: center;
   gap: 12px;
 }
 
+.principle-controls-bar {
+  position: relative;
+  display: grid;
+  align-items: center;
+  height: 24px;
+}
+
+.principle-controls-bar::before,
+.principle-controls-bar::after {
+  position: absolute;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.principle-controls-bar::before {
+  content: '+';
+  top: 0;
+  left: -3px;
+}
+
+.principle-controls-bar::after {
+  content: '×';
+  right: -3px;
+  bottom: 0;
+}
+
 .principle-controls input {
+  --fill: 0%;
+  appearance: none;
+  -webkit-appearance: none;
   width: 100%;
-  height: 36px;
+  height: 12px;
   margin: 0;
-  accent-color: var(--ink);
+  padding: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0;
+  background: repeating-linear-gradient(-45deg, var(--ink) 0 2px, transparent 2px 6px) 0 0 /
+    var(--fill) 100% no-repeat;
+  background-clip: padding-box;
+  color: var(--ink);
   cursor: ew-resize;
+}
+
+.principle-controls input::-webkit-slider-runnable-track {
+  height: 10px;
+  background: transparent;
+}
+
+.principle-controls input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 2px;
+  height: 16px;
+  margin-top: -3px;
+  border: 0;
+  border-radius: 0;
+  background: currentColor;
+}
+
+.principle-controls input::-moz-range-track {
+  height: 10px;
+  background: transparent;
+}
+
+.principle-controls input::-moz-range-thumb {
+  width: 2px;
+  height: 16px;
+  border: 0;
+  border-radius: 0;
+  background: currentColor;
 }
 
 .principle-controls input:focus-visible,
@@ -949,32 +1062,33 @@ p {
 }
 
 .principle-controls button {
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
-  border: 0;
-  border-radius: 50%;
-  background: var(--ink);
-  color: var(--on-ink);
+  padding: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
   cursor: pointer;
 }
 
 .principle-controls button svg {
-  width: 16px;
-  height: 16px;
+  width: 10px;
+  height: 10px;
   fill: currentColor;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .principle-controls button:hover {
-    background: var(--ink-hover);
+    border-color: var(--ink);
   }
 }
 
 .code-block {
   max-width: 100%;
-  margin: 24px 0;
+  margin: var(--u4) 0;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   tab-size: 2;
@@ -1143,10 +1257,6 @@ p {
 .api-block td:nth-child(3) {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-
-.decks-exhibit .exhibit-stage {
-  min-height: 200px;
 }
 
 .decks-stack {
@@ -1678,7 +1788,7 @@ p {
   }
 
   .github-link,
-  .sidebar-version {
+  .sidebar-stamp {
     display: none;
   }
 

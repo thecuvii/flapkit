@@ -1,5 +1,5 @@
 import * as Flapkit from '@thecuvii/flapkit'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { CassettePreview } from '../../src/render/cassette-preview'
 import type { HighlightedDocsCode } from './docs-code'
 import { Exhibit, SiteFrame, SpecStrip } from './site-chrome'
@@ -303,19 +303,22 @@ function FlapPrinciple() {
           {visiblePosition.character.trim() || 'Blank'} · {visibleIndex + 1}/{principleDeck.length}
         </output>
         <div className="principle-controls">
-          <input
-            id="principle-deck-position"
-            type="range"
-            min="0"
-            max="1000"
-            value={Math.round(progress * 1000)}
-            onChange={(event) => {
-              stopPlayback()
-              setProgress(Number(event.currentTarget.value) / 1000)
-            }}
-            onKeyDown={stopPlayback}
-            onPointerDown={stopPlayback}
-          />
+          <div className="principle-controls-bar">
+            <input
+              id="principle-deck-position"
+              type="range"
+              min="0"
+              max="1000"
+              value={Math.round(progress * 1000)}
+              style={{ '--fill': `${progress * 100}%` } as CSSProperties}
+              onChange={(event) => {
+                stopPlayback()
+                setProgress(Number(event.currentTarget.value) / 1000)
+              }}
+              onKeyDown={stopPlayback}
+              onPointerDown={stopPlayback}
+            />
+          </div>
           <button
             type="button"
             onClick={togglePlayback}
@@ -493,7 +496,15 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
                   </a>
                 </div>
               </nav>
-              <p className="sidebar-version">0.0.0</p>
+              <div className="sidebar-stamp">
+                <i className="hatch" aria-hidden="true" />
+                <p className="sidebar-coords" aria-label="Made in Shenzhen">
+                  22.5431° N
+                  <br />
+                  114.0579° E
+                </p>
+                <p className="sidebar-version">0.0.0</p>
+              </div>
             </div>
           </aside>
 

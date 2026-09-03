@@ -37,13 +37,15 @@
   --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
   --stripes: url('/bg-stripes.svg');
-  --grid-step: 96px;
-  --sidebar-width: 348px;
+
+  /* One grid unit rules every horizontal measure. Snapped to 8px so lines stay crisp. */
+  --u: round(down, clamp(64px, 6vw, 96px), 8px);
+  --u4: calc(var(--u) / 4);
+  --sidebar-width: calc(4 * var(--u));
+  --well-center: calc(7 * var(--u));
   --gutter: 48px;
-  --well-center: 42rem;
-  --well-gap: 1.5rem;
-  --band: 24px;
-  --section-space: 6rem;
+  --band: var(--u4);
+  --section-space: var(--u);
   --exhibit-span: 100%;
   --type-meta: 0.625rem;
 
@@ -120,8 +122,8 @@ a:focus-visible {
   background-image:
     linear-gradient(90deg, var(--grid) 1px, transparent 1px),
     linear-gradient(var(--grid) 1px, transparent 1px);
-  background-size: var(--grid-step) var(--grid-step);
-  background-position: 50% 0;
+  background-size: var(--u) var(--u);
+  background-position: 0 0;
   mask-image: linear-gradient(to bottom, black 70%, transparent);
 }
 
@@ -151,16 +153,14 @@ a:focus-visible {
   min-width: 0;
 }
 
+/* Segments span whole grid units: 2u at the left edge, 1u + 2u anchored to the right */
 .docs-band {
   height: 6px;
-  background: linear-gradient(
-    90deg,
-    var(--safety) 0 19%,
-    transparent 19% 50%,
-    var(--ink) 50% 63%,
-    var(--flare) 63% 78%,
-    transparent 78%
-  );
+  background:
+    linear-gradient(var(--safety), var(--safety)) 0 0 / calc(2 * var(--u)) 100% no-repeat,
+    linear-gradient(var(--ink), var(--ink)) right calc(4 * var(--u)) top 0 / var(--u) 100% no-repeat,
+    linear-gradient(var(--flare), var(--flare)) right calc(2 * var(--u)) top 0 / calc(2 * var(--u))
+      100% no-repeat;
 }
 
 .docs-body {
@@ -168,14 +168,16 @@ a:focus-visible {
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
 }
 
+/*
+ * The center column is centered, then snapped to the nearest grid line.
+ * --lead is the left gutter in whole units; --col-left is its viewport x.
+ */
 .docs-well {
+  --lead: max(var(--u), round(nearest, calc((100vw - 11 * var(--u)) / 2), var(--u)));
+  --col-left: calc(var(--sidebar-width) + var(--lead));
   position: relative;
   display: grid;
-  grid-template-columns: minmax(var(--gutter), 1fr) minmax(0, var(--well-center)) minmax(
-      var(--gutter),
-      1fr
-    );
-  column-gap: var(--well-gap);
+  grid-template-columns: var(--lead) var(--well-center) minmax(0, 1fr);
   min-width: 0;
   counter-reset: exhibit;
 }
@@ -194,12 +196,12 @@ a:focus-visible {
 
 .docs-well::before,
 .experiments-page::before {
-  left: calc(50% - var(--well-center) / 2);
+  left: var(--lead);
 }
 
 .docs-well::after,
 .experiments-page::after {
-  left: calc(50% + var(--well-center) / 2);
+  left: calc(var(--lead) + var(--well-center));
 }
 
 .docs-well > * {
@@ -209,12 +211,19 @@ a:focus-visible {
   grid-template-columns: subgrid;
 }
 
+/* Full-bleed section rule with square markers where it crosses the column lines */
 .docs-well > *::after {
   position: absolute;
   right: 0;
-  bottom: 0;
+  bottom: -3px;
   left: calc(-1 * var(--sidebar-width));
-  border-bottom: var(--line);
+  height: 7px;
+  background:
+    linear-gradient(var(--ink), var(--ink)) calc(var(--col-left) - 3px) 0 / 7px 7px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) calc(var(--col-left) + var(--well-center) - 3px) 0 / 7px
+      7px no-repeat,
+    repeating-linear-gradient(90deg, var(--rule) 0 3px, transparent 3px 6px) 0 3px / 100% 1px
+      no-repeat;
   pointer-events: none;
   content: '';
 }
@@ -239,7 +248,7 @@ a:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 28px 18px 40px 20px;
+  padding: var(--u4) var(--u4) calc(var(--u4) * 1.5);
 }
 
 .logo {
@@ -478,7 +487,7 @@ p {
   display: grid;
   grid-template-columns: subgrid;
   min-width: 0;
-  margin: 40px 0 0;
+  margin: calc(var(--u) / 2) 0 0;
   counter-increment: exhibit;
 }
 
@@ -490,9 +499,10 @@ p {
   clip-path: inset(2px);
 }
 
+/* Small tiles sit on the column lines, like the stray blocks on a grid poster */
 .exhibit-aside::after {
   position: absolute;
-  width: 28px;
+  width: calc(var(--u) / 3);
   height: 6px;
   background: var(--ink);
   opacity: 0.55;
@@ -504,8 +514,8 @@ p {
 }
 
 .exhibit-aside:first-child::after {
-  top: 14px;
-  left: 14px;
+  top: var(--u4);
+  right: 0;
 }
 
 .exhibit-aside:nth-child(3) {
@@ -513,9 +523,10 @@ p {
 }
 
 .exhibit-aside:nth-child(3)::after {
-  right: 14px;
-  bottom: 14px;
+  bottom: var(--u4);
+  left: 0;
   background: var(--flare);
+  opacity: 1;
 }
 
 .exhibit-stage {
@@ -529,14 +540,14 @@ p {
   place-items: center;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  padding: 48px 0;
+  padding: calc(var(--u) / 2) 0;
 }
 
 /* Corner brackets, one pseudo per pair so the stage keeps its scroll box */
 .exhibit-stage::before,
 .exhibit-stage::after {
   position: absolute;
-  inset: 12px;
+  inset: var(--u4);
   pointer-events: none;
   content: '';
   --bracket: var(--rule-strong);
@@ -586,7 +597,11 @@ p {
   align-items: flex-end;
   justify-content: flex-end;
   padding-bottom: 4px;
-  background: repeating-linear-gradient(90deg, var(--rule-strong) 0 1px, transparent 1px 24px)
+  background: repeating-linear-gradient(
+      90deg,
+      var(--rule-strong) 0 1px,
+      transparent 1px var(--u4)
+    )
     0 0 / 100% 6px no-repeat;
   color: var(--faint);
   font-family: var(--font-mono);
@@ -619,12 +634,12 @@ p {
 }
 
 .hero-exhibit {
-  margin-top: 56px;
+  margin-top: calc(var(--u) / 2);
 }
 
 .hero-exhibit .exhibit-stage {
-  min-height: 220px;
-  padding: 56px 0;
+  min-height: calc(var(--u) * 2.5);
+  padding: calc(var(--u) / 2) 0;
 }
 
 .spec-strip {
@@ -975,7 +990,7 @@ p {
   min-width: 100%;
   margin: 0;
   background: transparent !important;
-  padding: 22px 24px;
+  padding: var(--u4);
 }
 
 .code-block code {
@@ -1141,15 +1156,13 @@ p {
 }
 
 .experiments-page {
+  --lead: max(var(--u), round(nearest, calc((100vw - 7 * var(--u)) / 2), var(--u)));
+  --col-left: var(--lead);
   position: relative;
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: minmax(var(--gutter), 1fr) minmax(0, var(--well-center)) minmax(
-      var(--gutter),
-      1fr
-    );
-  column-gap: var(--well-gap);
-  padding: 28px 0 120px;
+  grid-template-columns: var(--lead) var(--well-center) minmax(0, 1fr);
+  padding: var(--u4) 0 calc(var(--u) + var(--u4));
   counter-reset: exhibit;
 }
 
@@ -1574,7 +1587,6 @@ p {
   :root {
     --sidebar-width: 0px;
     --gutter: 24px;
-    --well-gap: 0px;
     --section-space: 4.5rem;
     scroll-padding-top: 64px;
   }
@@ -1595,6 +1607,13 @@ p {
   .exhibit-aside::after,
   .docs-grid {
     display: none;
+  }
+
+  .docs-well > *::after {
+    bottom: 0;
+    height: 0;
+    border-bottom: var(--line);
+    background: none;
   }
 
   .sidebar {

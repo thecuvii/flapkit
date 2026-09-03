@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 export function SiteFrame({ children }: { children: ReactNode }) {
   return (
     <div className="docs-shell">
+      <div className="docs-grid" aria-hidden="true" />
       <div className="docs-grain" aria-hidden="true">
         <svg>
           <filter id="docs-noise-fx">
@@ -11,7 +12,10 @@ export function SiteFrame({ children }: { children: ReactNode }) {
           <rect width="100%" height="100%" filter="url(#docs-noise-fx)" />
         </svg>
       </div>
-      <div className="docs-frame">{children}</div>
+      <div className="docs-frame">
+        <div className="docs-band" aria-hidden="true" />
+        {children}
+      </div>
     </div>
   )
 }

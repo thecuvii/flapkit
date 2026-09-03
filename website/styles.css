@@ -9,7 +9,9 @@
   --faint: oklch(0.62 0.012 var(--cream-hue));
   --rule: oklch(1 0 0 / 0.08);
   --rule-strong: oklch(1 0 0 / 0.16);
+  --grid: oklch(1 0 0 / 0.035);
   --line: 1px dashed var(--rule);
+  --leader: radial-gradient(circle, oklch(1 0 0 / 0.22) 0.6px, transparent 0.9px);
   --safety: oklch(0.655 0.174 var(--hue));
   --safety-deep: oklch(0.72 0.15 var(--hue));
   --flare: oklch(0.746 0.162 var(--flare-hue));
@@ -35,12 +37,13 @@
   --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
   --stripes: url('/bg-stripes.svg');
+  --grid-step: 96px;
   --sidebar-width: 348px;
   --gutter: 48px;
   --well-center: 42rem;
   --well-gap: 1.5rem;
   --band: 24px;
-  --section-space: 7.5rem;
+  --section-space: 6rem;
   --exhibit-span: 100%;
   --type-meta: 0.625rem;
 
@@ -107,6 +110,21 @@ a:focus-visible {
   overflow-x: clip;
 }
 
+.docs-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  grid-column: 1;
+  grid-row: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px);
+  background-size: var(--grid-step) var(--grid-step);
+  background-position: 50% 0;
+  mask-image: linear-gradient(to bottom, black 70%, transparent);
+}
+
 .docs-grain {
   position: fixed;
   inset: 0;
@@ -126,9 +144,23 @@ a:focus-visible {
 }
 
 .docs-frame {
+  position: relative;
+  z-index: 1;
   grid-column: 1;
   grid-row: 1;
   min-width: 0;
+}
+
+.docs-band {
+  height: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--safety) 0 19%,
+    transparent 19% 50%,
+    var(--ink) 50% 63%,
+    var(--flare) 63% 78%,
+    transparent 78%
+  );
 }
 
 .docs-body {
@@ -137,6 +169,7 @@ a:focus-visible {
 }
 
 .docs-well {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(var(--gutter), 1fr) minmax(0, var(--well-center)) minmax(
       var(--gutter),
@@ -144,6 +177,29 @@ a:focus-visible {
     );
   column-gap: var(--well-gap);
   min-width: 0;
+  counter-reset: exhibit;
+}
+
+.docs-well::before,
+.docs-well::after,
+.experiments-page::before,
+.experiments-page::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: var(--line);
+  pointer-events: none;
+  content: '';
+}
+
+.docs-well::before,
+.experiments-page::before {
+  left: calc(50% - var(--well-center) / 2);
+}
+
+.docs-well::after,
+.experiments-page::after {
+  left: calc(50% + var(--well-center) / 2);
 }
 
 .docs-well > * {
@@ -173,7 +229,6 @@ a:focus-visible {
 
 .sidebar {
   min-width: 0;
-  background: var(--paper);
   border-right: var(--line);
 }
 
@@ -262,10 +317,13 @@ a:focus-visible {
   background: var(--safety);
 }
 
-.github-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.sidebar nav .github-link {
+  grid-template-columns: 8px auto auto;
+  column-gap: 6px;
+}
+
+.sidebar nav .github-link::before {
+  margin-right: 2px;
 }
 
 .github-link > span {
@@ -280,6 +338,12 @@ a:focus-visible {
   font-weight: 620;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.sidebar-version::after {
+  margin-left: 0.6em;
+  color: var(--safety);
+  content: '>>>';
 }
 
 .doc-section {
@@ -354,6 +418,25 @@ p {
   text-wrap: balance;
 }
 
+.docs-well h2::before {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  align-self: center;
+  border: 1px solid var(--safety);
+  rotate: 45deg;
+  content: '';
+}
+
+.docs-well h2::after {
+  flex: 1;
+  min-width: 48px;
+  height: 8px;
+  align-self: center;
+  background: var(--leader) 0 0 / 4px 4px repeat;
+  content: '';
+}
+
 .section-index {
   color: var(--safety);
   font-family: var(--font-mono);
@@ -395,25 +478,48 @@ p {
   display: grid;
   grid-template-columns: subgrid;
   min-width: 0;
-  margin: 48px 0 0;
+  margin: 40px 0 0;
+  counter-increment: exhibit;
 }
 
 .exhibit-aside {
+  position: relative;
   grid-row: 1;
   background-image: var(--stripes);
   background-repeat: repeat;
   clip-path: inset(2px);
 }
 
+.exhibit-aside::after {
+  position: absolute;
+  width: 28px;
+  height: 6px;
+  background: var(--ink);
+  opacity: 0.55;
+  content: '';
+}
+
 .exhibit-aside:first-child {
   grid-column: 1;
+}
+
+.exhibit-aside:first-child::after {
+  top: 14px;
+  left: 14px;
 }
 
 .exhibit-aside:nth-child(3) {
   grid-column: 3;
 }
 
+.exhibit-aside:nth-child(3)::after {
+  right: 14px;
+  bottom: 14px;
+  background: var(--flare);
+}
+
 .exhibit-stage {
+  position: relative;
   grid-column: 2;
   grid-row: 1;
   width: var(--exhibit-span);
@@ -424,6 +530,34 @@ p {
   overflow-x: auto;
   overscroll-behavior-x: contain;
   padding: 48px 0;
+}
+
+/* Corner brackets, one pseudo per pair so the stage keeps its scroll box */
+.exhibit-stage::before,
+.exhibit-stage::after {
+  position: absolute;
+  inset: 12px;
+  pointer-events: none;
+  content: '';
+  --bracket: var(--rule-strong);
+}
+
+.exhibit-stage::before {
+  background:
+    linear-gradient(var(--bracket), var(--bracket)) 0 0 / 12px 1px,
+    linear-gradient(var(--bracket), var(--bracket)) 0 0 / 1px 12px,
+    linear-gradient(var(--bracket), var(--bracket)) 100% 100% / 12px 1px,
+    linear-gradient(var(--bracket), var(--bracket)) 100% 100% / 1px 12px;
+  background-repeat: no-repeat;
+}
+
+.exhibit-stage::after {
+  background:
+    linear-gradient(var(--bracket), var(--bracket)) 100% 0 / 12px 1px,
+    linear-gradient(var(--bracket), var(--bracket)) 100% 0 / 1px 12px,
+    linear-gradient(var(--bracket), var(--bracket)) 0 100% / 12px 1px,
+    linear-gradient(var(--bracket), var(--bracket)) 0 100% / 1px 12px;
+  background-repeat: no-repeat;
 }
 
 .exhibit-meta {
@@ -440,7 +574,26 @@ p {
 .exhibit-band {
   position: relative;
   grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
   height: var(--band);
+}
+
+/* Tick ruler across the center column, exhibit number at its end */
+.exhibit-band::after {
+  grid-column: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding-bottom: 4px;
+  background: repeating-linear-gradient(90deg, var(--rule-strong) 0 1px, transparent 1px 24px)
+    0 0 / 100% 6px no-repeat;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: var(--type-meta);
+  font-weight: 620;
+  letter-spacing: 0.08em;
+  content: '0' counter(exhibit, decimal-leading-zero);
 }
 
 .docs-well .exhibit-meta::before,
@@ -475,11 +628,35 @@ p {
 }
 
 .spec-strip {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: var(--exhibit-span);
   padding: 1.5rem 0;
+}
+
+/* Diamonds where the meta rule crosses the center column edges */
+.spec-strip::before,
+.spec-strip::after {
+  position: absolute;
+  top: -4px;
+  width: 7px;
+  height: 7px;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  rotate: 45deg;
+  content: '';
+}
+
+.spec-strip::before {
+  left: -4px;
+}
+
+.spec-strip::after {
+  right: -4px;
+  background: var(--ink);
+  border-color: var(--ink);
 }
 
 .spec-strip > div {
@@ -964,6 +1141,7 @@ p {
 }
 
 .experiments-page {
+  position: relative;
   min-height: 100dvh;
   display: grid;
   grid-template-columns: minmax(var(--gutter), 1fr) minmax(0, var(--well-center)) minmax(
@@ -972,6 +1150,7 @@ p {
     );
   column-gap: var(--well-gap);
   padding: 28px 0 120px;
+  counter-reset: exhibit;
 }
 
 .experiments-header {
@@ -1407,6 +1586,15 @@ p {
   .docs-well,
   .experiments-page {
     grid-template-columns: var(--gutter) minmax(0, 1fr) var(--gutter);
+  }
+
+  .docs-well::before,
+  .docs-well::after,
+  .experiments-page::before,
+  .experiments-page::after,
+  .exhibit-aside::after,
+  .docs-grid {
+    display: none;
   }
 
   .sidebar {

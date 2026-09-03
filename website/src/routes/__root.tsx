@@ -15,8 +15,16 @@ export const Route = createRootRoute({
         content:
           'Composable React split-flap displays with mechanical motion, sound, and customizable looks.',
       },
-      { name: 'theme-color', content: '#ffffff' },
+      { name: 'theme-color', content: '#323232' },
       { title: 'Flapkit — Split-flap displays for React' },
+    ],
+    links: [
+      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
+      {
+        rel: 'stylesheet',
+        href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap',
+      },
     ],
   }),
   component: RootComponent,

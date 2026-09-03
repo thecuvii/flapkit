@@ -1,4 +1,5 @@
 import * as Flapkit from '@thecuvii/flapkit'
+import { SiteFrame } from './site-chrome'
 import {
   Profiler,
   useCallback,
@@ -367,13 +368,14 @@ export function PerformancePage() {
         : 'Ready'
 
   return (
+    <SiteFrame>
     <main className="performance-page">
       <header className="performance-header">
         <div>
-          <a href="/">← Documentation</a>
+          <a href="/">← Docs</a>
           <span>Browser benchmark · local results</span>
         </div>
-        <h1>Performance bench</h1>
+        <h1>Bench</h1>
         <p>
           Warm up the selected renderer, repeat identical target updates, and compare median and p95
           results in the same browser. The board stays mounted between measured runs.
@@ -470,5 +472,6 @@ export function PerformancePage() {
         diagnostic, not cross-device scores.
       </p>
     </main>
+    </SiteFrame>
   )
 }

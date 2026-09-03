@@ -1,5 +1,6 @@
 import * as Flapkit from '@thecuvii/flapkit'
 import { useState, type ReactNode } from 'react'
+import { Exhibit, SiteFrame } from './site-chrome'
 
 const unicodeDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 const wideDeck = Flapkit.createDeck(['  ', '14', '05', '55', '15', '30', '20'])
@@ -36,11 +37,17 @@ function Experiment({
   children,
   description,
   label,
+  look,
+  motion,
+  deck,
   title,
 }: {
   children: ReactNode
   description: string
   label: string
+  look: string
+  motion: string
+  deck: string
   title: string
 }) {
   return (
@@ -50,9 +57,9 @@ function Experiment({
         <h2>{title}</h2>
         <p>{description}</p>
       </div>
-      <div className="experiment-stage" role="region" aria-label={`${label} preview`} tabIndex={0}>
+      <Exhibit look={look} motion={motion} deck={deck}>
         <div className="experiment-board">{children}</div>
-      </div>
+      </Exhibit>
     </section>
   )
 }
@@ -63,26 +70,30 @@ export function ExperimentsPage() {
   const alternatePreset = presets[(presetIndex + 2) % presets.length]!
 
   return (
-    <main className="experiments-page">
-      <header className="experiments-header">
-        <a href="/">← Documentation</a>
-        <button
-          type="button"
-          onClick={() => setPresetIndex((index) => (index + 1) % presets.length)}
-        >
-          Update all boards
-        </button>
-      </header>
+    <SiteFrame>
+      <main className="experiments-page">
+        <header className="experiments-header">
+          <a href="/">← Docs</a>
+          <button
+            type="button"
+            onClick={() => setPresetIndex((index) => (index + 1) % presets.length)}
+          >
+            Update all boards
+          </button>
+        </header>
 
-      <div className="experiments-intro">
-        <span>Flapkit lab</span>
-        <h1>Motion experiments</h1>
-        <p>Compare motion engines, Unicode decks, and double-width cassettes with live updates.</p>
-      </div>
+        <div className="experiments-intro">
+          <span>01 / Lab</span>
+          <h1>Examples</h1>
+          <p>Compare motion engines, Unicode decks, and double-width cassettes with live updates.</p>
+        </div>
 
-      <div className="experiments-stack">
+        <div className="experiments-stack">
         <Experiment
           label="Riffle · Airport"
+          look="airport"
+          motion="riffle"
+          deck="A–Z"
           title="Randomized rapid flipping"
           description="Canvas-assisted motion spreads starts across the board and stays lightweight on dense layouts."
         >
@@ -97,6 +108,9 @@ export function ExperimentsPage() {
 
         <Experiment
           label="Cascade · Industrial"
+          look="industrial"
+          motion="cascade"
+          deck="A–Z"
           title="Row-staggered 3D leaves"
           description="CSS 3D cassettes move in a controlled row cascade with per-cell cadence variation."
         >
@@ -111,6 +125,9 @@ export function ExperimentsPage() {
 
         <Experiment
           label="Unicode · Custom deck"
+          look="airport"
+          motion="riffle"
+          deck="custom"
           title="One grapheme per cell"
           description="Each CJK grapheme occupies one independently driven character cell with its own upper and lower leaves."
         >
@@ -136,6 +153,9 @@ export function ExperimentsPage() {
 
         <Experiment
           label="Cassette · Double width"
+          look="airport"
+          motion="riffle"
+          deck="numeric"
           title="One leaf stack, two graphemes"
           description="Each double-width cassette has one deck and one motion state while every leaf position carries two graphemes."
         >
@@ -162,7 +182,8 @@ export function ExperimentsPage() {
             <strong>One runtime per cassette</strong>
           </div>
         </Experiment>
-      </div>
-    </main>
+        </div>
+      </main>
+    </SiteFrame>
   )
 }

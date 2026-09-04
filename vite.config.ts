@@ -6,31 +6,12 @@ export default defineConfig({
     singleQuote: true,
   },
   lint: {
-    ignorePatterns: ['dist/**', 'website/dist/**'],
+    ignorePatterns: ['dist/**', 'website/.next/**', 'website/out/**'],
     options: {
       typeAware: true,
       typeCheck: true,
     },
     plugins: ['typescript', 'react'],
-  },
-  pack: {
-    deps: {
-      neverBundle: ['react', 'react/jsx-runtime'],
-    },
-    dts: true,
-    entry: [
-      'src/index.ts',
-      'src/sound/index.ts',
-      'src/styles/flapkit.css',
-      'src/styles/airport.css',
-      'src/styles/industrial.css',
-      'src/styles/signal.css',
-    ],
-    format: ['esm'],
-    platform: 'neutral',
-    root: 'src',
-    sourcemap: true,
-    unbundle: true,
   },
   staged: {
     '*.{css,js,json,jsx,md,mjs,ts,tsx,yaml,yml}': 'vp check --fix',

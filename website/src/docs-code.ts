@@ -1,18 +1,113 @@
-export const docsCode = {
-  quickStart: {
-    code: `import * as Flapkit from '@thecuvii/flapkit'
-import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/airport.css'
+export type QuickStartSnippetOptions = {
+  look: 'airport' | 'industrial'
+  motion: 'riffle' | 'cascade'
+  board: boolean
+  header: boolean
+}
 
-<Flapkit.Root motion={Flapkit.riffle()}>
-  <Flapkit.Board aria-label="Package status" className="flapkit-airport">
-    <Flapkit.Row label="STATUS">
+export function quickStartCode({ look, motion, board, header }: QuickStartSnippetOptions) {
+  const frame = board ? 'Board' : 'Grid'
+  const motionCall = motion === 'cascade' ? 'Flapkit.cascade()' : 'Flapkit.riffle()'
+  const headerLine = board && header ? '    <Flapkit.Header>Departures</Flapkit.Header>\n' : ''
+
+  return `import * as Flapkit from '@thecuvii/flapkit'
+import '@thecuvii/flapkit/flapkit.css'
+import '@thecuvii/flapkit/${look}.css'
+
+<Flapkit.Root motion={${motionCall}}>
+  <Flapkit.${frame} aria-label="Package status" className="flapkit-${look}">
+${headerLine}    <Flapkit.Row label="STATUS">
       {[...'FLAPKIT'].map((character, index) => (
         <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
       ))}
     </Flapkit.Row>
-  </Flapkit.Board>
-</Flapkit.Root>`,
+  </Flapkit.${frame}>
+</Flapkit.Root>`
+}
+
+export const defaultQuickStartOptions = {
+  look: 'airport',
+  motion: 'riffle',
+  board: true,
+  header: true,
+} as const satisfies QuickStartSnippetOptions
+
+export const quickStartStaticCode = quickStartCode(defaultQuickStartOptions)
+export const quickStartHeaderLine = '    <Flapkit.Header>Departures</Flapkit.Header>'
+export const quickStartHeaderTag = '<Flapkit.Header>Departures</Flapkit.Header>'
+
+export type QuickStartToken = {
+  color?: string
+  content: string
+  offset: number
+}
+
+export type QuickStartRangeId =
+  | 'look-import'
+  | 'motion'
+  | 'frame-open'
+  | 'look-class'
+  | 'header'
+  | 'frame-close'
+
+type QuickStartRange = {
+  end: number
+  id: QuickStartRangeId
+  start: number
+}
+
+function rangeInside(source: string, haystack: string, value: string): { end: number; start: number } {
+  const at = source.indexOf(haystack)
+  if (at === -1) {
+    throw new Error(`Quick start snippet is missing ${JSON.stringify(haystack)}`)
+  }
+  const inner = haystack.indexOf(value)
+  if (inner === -1) {
+    throw new Error(`Quick start snippet haystack ${JSON.stringify(haystack)} is missing ${JSON.stringify(value)}`)
+  }
+  return { end: at + inner + value.length, start: at + inner }
+}
+
+export const quickStartRanges: readonly QuickStartRange[] = [
+  // Offsets are measured against the static default snippet.
+  {
+    id: 'look-import',
+    ...rangeInside(quickStartStaticCode, "import '@thecuvii/flapkit/airport.css'", 'airport'),
+  },
+  { id: 'motion', ...rangeInside(quickStartStaticCode, 'motion={Flapkit.riffle()}', 'riffle') },
+  {
+    id: 'frame-open',
+    ...rangeInside(quickStartStaticCode, '<Flapkit.Board aria-label', 'Board'),
+  },
+  {
+    id: 'look-class',
+    ...rangeInside(quickStartStaticCode, 'className="flapkit-airport"', 'airport'),
+  },
+  { id: 'header', ...rangeInside(quickStartStaticCode, quickStartHeaderLine, quickStartHeaderTag) },
+  { id: 'frame-close', ...rangeInside(quickStartStaticCode, '</Flapkit.Board>', 'Board') },
+]
+
+export function quickStartLiveValue(
+  id: QuickStartRangeId,
+  options: QuickStartSnippetOptions,
+) {
+  switch (id) {
+    case 'look-import':
+    case 'look-class':
+      return options.look
+    case 'motion':
+      return options.motion
+    case 'frame-open':
+    case 'frame-close':
+      return options.board ? 'Board' : 'Grid'
+    case 'header':
+      return options.board && options.header ? quickStartHeaderTag : ''
+  }
+}
+
+export const docsCode = {
+  quickStart: {
+    code: quickStartCode(defaultQuickStartOptions),
     language: 'tsx',
   },
   composition: {

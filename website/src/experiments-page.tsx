@@ -1,3 +1,5 @@
+'use client'
+
 import * as Flapkit from '@thecuvii/flapkit'
 import { useState, type ReactNode } from 'react'
 import { Exhibit, SiteFrame } from './site-chrome'

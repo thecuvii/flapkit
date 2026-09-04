@@ -1,3 +1,5 @@
+'use client'
+
 import * as Flapkit from '@thecuvii/flapkit'
 import { useState, type CSSProperties } from 'react'
 import { CassettePreview } from '../../src/render/cassette-preview'

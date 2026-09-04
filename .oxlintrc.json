@@ -1,0 +1,4 @@
+{
+  "ignorePatterns": ["dist/**", "website/.next/**", "website/out/**", "website/next-env.d.ts"],
+  "plugins": ["typescript", "react"]
+}

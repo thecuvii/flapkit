@@ -1,9 +1,10 @@
+'use client'
+
 import * as Flapkit from '@thecuvii/flapkit'
 import { useClipboard } from 'foxact/use-clipboard'
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -13,8 +14,17 @@ import {
 } from 'react'
 import { TextMorph } from 'torph/react'
 import { CassettePreview } from '../../src/render/cassette-preview'
-import { docsCode, type HighlightedDocsCode } from './docs-code'
-import { Exhibit, SiteFrame, StreamlineBlockArrowheadsLeft } from './site-chrome'
+import {
+  docsCode,
+  quickStartCode,
+  quickStartLiveValue,
+  quickStartRanges,
+  type HighlightedDocsCode,
+  type QuickStartRangeId,
+  type QuickStartSnippetOptions,
+  type QuickStartToken,
+} from './docs-code'
+import { Exhibit, InstrumentField, SiteFrame, StreamlineBlockArrowheadsLeft } from './site-chrome'
 
 const navigation = [
   {
@@ -143,30 +153,144 @@ function GithubMark(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-function CodeBlock({ html, source }: { html: string; source: string }) {
+function CodeCopyButton({ source }: { source: string }) {
   const { copied, copy } = useClipboard({ timeout: 1600 })
   const copySource = useCallback(() => {
     void copy(source)
   }, [copy, source])
 
   return (
+    <button
+      type="button"
+      className="code-block-copy"
+      aria-live="polite"
+      onClick={copySource}
+    >
+      <TextMorph as="span" numbers={false}>
+        {copied ? 'Copied' : 'Copy'}
+      </TextMorph>
+    </button>
+  )
+}
+
+function CodeBlock({ html, source }: { html: string; source: string }) {
+  return (
     <div className="code-block" role="region" aria-label="Code example">
-      <button
-        type="button"
-        className="code-block-copy"
-        aria-live="polite"
-        onClick={copySource}
-      >
-        <TextMorph as="span" numbers={false}>
-          {copied ? 'Copied' : 'Copy'}
-        </TextMorph>
-      </button>
+      <CodeCopyButton source={source} />
       <div
         className="code-block-body"
         tabIndex={0}
         // Shiki escapes source code before producing this trusted HTML.
         dangerouslySetInnerHTML={{ __html: html }}
       />
+    </div>
+  )
+}
+
+function tokenOverlapsRange(token: QuickStartToken, start: number, end: number) {
+  return token.offset < end && token.offset + token.content.length > start
+}
+
+function AnimatedCodeWord({
+  color,
+  id,
+  options,
+}: {
+  color?: string
+  id: QuickStartRangeId
+  options: QuickStartSnippetOptions
+}) {
+  return (
+    <span style={{ color }}>
+      <TextMorph as="span" duration={400} scale={false} style={{ verticalAlign: 'baseline' }}>
+        {quickStartLiveValue(id, options)}
+      </TextMorph>
+    </span>
+  )
+}
+
+function QuickStartSnippet({
+  lines,
+  options,
+}: {
+  lines: readonly QuickStartToken[][]
+  options: QuickStartSnippetOptions
+}) {
+  const headerRange = quickStartRanges.find((range) => range.id === 'header')
+
+  return (
+    <pre className="shiki">
+      <code>
+        {lines.map((line, lineIndex) => {
+          const isHeaderLine = Boolean(
+            headerRange && line.some((token) => tokenOverlapsRange(token, headerRange.start, headerRange.end)),
+          )
+          const hideHeaderLine = isHeaderLine && !(options.board && options.header)
+
+          return (
+            <span
+              key={line[0]?.offset ?? `blank-${lineIndex}`}
+              hidden={hideHeaderLine || undefined}
+            >
+              {line.map((token) => {
+                const animated = quickStartRanges.find((range) =>
+                  tokenOverlapsRange(token, range.start, range.end),
+                )
+                if (!animated) {
+                  return (
+                    <span key={token.offset} style={{ color: token.color }}>
+                      {token.content}
+                    </span>
+                  )
+                }
+                if (
+                  token.offset > animated.start ||
+                  token.offset + token.content.length <= animated.start
+                ) {
+                  return null
+                }
+
+                const before = token.content.slice(0, animated.start - token.offset)
+                const after = token.content.slice(animated.end - token.offset)
+                const valueToken = line.find(
+                  ({ offset }) => offset >= animated.start && offset < animated.end,
+                )
+                return (
+                  <span key={token.offset} style={{ color: token.color }}>
+                    {before}
+                    <AnimatedCodeWord
+                      color={valueToken?.color ?? token.color}
+                      id={animated.id}
+                      options={options}
+                    />
+                    {after}
+                  </span>
+                )
+              })}
+              {'\n'}
+            </span>
+          )
+        })}
+      </code>
+    </pre>
+  )
+}
+
+function TorphCodeBlock({
+  lines,
+  options,
+  source,
+}: {
+  lines: readonly QuickStartToken[][]
+  options: QuickStartSnippetOptions
+  source: string
+}) {
+  return (
+    <div className="code-block" role="region" aria-label="Code example">
+      <CodeCopyButton source={source} />
+      <div className="code-block-body code-block-live" tabIndex={0}>
+        <QuickStartSnippet lines={lines} options={options} />
+      </div>
     </div>
   )
 }
@@ -277,268 +401,174 @@ function ChoiceSwitch<T extends string>({
   )
 }
 
-function DepartureBoard({ look, motion }: { look: LookName; motion: 'cascade' | 'riffle' }) {
+function DepartureBoard({
+  look,
+  motion,
+  frame,
+  header,
+}: {
+  look: LookName
+  motion: 'cascade' | 'riffle'
+  frame: boolean
+  header: boolean
+}) {
+  const Frame = frame ? Flapkit.Board : Flapkit.Grid
+  const rows = departureRows.map((row) => (
+    <Flapkit.Row key={row.id} highlighted={row.highlighted} id={row.id}>
+      <Flapkit.Group deck={departureFlightDeck} id="flight" label="FLIGHT">
+        <Flapkit.WideCell>{row.flight}</Flapkit.WideCell>
+      </Flapkit.Group>
+      <Flapkit.Group id="time" label="TIME">
+        {cells(row.time, 5)}
+      </Flapkit.Group>
+      <Flapkit.Group deck={departureDestDeck} id="dest" label="DEST">
+        {cells(row.dest, 2, departureDestDeck)}
+      </Flapkit.Group>
+      <Flapkit.Group
+        deck={departureStatusDeck}
+        id="status"
+        label="STATUS"
+        variant={row.statusVariant}
+      >
+        {cells(row.status, 8, departureStatusDeck)}
+      </Flapkit.Group>
+      <Flapkit.Group id="gate" label="GATE">
+        {cells(row.gate, 3)}
+      </Flapkit.Group>
+    </Flapkit.Row>
+  ))
+
   return (
-    <div className={`quick-start-board-slot flapkit-${look}`}>
+    <div
+      className={`quick-start-board-slot flapkit-${look}`}
+      data-frame={frame ? 'on' : 'off'}
+      data-header={header ? 'on' : 'off'}
+    >
       <div className="quick-start-board-scale">
         <Flapkit.Root
           key={motion}
           motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}
         >
-          <Flapkit.Board aria-label="Airport departures" className={`flapkit-${look} preview-board`}>
-            <Flapkit.Header>Departures</Flapkit.Header>
-            {departureRows.map((row) => (
-              <Flapkit.Row key={row.id} highlighted={row.highlighted} id={row.id}>
-                <Flapkit.Group deck={departureFlightDeck} id="flight" label="FLIGHT">
-                  <Flapkit.WideCell>{row.flight}</Flapkit.WideCell>
-                </Flapkit.Group>
-                <Flapkit.Group id="time" label="TIME">
-                  {cells(row.time, 5)}
-                </Flapkit.Group>
-                <Flapkit.Group deck={departureDestDeck} id="dest" label="DEST">
-                  {cells(row.dest, 2, departureDestDeck)}
-                </Flapkit.Group>
-                <Flapkit.Group
-                  deck={departureStatusDeck}
-                  id="status"
-                  label="STATUS"
-                  variant={row.statusVariant}
-                >
-                  {cells(row.status, 8, departureStatusDeck)}
-                </Flapkit.Group>
-                <Flapkit.Group id="gate" label="GATE">
-                  {cells(row.gate, 3)}
-                </Flapkit.Group>
-              </Flapkit.Row>
-            ))}
-          </Flapkit.Board>
+          <Frame aria-label="Airport departures" className={`flapkit-${look} preview-board`}>
+            {header ? <Flapkit.Header>Departures</Flapkit.Header> : null}
+            {rows}
+          </Frame>
         </Flapkit.Root>
       </div>
     </div>
   )
 }
 
-function QuickStartPreview() {
+const onOffOptions = ['on', 'off'] as const
+
+function QuickStartPreview({ lines }: { lines: readonly QuickStartToken[][] }) {
   const [look, setLook] = useState<LookName>('airport')
   const [motion, setMotion] = useState<'cascade' | 'riffle'>('riffle')
+  const [board, setBoard] = useState(true)
+  const [header, setHeader] = useState(true)
+  const showHeader = board && header
+  const options = { look, motion, board, header: showHeader }
+  const source = quickStartCode(options)
 
   return (
-    <Exhibit
-      look={look}
-      motion={motion}
-      lookOptions={lookNames}
-      motionOptions={['riffle', 'cascade'] as const}
-      onLookChange={setLook}
-      onMotionChange={setMotion}
-    >
-      <DepartureBoard look={look} motion={motion} />
-    </Exhibit>
+    <>
+      <Exhibit
+        look={look}
+        motion={motion}
+        lookOptions={lookNames}
+        motionOptions={['riffle', 'cascade'] as const}
+        onLookChange={setLook}
+        onMotionChange={setMotion}
+        extras={[
+          <InstrumentField
+            key="board"
+            label="BOARD"
+            value={board ? 'on' : 'off'}
+            options={onOffOptions}
+            onChange={(value) => {
+              const next = value === 'on'
+              setBoard(next)
+              if (!next) setHeader(false)
+            }}
+          />,
+          <InstrumentField
+            key="header"
+            label="HEADER"
+            value={showHeader ? 'on' : 'off'}
+            options={onOffOptions}
+            onChange={(value) => {
+              if (value === 'on') {
+                setBoard(true)
+                setHeader(true)
+                return
+              }
+              setHeader(false)
+            }}
+          />,
+        ]}
+      >
+        <DepartureBoard look={look} motion={motion} frame={board} header={showHeader} />
+      </Exhibit>
+      <TorphCodeBlock lines={lines} options={options} source={source} />
+    </>
   )
 }
 
 const anatomyParts = [
-  {
-    id: 'root',
-    name: 'Root',
-    note: 'Motion and optional sound',
-    selector: '[data-anatomy="root"]',
-  },
+  { id: 'root', name: 'Root', note: 'Motion and optional sound' },
   {
     id: 'board',
     name: 'Board',
     note: 'Framed display with grain, labels, and optional header',
-    selector: '[data-slot="split-flap-board"]',
-    cover: '.flapkit-board-header, .flapkit-grid',
   },
   {
     id: 'grid',
     name: 'Grid',
     note: 'Frameless display with the same cassette grid',
-    selector: '.flapkit-grid',
   },
   {
     id: 'header',
     name: 'Header',
     note: 'Optional board title. Board only',
-    selector: '.flapkit-board-header',
   },
   {
     id: 'row',
     name: 'Row',
-    note: (
-      <>
-        One horizontal record. <code>highlighted</code> lifts a row
-      </>
-    ),
-    selector: '[data-split-flap-row]',
+    note: 'One horizontal record',
   },
   {
     id: 'group',
     name: 'Group',
     note: 'Optional adjacent region with shared settings',
-    selector: '[data-split-flap-group]',
   },
   {
     id: 'cell',
     name: 'Cell / WideCell',
     note: 'One independently driven cassette. A group cannot mix widths',
-    selector: '[data-slot="cassette"]',
-    firstOnly: true,
   },
 ] as const
 
 type AnatomyPartId = (typeof anatomyParts)[number]['id']
 
-type GuideBox = {
-  height: number
-  left: number
-  top: number
-  width: number
-}
-
-function measureAnatomyTargets(
-  root: HTMLElement,
-  selector: string,
-  firstOnly = false,
-): GuideBox[] {
-  const rootBox = root.getBoundingClientRect()
-  const nodes = firstOnly
-    ? root.querySelector<HTMLElement>(selector)
-    : root.querySelectorAll<HTMLElement>(selector)
-  const elements = nodes instanceof Element ? [nodes] : nodes ? [...nodes] : []
-
-  return elements.map((element) => {
-    const box = element.getBoundingClientRect()
-    return {
-      top: box.top - rootBox.top + root.scrollTop,
-      left: box.left - rootBox.left + root.scrollLeft,
-      width: box.width,
-      height: box.height,
-    }
-  })
-}
-
-function anatomyVeilMask(boxes: readonly GuideBox[]) {
-  return {
-    WebkitMaskImage: ['linear-gradient(#000 0 0)', ...boxes.map(() => 'linear-gradient(#000 0 0)')].join(
-      ', ',
-    ),
-    maskImage: ['linear-gradient(#000 0 0)', ...boxes.map(() => 'linear-gradient(#000 0 0)')].join(', '),
-    WebkitMaskSize: ['100% 100%', ...boxes.map((box) => `${box.width}px ${box.height}px`)].join(', '),
-    maskSize: ['100% 100%', ...boxes.map((box) => `${box.width}px ${box.height}px`)].join(', '),
-    WebkitMaskPosition: ['0 0', ...boxes.map((box) => `${box.left}px ${box.top}px`)].join(', '),
-    maskPosition: ['0 0', ...boxes.map((box) => `${box.left}px ${box.top}px`)].join(', '),
-    WebkitMaskRepeat: 'no-repeat',
-    maskRepeat: 'no-repeat',
-    WebkitMaskComposite: 'xor',
-    maskComposite: 'exclude',
-  } as const
-}
-
-function AnatomyGuides({
-  boxes,
-  covers,
-}: {
-  boxes: readonly GuideBox[]
-  covers?: readonly GuideBox[]
-}) {
-  const xs = [...new Set(boxes.flatMap((box) => [box.left, box.left + box.width]))]
-  const ys = [...new Set(boxes.flatMap((box) => [box.top, box.top + box.height]))]
-
-  return (
-    <div className="anatomy-guides" aria-hidden="true">
-      <span className="anatomy-guide-veil" style={anatomyVeilMask(boxes)} />
-      {(covers ?? []).map((box, index) => (
-        <span
-          key={`cover:${index}`}
-          className="anatomy-guide-cover"
-          style={{
-            top: box.top,
-            left: box.left,
-            width: box.width,
-            height: box.height,
-          }}
-        />
-      ))}
-      {ys.map((top) => (
-        <span key={`h:${top}`} className="anatomy-guide-h" style={{ top }} />
-      ))}
-      {xs.map((left) => (
-        <span key={`v:${left}`} className="anatomy-guide-v" style={{ left }} />
-      ))}
-      {boxes.map((box, index) => (
-        <span
-          key={`box:${index}`}
-          className="anatomy-guide-box"
-          style={{
-            top: box.top,
-            left: box.left,
-            width: box.width,
-            height: box.height,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
 function CompositionAnatomy() {
-  const stageRef = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<AnatomyPartId | null>(null)
-  const [boxes, setBoxes] = useState<GuideBox[]>([])
-  const [covers, setCovers] = useState<GuideBox[]>([])
-
-  useLayoutEffect(() => {
-    const root = stageRef.current
-    const part = anatomyParts.find((item) => item.id === hover)
-    if (!root || !part) {
-      setBoxes([])
-      setCovers([])
-      return
-    }
-
-    const update = () => {
-      setBoxes(measureAnatomyTargets(root, part.selector, 'firstOnly' in part && part.firstOnly))
-      setCovers('cover' in part ? measureAnatomyTargets(root, part.cover) : [])
-    }
-
-    update()
-    const observer = new ResizeObserver(update)
-    observer.observe(root)
-    for (const element of root.querySelectorAll(part.selector)) {
-      observer.observe(element)
-    }
-    if ('cover' in part) {
-      for (const element of root.querySelectorAll(part.cover)) {
-        observer.observe(element)
-      }
-    }
-    const stage = root.closest('.exhibit-stage')
-    stage?.addEventListener('scroll', update, { passive: true })
-    window.addEventListener('resize', update)
-    return () => {
-      observer.disconnect()
-      stage?.removeEventListener('scroll', update)
-      window.removeEventListener('resize', update)
-    }
-  }, [hover])
 
   return (
     <>
-      <Exhibit look="airport" motion="riffle" deck="A–Z">
-        <div className="composition-preview" ref={stageRef}>
-          <div data-anatomy="root">
-            <Flapkit.Root motion={Flapkit.riffle()}>
-              <Flapkit.Board className="flapkit-airport preview-board">
-                <Flapkit.Header>Departures</Flapkit.Header>
-                <Flapkit.Row highlighted id="LH401">
-                  <Flapkit.Group label="STATUS">{cells('BOARDING', 8)}</Flapkit.Group>
-                  <Flapkit.Group label="GATE">{cells('A12', 3)}</Flapkit.Group>
-                </Flapkit.Row>
-              </Flapkit.Board>
-            </Flapkit.Root>
-          </div>
-          {boxes.length > 0 ? <AnatomyGuides boxes={boxes} covers={covers} /> : null}
+      <Exhibit className="composition-exhibit" look="airport" motion="riffle" deck="A–Z">
+        <div
+          className="composition-preview"
+          data-explode={hover === 'row' || hover === 'group' || hover === 'cell' ? hover : undefined}
+        >
+          <Flapkit.Root motion={Flapkit.riffle()}>
+            <Flapkit.Board className="flapkit-airport preview-board">
+              <Flapkit.Header>Departures</Flapkit.Header>
+              <Flapkit.Row highlighted id="LH401">
+                <Flapkit.Group label="STATUS">{cells('BOARDING', 8)}</Flapkit.Group>
+                <Flapkit.Group label="GATE">{cells('A12', 3)}</Flapkit.Group>
+              </Flapkit.Row>
+            </Flapkit.Board>
+          </Flapkit.Root>
         </div>
       </Exhibit>
       <ul className="anatomy" aria-label="Flapkit component tree">
@@ -772,7 +802,9 @@ function MotionPreview() {
       motionOptions={['riffle', 'cascade'] as const}
       onMotionChange={setMotion}
     >
-      <StatusBoard motion={motion} />
+      <div className="motion-board-slot">
+        <StatusBoard motion={motion} />
+      </div>
     </Exhibit>
   )
 }
@@ -781,14 +813,10 @@ function LooksPreview() {
   const [look, setLook] = useState<LookName>('airport')
 
   return (
-    <Exhibit
-      look={look}
-      motion="cascade"
-      deck="A–Z"
-      lookOptions={lookNames}
-      onLookChange={setLook}
-    >
-      <StatusBoard look={look} motion="cascade" />
+    <Exhibit look={look} lookOptions={lookNames} onLookChange={setLook}>
+      <div className="looks-board-slot flapkit-industrial">
+        <StatusBoard look={look} motion="cascade" />
+      </div>
     </Exhibit>
   )
 }
@@ -989,7 +1017,13 @@ function DocSection({
   )
 }
 
-export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocsCode }) {
+export function DocsPage({
+  highlighted: highlightedCode,
+  quickStartLines,
+}: {
+  highlighted: HighlightedDocsCode
+  quickStartLines: QuickStartToken[][]
+}) {
   return (
     <SiteFrame>
       <div className="docs-body">
@@ -1028,10 +1062,10 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
             look; Flapkit does not inject styles at runtime.
           </p>
           <p>
-            The preview is a fuller departure board. The snippet below is the smallest first board.
+            The preview is a fuller departure board. The snippet is the smallest first board, and
+            follows the options.
           </p>
-          <QuickStartPreview />
-          <CodeBlock html={highlightedCode.quickStart} source={docsCode.quickStart.code} />
+          <QuickStartPreview lines={quickStartLines} />
         </DocSection>
 
         <DocSection id="how-it-works" index="02" title="How it works" className="principle-section">

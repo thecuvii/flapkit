@@ -17,7 +17,7 @@ function InstrumentMark() {
   return <StreamlineBlockArrowheadsLeft className="choice-switch-mark" aria-hidden="true" />
 }
 
-function InstrumentField<T extends string>({
+export function InstrumentField<T extends string>({
   label,
   value,
   options,
@@ -110,6 +110,7 @@ export function Exhibit<L extends string = string, M extends string = string>({
   motionOptions,
   onLookChange,
   onMotionChange,
+  extras,
   footer,
 }: {
   children: ReactNode
@@ -121,10 +122,13 @@ export function Exhibit<L extends string = string, M extends string = string>({
   motionOptions?: readonly M[]
   onLookChange?: (value: L) => void
   onMotionChange?: (value: M) => void
+  extras?: ReactNode[]
   footer?: ReactNode
 }) {
   const controlled =
-    Boolean(look && lookOptions && onLookChange) || Boolean(motion && motionOptions && onMotionChange)
+    Boolean(look && lookOptions && onLookChange) ||
+    Boolean(motion && motionOptions && onMotionChange) ||
+    Boolean(extras?.length)
   const columns = [
     look
       ? (
@@ -149,6 +153,7 @@ export function Exhibit<L extends string = string, M extends string = string>({
         )
       : null,
     deck ? <InstrumentField key="deck" label="DECK" value={deck} /> : null,
+    ...(extras ?? []),
   ].filter(Boolean)
 
   return (

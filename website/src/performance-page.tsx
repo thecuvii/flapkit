@@ -1,3 +1,5 @@
+'use client'
+
 import * as Flapkit from '@thecuvii/flapkit'
 import { SiteFrame } from './site-chrome'
 import {

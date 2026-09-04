@@ -1,3 +1,3 @@
 # Flapkit website
 
-Private documentation and demo workspace for `@thecuvii/flapkit`.
+Private Next.js documentation and demo workspace for `@thecuvii/flapkit`.

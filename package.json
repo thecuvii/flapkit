@@ -24,22 +24,27 @@
     "./signal.css": "./dist/styles/signal.css"
   },
   "scripts": {
-    "build": "vp pack",
-    "build:website": "pnpm build && vp -C website build",
+    "build": "tsdown",
+    "build:website": "pnpm build && pnpm --filter website build",
     "check": "pnpm build && vp check && tsc -p website/tsconfig.json",
-    "check:fix": "pnpm build && vp check --fix && pnpm build && tsc -p website/tsconfig.json",
-    "dev": "pnpm build && vp -C website dev",
+    "check:fix": "pnpm build && vp check --fix && tsc -p website/tsconfig.json",
+    "dev": "pnpm --filter website dev",
+    "fmt": "oxfmt",
+    "lint": "oxlint .",
     "prepack": "pnpm build",
     "test": "vp test run",
     "prepare": "vp config --no-agent"
   },
   "devDependencies": {
-    "@types/react": "^19.2.18",
-    "react": "19.2.8",
-    "typescript": "7.0.2",
-    "vite": "8.2.2",
-    "vite-plus": "0.3.0",
-    "vitest": "4.1.0"
+    "@types/react": "catalog:dev",
+    "oxfmt": "catalog:dev",
+    "oxlint": "catalog:dev",
+    "react": "catalog:frontend",
+    "tsdown": "catalog:dev",
+    "typescript": "catalog:dev",
+    "vite": "catalog:dev",
+    "vite-plus": "catalog:dev",
+    "vitest": "catalog:dev"
   },
   "peerDependencies": {
     "react": ">=19.0.0"

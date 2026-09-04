@@ -1,7 +1,7 @@
 'use client'
 
 import * as Flapkit from '@thecuvii/flapkit'
-import { SiteFrame } from './site-chrome'
+import { SiteFrame } from '../site'
 import {
   Profiler,
   useCallback,

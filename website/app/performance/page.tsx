@@ -1,4 +1,4 @@
-import { PerformancePage } from '../../src/performance-page'
+import { PerformancePage } from '../../modules/performance'
 
 export default function PerformanceRoute() {
   return <PerformancePage />

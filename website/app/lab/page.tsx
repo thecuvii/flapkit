@@ -1,4 +1,4 @@
-import { LabPage } from '../../src/lab-page'
+import { LabPage } from '../../modules/lab'
 
 export default function LabRoute() {
   return <LabPage />

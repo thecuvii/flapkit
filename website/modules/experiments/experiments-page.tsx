@@ -2,7 +2,7 @@
 
 import * as Flapkit from '@thecuvii/flapkit'
 import { useState, type ReactNode } from 'react'
-import { Exhibit, SiteFrame } from './site-chrome'
+import { Exhibit, SiteFrame } from '../site'
 
 const unicodeDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 const wideDeck = Flapkit.createDeck(['  ', '14', '05', '55', '15', '30', '20'])

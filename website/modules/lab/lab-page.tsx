@@ -2,8 +2,8 @@
 
 import * as Flapkit from '@thecuvii/flapkit'
 import { useState, type CSSProperties } from 'react'
-import { CassettePreview } from '../../src/render/cassette-preview'
-import { SiteFrame } from './site-chrome'
+import { CassettePreview } from '../../../src/render/cassette-preview'
+import { SiteFrame } from '../site'
 
 const labDeck = Flapkit.createDeck('IJ')
 

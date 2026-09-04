@@ -13,7 +13,7 @@ import {
   type SVGProps,
 } from 'react'
 import { TextMorph } from 'torph/react'
-import { CassettePreview } from '../../src/render/cassette-preview'
+import { CassettePreview } from '../../../src/render/cassette-preview'
 import {
   docsCode,
   quickStartCode,
@@ -24,7 +24,7 @@ import {
   type QuickStartSnippetOptions,
   type QuickStartToken,
 } from './docs-code'
-import { Exhibit, InstrumentField, SiteFrame, StreamlineBlockArrowheadsLeft } from './site-chrome'
+import { Exhibit, InstrumentField, SiteFrame, StreamlineBlockArrowheadsLeft } from '../site'
 
 const navigation = [
   {

@@ -8,7 +8,7 @@ import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 import '@thecuvii/flapkit/industrial.css'
 import '@thecuvii/flapkit/signal.css'
-import '../styles.css'
+import './styles.css'
 
 export const metadata: Metadata = {
   title: 'Flapkit — Split-flap displays for React',

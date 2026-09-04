@@ -5,6 +5,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type ReactNode,
   type SVGProps,
@@ -12,7 +13,7 @@ import {
 import { TextMorph } from 'torph/react'
 import { CassettePreview } from '../../src/render/cassette-preview'
 import { docsCode, type HighlightedDocsCode } from './docs-code'
-import { Exhibit, SiteFrame } from './site-chrome'
+import { Exhibit, SiteFrame, StreamlineBlockArrowheadsLeft } from './site-chrome'
 
 const navigation = [
   {
@@ -130,19 +131,6 @@ function Logo() {
   )
 }
 
-function StreamlineBlockArrowheadsLeft(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16" {...props}>
-      <path
-        fill="currentColor"
-        fillRule="evenodd"
-        d="M11.92.16v15.68L4.08 8z"
-        clipRule="evenodd"
-      />
-    </svg>
-  )
-}
-
 function GithubMark(props: SVGProps<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16" {...props}>
@@ -182,29 +170,79 @@ function CodeBlock({ html, source }: { html: string; source: string }) {
   )
 }
 
-function useActiveSection() {
-  const [activeId, setActiveId] = useState<(typeof sectionIds)[number]>('quick-start')
+type SectionId = (typeof sectionIds)[number]
 
+let activeSectionId: SectionId = 'quick-start'
+const activeSectionListeners = new Set<() => void>()
+
+function subscribeActiveSection(onStoreChange: () => void) {
+  activeSectionListeners.add(onStoreChange)
+  return () => {
+    activeSectionListeners.delete(onStoreChange)
+  }
+}
+
+function getActiveSectionId() {
+  return activeSectionId
+}
+
+function setActiveSectionId(id: SectionId) {
+  if (activeSectionId === id) return
+  activeSectionId = id
+  for (const listener of activeSectionListeners) listener()
+}
+
+function DocsNav() {
   useEffect(() => {
-    const nodes = sectionIds
+    const sections = sectionIds
       .map((id) => document.getElementById(id))
       .filter((node): node is HTMLElement => node !== null)
-    if (nodes.length === 0) return
+    if (sections.length === 0) return
 
     const ratios = new Map<string, number>()
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) ratios.set(entry.target.id, entry.intersectionRatio)
         const next = [...ratios.entries()].sort((left, right) => right[1] - left[1])[0]
-        if (next && next[1] > 0) setActiveId(next[0] as (typeof sectionIds)[number])
+        if (!next || next[1] <= 0) return
+        setActiveSectionId(next[0] as SectionId)
       },
       { rootMargin: '-18% 0px -58% 0px', threshold: [0, 0.16, 0.4, 0.7] },
     )
-    for (const node of nodes) observer.observe(node)
+    for (const section of sections) observer.observe(section)
     return () => observer.disconnect()
   }, [])
 
-  return sectionMeta.find((section) => section.id === activeId) ?? sectionMeta[0]
+  return (
+    <nav aria-label="Documentation">
+      {navigation.map((group) => (
+        <div key={group.label} className="nav-group">
+          <p>{group.label}</p>
+          {group.items.map(([label, id]) => (
+            <DocsNavLink key={id} href={id} label={label} />
+          ))}
+        </div>
+      ))}
+    </nav>
+  )
+}
+
+function DocsNavLink({ href, label }: { href: SectionId; label: string }) {
+  const isActive = useSyncExternalStore(
+    subscribeActiveSection,
+    () => getActiveSectionId() === href,
+    () => href === 'quick-start',
+  )
+
+  return (
+    <a
+      href={`#${href}`}
+      className={isActive ? 'is-active' : undefined}
+      aria-current={isActive ? 'location' : undefined}
+    >
+      {label}
+    </a>
+  )
 }
 
 function ChoiceSwitch<T extends string>({
@@ -287,18 +325,10 @@ function QuickStartPreview() {
     <Exhibit
       look={look}
       motion={motion}
-      deck="custom"
-      footer={
-        <div className="choice-row">
-          <ChoiceSwitch label="Look" options={lookNames} value={look} onChange={setLook} />
-          <ChoiceSwitch
-            label="Motion"
-            options={['riffle', 'cascade'] as const}
-            value={motion}
-            onChange={setMotion}
-          />
-        </div>
-      }
+      lookOptions={lookNames}
+      motionOptions={['riffle', 'cascade'] as const}
+      onLookChange={setLook}
+      onMotionChange={setMotion}
     >
       <DepartureBoard look={look} motion={motion} />
     </Exhibit>
@@ -516,14 +546,8 @@ function MotionPreview() {
       look="airport"
       motion={motion}
       deck="A–Z"
-      footer={
-        <ChoiceSwitch
-          label="Motion"
-          options={['riffle', 'cascade'] as const}
-          value={motion}
-          onChange={setMotion}
-        />
-      }
+      motionOptions={['riffle', 'cascade'] as const}
+      onMotionChange={setMotion}
     >
       <StatusBoard motion={motion} />
     </Exhibit>
@@ -538,14 +562,8 @@ function LooksPreview() {
       look={look}
       motion="cascade"
       deck="A–Z"
-      footer={
-        <ChoiceSwitch
-          label="Look"
-          options={lookNames}
-          value={look}
-          onChange={setLook}
-        />
-      }
+      lookOptions={lookNames}
+      onLookChange={setLook}
     >
       <StatusBoard look={look} motion="cascade" />
     </Exhibit>
@@ -749,31 +767,13 @@ function DocSection({
 }
 
 export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocsCode }) {
-  const active = useActiveSection()
-
   return (
     <SiteFrame>
       <div className="docs-body">
           <aside className="sidebar">
             <div className="sidebar-inner">
               <Logo />
-              <nav aria-label="Documentation">
-                {navigation.map((group) => (
-                  <div key={group.label} className="nav-group">
-                    <p>{group.label}</p>
-                    {group.items.map(([label, id]) => (
-                      <a
-                        key={id}
-                        href={`#${id}`}
-                        className={active.id === id ? 'is-active' : undefined}
-                        aria-current={active.id === id ? 'location' : undefined}
-                      >
-                        {label}
-                      </a>
-                    ))}
-                  </div>
-                ))}
-              </nav>
+              <DocsNav />
               <div className="sidebar-stamp">
                 <div className="sidebar-stamp-loc">
                   <i className="hatch" aria-hidden="true" />

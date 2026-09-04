@@ -823,6 +823,113 @@ h2 {
   vertical-align: middle;
 }
 
+.instrument-strip {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--instrument-cols, 3), minmax(0, 1fr));
+  gap: 12px var(--u4);
+  width: var(--exhibit-span);
+  margin: 0;
+  padding: calc((var(--u) - 54px) / 2) 0;
+}
+
+.instrument-strip::before,
+.instrument-strip::after {
+  position: absolute;
+  top: -4px;
+  width: 7px;
+  height: 7px;
+  box-sizing: border-box;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  content: '';
+}
+
+.instrument-strip::before {
+  left: -4px;
+}
+
+.instrument-strip::after {
+  right: -4px;
+  background: var(--ink);
+}
+
+.instrument-field {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+.instrument-field dt,
+.instrument-field dd,
+.instrument-field button {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 620;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.instrument-field dt {
+  opacity: 0.4;
+  color: var(--ink);
+}
+
+.instrument-field [role='group'] {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.instrument-field dd,
+.instrument-field button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.instrument-field button {
+  cursor: pointer;
+  opacity: 0.4;
+}
+
+.instrument-field button[aria-pressed='true'] {
+  opacity: 1;
+}
+
+.instrument-field .choice-switch-mark {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 4px);
+  display: block;
+  width: 7px;
+  height: 7px;
+  flex: none;
+  color: var(--flare);
+  transform: translateY(-50%);
+  visibility: hidden;
+}
+
+.instrument-field dd .choice-switch-mark,
+.instrument-field button[aria-pressed='true'] .choice-switch-mark {
+  visibility: visible;
+}
+
+.instrument-field button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
 .preview-board {
   width: max-content;
 }
@@ -2141,6 +2248,12 @@ h2 {
 }
 
 @media (max-width: 680px) {
+  .instrument-strip {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px 0;
+  }
+
   .choice-row {
     grid-template-columns: 1fr;
   }

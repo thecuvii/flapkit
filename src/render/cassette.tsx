@@ -802,15 +802,6 @@ export const FlapCell = memo(function FlapCell({
               />
             </span>
             <span
-              {...classProps(styles.movingVaneEdge)}
-              style={{
-                height: splitFlapLook.leafThickness,
-                left: splitFlapLook.faceInsetX,
-                right: splitFlapLook.faceInsetX,
-                top: `calc(${splitFlapLook.faceInsetY} - ${splitFlapLook.leafThickness} / 2)`,
-              }}
-            />
-            <span
               {...classProps(styles.movingVaneSide, styles.movingVaneSideLeft)}
               style={{
                 height: `calc(50% - ${splitFlapLook.faceInsetY})`,

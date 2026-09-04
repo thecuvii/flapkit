@@ -10,7 +10,6 @@ import {
   spareLeafStep,
   spareLeafXOffsets,
   splitFlapLeafBrightnessVariation,
-  splitFlapLeafThickness,
   splitFlapSpareLeafCount,
 } from '../motion/constants'
 import {
@@ -35,7 +34,6 @@ type CanvasCassetteGeometry = {
   cellWidth: number
   cellX: number
   cellY: number
-  edge: CanvasGradient
   faceWidth: number
   faceX: number
   glyphStyles: Record<SplitFlapGlyphScript, CanvasGlyphStyle>
@@ -531,7 +529,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         const nextGlyphColors = visual.glyphColors[nextPosition.variant]
         const angle = canvasVaneAngle(runtime, motion, now)
         const angleRadians = (Math.abs(angle) * Math.PI) / 180
-        const edgeOn = Math.sin(Math.min(Math.PI, angleRadians))
         const stackShift = canvasStackShift(runtime, now)
         const {
           bottomFaceHeight,
@@ -541,7 +538,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           cellWidth,
           cellX,
           cellY,
-          edge,
           faceWidth,
           faceX,
           seamY,
@@ -676,15 +672,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           )
         }
         context.restore()
-
-        if (edgeOn > 0.32) {
-          const edgeHeight = Math.max(0.5, splitFlapLeafThickness * unit * edgeOn)
-          context.globalAlpha = 0.72
-          context.fillStyle = edge
-          context.fillRect(faceX, seamY - edgeHeight / 2, faceWidth, edgeHeight)
-          context.globalAlpha = 1
-          drawOperations += 1
-        }
       })
 
       controller.recordCanvasFrame(drawOperations)
@@ -845,12 +832,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         bottomSurface.addColorStop(0, 'rgba(0, 0, 0, 0.18)')
         bottomSurface.addColorStop(0.38, 'rgba(0, 0, 0, 0.035)')
         bottomSurface.addColorStop(1, 'rgba(214, 207, 170, 0.025)')
-        const edge = context.createLinearGradient(faceX, 0, faceX + faceWidth, 0)
-        edge.addColorStop(0, '#080a08')
-        edge.addColorStop(0.22, '#30342f')
-        edge.addColorStop(0.42, '#777d76')
-        edge.addColorStop(0.63, '#2a2e2a')
-        edge.addColorStop(1, '#070807')
         geometryRef.current[index] = {
           baselines: {
             cjk: cjkGlyph.baseline,
@@ -863,7 +844,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           cellWidth,
           cellX,
           cellY,
-          edge,
           faceWidth,
           faceX,
           glyphStyles: {

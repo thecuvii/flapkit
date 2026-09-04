@@ -427,26 +427,6 @@
   :where(.flapkit-moving-vane .flapkit-face) {
     box-shadow: none;
   }
-  /* Catch light on the face so it turns with the leaf. Compact glyphs already
-     occupy ::before, so the idle lower leaf uses ::after instead. */
-  :where(.flapkit-moving-vane-edge) {
-    position: absolute;
-    z-index: 7;
-    opacity: 0.72;
-    background-color: #1d201d;
-    background-image: linear-gradient(
-      90deg,
-      #080a08 0%,
-      #30342f 22%,
-      #777d76 42%,
-      #2a2e2a 63%,
-      #070807 100%
-    );
-    box-shadow: 0 0 0 0.018cqw rgba(0, 0, 0, 0.92);
-    transform: rotateX(90deg);
-    transform-origin: 50% 50%;
-    pointer-events: none;
-  }
   :where(.flapkit-moving-vane-side) {
     position: absolute;
     z-index: 7;

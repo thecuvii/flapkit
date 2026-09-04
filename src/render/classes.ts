@@ -46,7 +46,6 @@ export const styles = {
   movingVaneFace: 'flapkit-moving-vane-face',
   movingVaneFront: 'flapkit-moving-vane-front',
   movingVaneBack: 'flapkit-moving-vane-back',
-  movingVaneEdge: 'flapkit-moving-vane-edge',
   movingVaneSide: 'flapkit-moving-vane-side',
   movingVaneSideLeft: 'flapkit-moving-vane-side-left',
   movingVaneSideRight: 'flapkit-moving-vane-side-right',

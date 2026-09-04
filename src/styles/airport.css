@@ -152,7 +152,7 @@
     --flapkit-frame-left: 27.06px;
     --flapkit-frame-right: 25.83px;
     --flapkit-frame-top: 16.81px;
-    --flapkit-glyph-font-family: GeistSans, 'Arial Narrow', Arial, sans-serif;
+    --flapkit-glyph-font-family: 'Helvetica Neue', Helvetica, 'Arial Narrow', Arial, sans-serif;
     --flapkit-glyph-font-weight: 600;
     --flapkit-glyph-orange: #cf9138;
     --flapkit-glyph-opacity: 0.94;
@@ -177,7 +177,7 @@
     --flapkit-header-height: 47.56px;
     --flapkit-highlight-face: #3b3d31;
     --flapkit-highlight-glyph: #fff2c8;
-    --flapkit-label-font-family: GeistSans, 'Arial Narrow', Arial, sans-serif;
+    --flapkit-label-font-family: 'Helvetica Neue', Helvetica, 'Arial Narrow', Arial, sans-serif;
     --flapkit-leaf-thickness: 0.24cqw;
     --flapkit-row-background-color: #151713;
     --flapkit-row-background-image: linear-gradient(

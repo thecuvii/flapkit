@@ -2,7 +2,7 @@
 
 // DOM cassette renderer shared by the motion adapters.
 
-import { memo, useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react'
+import { memo, useEffect, useRef, type CSSProperties, type RefObject } from 'react'
 import {
   activeLeafClearance,
   glyphOffsetValues,
@@ -167,9 +167,7 @@ export const FlapCell = memo(function FlapCell({
   className?: string
 }) {
   const { index } = cell
-  const [css3dMotion, setCss3dMotion] = useState(false)
   const rootRef = useRef<HTMLSpanElement>(null)
-  const compactCellRef = useRef<HTMLSpanElement>(null)
   const outgoingLowerRef = useRef<HTMLSpanElement>(null)
   const outgoingLowerGlyphRef = useRef<HTMLSpanElement>(null)
   const arrivingUpperRef = useRef<HTMLSpanElement>(null)
@@ -181,11 +179,6 @@ export const FlapCell = memo(function FlapCell({
   const spareLeafPackRef = useRef<HTMLSpanElement>(null)
   const glyphOffset = glyphOffsets[index % glyphOffsets.length]
   const glyphOffsetValue = glyphOffsetValues[index % glyphOffsetValues.length]
-
-  useEffect(() => {
-    if (detailed) return
-    return controller.subscribeCssCassette(index, setCss3dMotion)
-  }, [controller, detailed, index])
 
   const highlightFacePercent = highlighted ? 12 : 0
   const highlightGlyphPercent = highlighted ? 70 : 0
@@ -382,17 +375,16 @@ export const FlapCell = memo(function FlapCell({
     `linear-gradient(#050605, #050605) bottom / 100% calc(${activeLeafReveal}cqw + ${splitFlapLook.faceInsetY}) no-repeat`,
   ].join(', ')
 
+  // The view registers once per mount; the controller toggles compact 3D motion by attribute.
   useEffect(() => {
     const outgoingLowerGlyph = detailed ? outgoingLowerGlyphRef.current : outgoingLowerRef.current
     const arrivingUpperGlyph = detailed ? arrivingUpperGlyphRef.current : arrivingUpperRef.current
-    const movingFrontGlyph =
-      detailed || css3dMotion ? movingFrontGlyphRef.current : outgoingLowerRef.current
-    const movingBackGlyph =
-      detailed || css3dMotion ? movingBackGlyphRef.current : arrivingUpperRef.current
-    const movingVane = detailed || css3dMotion ? movingVaneRef.current : compactCellRef.current
+    const movingFrontGlyph = movingFrontGlyphRef.current
+    const movingBackGlyph = movingBackGlyphRef.current
+    const movingVane = movingVaneRef.current
     const spareLeafPack = detailed
       ? (spareLeafPackRef.current ?? rootRef.current)
-      : (compactMovingStackRef.current ?? compactCellRef.current)
+      : compactMovingStackRef.current
 
     if (
       !rootRef.current ||
@@ -413,7 +405,7 @@ export const FlapCell = memo(function FlapCell({
       arrivingUpper: arrivingUpperRef.current,
       arrivingUpperGlyph,
       compact: !detailed,
-      compactMotion: !detailed && css3dMotion,
+      compactMotion: false,
       cssRiffleDuration: null,
       cssRiffleTargetIndex: null,
       movingBackGlyph,
@@ -424,7 +416,7 @@ export const FlapCell = memo(function FlapCell({
       root: rootRef.current,
       spareLeafPack,
     })
-  }, [controller, css3dMotion, detailed, index])
+  }, [controller, detailed, index])
 
   if (!detailed) {
     return (
@@ -446,7 +438,6 @@ export const FlapCell = memo(function FlapCell({
         }
       >
         <span
-          ref={compactCellRef}
           {...classProps(styles.cell, styles.compactCell)}
           data-slot="cassette-base"
           style={
@@ -522,83 +513,80 @@ export const FlapCell = memo(function FlapCell({
           >
             {cell.span === 2 && <WideGlyphParts compact />}
           </span>
-          {css3dMotion && (
-            <>
-              <span
-                ref={compactMovingStackRef}
-                {...classProps(styles.compactMovingStack)}
-                data-slot="moving-spare-leaves"
-                style={{
-                  background: compactMovingStackBackground,
-                  clipPath: `inset(calc(100% - ${activeLeafReveal}cqw - ${splitFlapLook.faceInsetY}) 0 0)`,
-                }}
-              />
-              <span
-                ref={movingVaneRef}
-                {...classProps(styles.movingVane, styles.compactMovingVane)}
-                data-slot="moving-leaf"
-              >
-                <span
-                  ref={movingFrontGlyphRef}
-                  {...classProps(
-                    styles.compactGlyphCarrier,
-                    styles.movingVaneFace,
-                    styles.compactMovingVaneFace,
-                    cell.span === 2 && styles.compactWideGlyphCarrier,
-                  )}
-                  data-part="face"
-                  data-glyph=""
-                  data-face-half="upper"
-                  data-face-state="moving"
-                  data-slot="moving-leaf-front"
-                  data-split-flap-compact-glyph
-                  data-split-flap-wide-glyph={cell.span === 2 || undefined}
-                  style={{
-                    ...compactGlyphCarrierStyle(
-                      glyphColor,
-                      false,
-                      `calc(${splitFlapLook.glyphY} - ${splitFlapLook.faceInsetY})`,
-                    ),
-                    backgroundColor: topFaceColor,
-                    backgroundImage: compactTopFaceBackground,
-                    clipPath: `inset(${splitFlapLook.faceInsetY} ${splitFlapLook.faceInsetX} 50% ${splitFlapLook.faceInsetX})`,
-                    transform: `translateZ(calc(${splitFlapLook.leafThickness} / 2))`,
-                  }}
-                >
-                  {cell.span === 2 && <WideGlyphParts compact />}
-                </span>
-                <span
-                  ref={movingBackGlyphRef}
-                  {...classProps(
-                    styles.compactGlyphCarrier,
-                    styles.movingVaneFace,
-                    styles.compactMovingVaneFace,
-                    cell.span === 2 && styles.compactWideGlyphCarrier,
-                  )}
-                  data-part="face"
-                  data-glyph=""
-                  data-face-half="lower"
-                  data-face-state="moving"
-                  data-slot="moving-leaf-back"
-                  data-split-flap-compact-glyph
-                  data-split-flap-wide-glyph={cell.span === 2 || undefined}
-                  style={{
-                    ...compactGlyphCarrierStyle(
-                      bottomGlyphColor,
-                      true,
-                      `calc(${splitFlapLook.glyphY} - ${splitFlapLook.compactHalfCell})`,
-                    ),
-                    backgroundColor: bottomFaceColor,
-                    backgroundImage: compactBottomFaceBackground,
-                    clipPath: `inset(50% ${splitFlapLook.faceInsetX} ${activeBottomInset} ${splitFlapLook.faceInsetX})`,
-                    transform: `translateZ(calc(${splitFlapLook.leafThickness} / -2)) rotateX(180deg)`,
-                  }}
-                >
-                  {cell.span === 2 && <WideGlyphParts compact />}
-                </span>
-              </span>
-            </>
-          )}
+          {/* Mounted permanently; hidden by CSS until the controller marks the cassette active. */}
+          <span
+            ref={compactMovingStackRef}
+            {...classProps(styles.compactMovingStack)}
+            data-slot="moving-spare-leaves"
+            style={{
+              background: compactMovingStackBackground,
+              clipPath: `inset(calc(100% - ${activeLeafReveal}cqw - ${splitFlapLook.faceInsetY}) 0 0)`,
+            }}
+          />
+          <span
+            ref={movingVaneRef}
+            {...classProps(styles.movingVane, styles.compactMovingVane)}
+            data-slot="moving-leaf"
+          >
+            <span
+              ref={movingFrontGlyphRef}
+              {...classProps(
+                styles.compactGlyphCarrier,
+                styles.movingVaneFace,
+                styles.compactMovingVaneFace,
+                cell.span === 2 && styles.compactWideGlyphCarrier,
+              )}
+              data-part="face"
+              data-glyph=""
+              data-face-half="upper"
+              data-face-state="moving"
+              data-slot="moving-leaf-front"
+              data-split-flap-compact-glyph
+              data-split-flap-wide-glyph={cell.span === 2 || undefined}
+              style={{
+                ...compactGlyphCarrierStyle(
+                  glyphColor,
+                  false,
+                  `calc(${splitFlapLook.glyphY} - ${splitFlapLook.faceInsetY})`,
+                ),
+                backgroundColor: topFaceColor,
+                backgroundImage: compactTopFaceBackground,
+                clipPath: `inset(${splitFlapLook.faceInsetY} ${splitFlapLook.faceInsetX} 50% ${splitFlapLook.faceInsetX})`,
+                transform: `translateZ(calc(${splitFlapLook.leafThickness} / 2))`,
+              }}
+            >
+              {cell.span === 2 && <WideGlyphParts compact />}
+            </span>
+            <span
+              ref={movingBackGlyphRef}
+              {...classProps(
+                styles.compactGlyphCarrier,
+                styles.movingVaneFace,
+                styles.compactMovingVaneFace,
+                cell.span === 2 && styles.compactWideGlyphCarrier,
+              )}
+              data-part="face"
+              data-glyph=""
+              data-face-half="lower"
+              data-face-state="moving"
+              data-slot="moving-leaf-back"
+              data-split-flap-compact-glyph
+              data-split-flap-wide-glyph={cell.span === 2 || undefined}
+              style={{
+                ...compactGlyphCarrierStyle(
+                  bottomGlyphColor,
+                  true,
+                  `calc(${splitFlapLook.glyphY} - ${splitFlapLook.compactHalfCell})`,
+                ),
+                backgroundColor: bottomFaceColor,
+                backgroundImage: compactBottomFaceBackground,
+                clipPath: `inset(50% ${splitFlapLook.faceInsetX} ${activeBottomInset} ${splitFlapLook.faceInsetX})`,
+                transform: `translateZ(calc(${splitFlapLook.leafThickness} / -2)) rotateX(180deg)`,
+              }}
+            >
+              {cell.span === 2 && <WideGlyphParts compact />}
+            </span>
+          </span>
         </span>
         <CompactHardware wide={cell.span === 2} />
       </span>

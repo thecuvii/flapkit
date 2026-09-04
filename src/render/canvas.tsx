@@ -112,6 +112,7 @@ function getCanvasGlyphAtlas(
     glyphStyle.opacity.toFixed(3),
     color,
     matchingCharacters.join('\u0000'),
+    'origin:box-center',
   ].join('|')
   const cached = canvasGlyphAtlases.get(key)
   if (cached) return cached
@@ -145,10 +146,14 @@ function getCanvasGlyphAtlas(
       const character = matchingCharacters[index]
       if (character === ' ') continue
 
+      // DOM uses transform-origin 50% 50% on the ::before box. Scaling around
+      // the alphabetic baseline pulls ink down and clips the top half to a
+      // seam sliver, which reads as a riffle/rest size mismatch.
+      const boxCenterY = baseline - fontSize * 0.29
       context.save()
-      context.translate(index * slotWidth + slotWidth / 2, baseline)
+      context.translate(index * slotWidth + slotWidth / 2, boxCenterY)
       context.scale(glyphStyle.width, glyphStyle.height)
-      context.fillText(character, 0, 0)
+      context.fillText(character, 0, baseline - boxCenterY)
       context.restore()
     }
   }
@@ -373,14 +378,35 @@ function canvasStackShift(runtime: SplitFlapRuntime, now: number) {
   )
 }
 
-function canvasGlyphScale(transform: string, axis: 'x' | 'y') {
-  if (!transform || transform === 'none') return 1
-  try {
-    const matrix = new DOMMatrixReadOnly(transform)
-    return Math.abs(axis === 'x' ? matrix.a : matrix.d) || 1
-  } catch {
-    return 1
+function parseCssNumber(value: string) {
+  const parsed = Number.parseFloat(value)
+  return Number.isFinite(parsed) ? parsed : Number.NaN
+}
+
+function canvasGlyphScale(
+  transform: string,
+  hostStyle: CSSStyleDeclaration,
+  axis: 'x' | 'y',
+) {
+  if (transform && transform !== 'none') {
+    try {
+      const matrix = new DOMMatrixReadOnly(transform)
+      const value = Math.abs(axis === 'x' ? matrix.a : matrix.d)
+      if (value) return value
+    } catch {
+      // Fall through to the look's published scale variables.
+    }
   }
+
+  const keys =
+    axis === 'x'
+      ? ['--flapkit-active-glyph-width', '--flapkit-glyph-width']
+      : ['--flapkit-active-glyph-scale-y', '--flapkit-glyph-scale-y']
+  for (const key of keys) {
+    const parsed = parseCssNumber(hostStyle.getPropertyValue(key))
+    if (parsed > 0) return parsed
+  }
+  return axis === 'y' ? 0.78 : 1
 }
 
 function measureCanvasGlyph(
@@ -397,25 +423,30 @@ function measureCanvasGlyph(
   }
 
   const computedStyle = getComputedStyle(element, pseudoElement)
-  const size = Number.parseFloat(computedStyle.fontSize)
-  const lineHeight = Number.parseFloat(computedStyle.lineHeight)
-  const top = Number.parseFloat(computedStyle.top)
+  const hostStyle = getComputedStyle(element)
+  // Layout px — same space as the canvas backing store. Ancestor scales then
+  // shrink both the DOM glyph and the canvas the same way.
+  const size = parseCssNumber(computedStyle.fontSize)
+  const generated = computedStyle.display !== 'none'
+  let lineHeight = generated ? parseCssNumber(computedStyle.lineHeight) : Number.NaN
+  let top = generated ? parseCssNumber(computedStyle.top) : Number.NaN
+  if (!Number.isFinite(top)) {
+    top = parseCssNumber(hostStyle.getPropertyValue('--compact-glyph-top'))
+  }
+  if (!Number.isFinite(lineHeight)) lineHeight = size * 1.2
+  if (!Number.isFinite(top)) top = 0
   const glyphStyle: CanvasGlyphStyle = {
     family: computedStyle.fontFamily,
-    height: canvasGlyphScale(computedStyle.transform, 'y'),
+    height: canvasGlyphScale(computedStyle.transform, hostStyle, 'y'),
     opacity: Number.parseFloat(computedStyle.opacity) || 1,
     size,
     stretch: computedStyle.fontStretch as CanvasFontStretch,
     style: computedStyle.fontStyle,
     variantCaps: computedStyle.fontVariantCaps as CanvasFontVariantCaps,
     weight: computedStyle.fontWeight,
-    width: canvasGlyphScale(computedStyle.transform, 'x'),
+    width: canvasGlyphScale(computedStyle.transform, hostStyle, 'x'),
   }
-  const baseline =
-    topFaceY +
-    (Number.isFinite(top) ? top : 0) +
-    ((Number.isFinite(lineHeight) ? lineHeight : size * 1.2) - size) / 2 +
-    size * 0.79
+  const baseline = topFaceY + top + (lineHeight - size) / 2 + size * 0.79
 
   if (previousScript) {
     element.dataset.splitFlapScript = previousScript
@@ -691,12 +722,19 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
 
     const measure = () => {
       const activeLayout = layoutRef.current
-      const canvasRect = canvas.getBoundingClientRect()
+      // Layout pixels, not getBoundingClientRect. An ancestor scale (docs fit)
+      // must not change the backing-store size or font-size would disagree with
+      // the CSS box the bitmap is stretched into.
+      const layoutWidth = parent.clientWidth
+      const layoutHeight = parent.clientHeight
+      const parentRect = parent.getBoundingClientRect()
+      const visualScaleX = layoutWidth > 0 ? parentRect.width / layoutWidth : 1
+      const visualScaleY = layoutHeight > 0 ? parentRect.height / layoutHeight : 1
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
       canvas.dataset.pixelRatio = `${pixelRatio}`
       staticCanvas.dataset.pixelRatio = `${pixelRatio}`
-      canvas.width = Math.max(1, Math.round(canvasRect.width * pixelRatio))
-      canvas.height = Math.max(1, Math.round(canvasRect.height * pixelRatio))
+      canvas.width = Math.max(1, Math.round(layoutWidth * pixelRatio))
+      canvas.height = Math.max(1, Math.round(layoutHeight * pixelRatio))
       staticCanvas.width = canvas.width
       staticCanvas.height = canvas.height
       const context = canvas.getContext('2d')
@@ -704,6 +742,13 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
       if (!context || !staticContext) return
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       staticContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+
+      const toLayout = (rect: DOMRect) => ({
+        x: (rect.left - parentRect.left) / visualScaleX,
+        y: (rect.top - parentRect.top) / visualScaleY,
+        width: rect.width / visualScaleX,
+        height: rect.height / visualScaleY,
+      })
       geometryRef.current = Array.from({ length: activeLayout.cells.length })
       staticGlyphIndicesRef.current = new Int16Array(activeLayout.cells.length)
       staticGlyphIndicesRef.current.fill(-1)
@@ -785,22 +830,21 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         const scaleContext = cassette.closest<HTMLElement>('[data-split-flap-scale-context]')
         if (!cassetteBase || !scaleContext || !upperFace || !lowerFace || !visual) return
 
-        const rectangle = cassetteBase.getBoundingClientRect()
-        const upperRectangle = upperFace.getBoundingClientRect()
-        const lowerRectangle = lowerFace.getBoundingClientRect()
-        const scaleRectangle = scaleContext.getBoundingClientRect()
+        const rectangle = toLayout(cassetteBase.getBoundingClientRect())
+        const upperRectangle = toLayout(upperFace.getBoundingClientRect())
+        const lowerRectangle = toLayout(lowerFace.getBoundingClientRect())
         const cassetteStyle = getComputedStyle(cassette)
-        const unit = scaleRectangle.width / 100
-        const cellX = rectangle.left - canvasRect.left
-        const cellY = rectangle.top - canvasRect.top
+        const unit = scaleContext.offsetWidth / 100
+        const cellX = rectangle.x
+        const cellY = rectangle.y
         const cellWidth = rectangle.width
         const cellHeight = rectangle.height
         const seamY = cellY + cellHeight / 2
-        const faceX = upperRectangle.left - canvasRect.left
+        const faceX = upperRectangle.x
         const faceWidth = upperRectangle.width
-        const topFaceY = upperRectangle.top - canvasRect.top
+        const topFaceY = upperRectangle.y
         const topFaceHeight = upperRectangle.height
-        const bottomFaceY = lowerRectangle.top - canvasRect.top
+        const bottomFaceY = lowerRectangle.y
         const bottomFaceHeight = lowerRectangle.height
         const wideGlyphPart = upperFace.querySelector<HTMLElement>(
           '[data-split-flap-glyph-part]',

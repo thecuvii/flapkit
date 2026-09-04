@@ -379,6 +379,15 @@
     pointer-events: none;
     will-change: transform;
   }
+  /* The 3D vane stays mounted but costs nothing until the controller activates the cassette. */
+  :where(.flapkit-compact-cassette:not([data-split-flap-active]) .flapkit-compact-moving-stack),
+  :where(.flapkit-compact-cassette:not([data-split-flap-active]) .flapkit-compact-moving-vane) {
+    display: none;
+  }
+  /* Isolate an animating cassette so its per-pitch glyph repaints do not dirty the board's tiles. */
+  :where(.flapkit-compact-cassette[data-split-flap-active]) {
+    will-change: transform;
+  }
   :where(.flapkit-moving-vane) {
     position: absolute;
     z-index: 4;

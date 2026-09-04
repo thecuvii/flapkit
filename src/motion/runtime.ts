@@ -126,12 +126,16 @@ export type MotionTuning = {
   withinRowJitterMs: number
 }
 
+/** Attribute the controller toggles on a compact cassette root while it runs CSS 3D motion. */
+export const activeCssCassetteAttribute = 'data-split-flap-active'
+
 /** @internal DOM adapter contract; not part of the package's public entry points. */
 export type SplitFlapView = {
   animations: Animation[]
   arrivingUpper: HTMLSpanElement
   arrivingUpperGlyph: HTMLSpanElement
   compact: boolean
+  /** Owned by the controller: true while a compact cassette is promoted for CSS 3D motion. */
   compactMotion: boolean
   cssRiffleDuration: number | null
   cssRiffleTargetIndex: number | null
@@ -235,7 +239,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   private canvasOperationCount = 0
   private canvasRenderers = new Set<SplitFlapCanvasRenderer>()
   private compactSettleKeyframes = compactSettleVaneKeyframes(1.2)
-  private cssCassetteListeners = new Map<number, Set<(active: boolean) => void>>()
   private frameId: number | null = null
   private mechanicalEventListeners = new Set<SplitFlapMechanicalEventListener>()
   private scrubbedPitches = new Map<
@@ -289,6 +292,8 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   registerView(index: number, view: SplitFlapView) {
     const runtime = this.runtimes[index]
     runtime.views.add(view)
+    // Compact cassettes keep their 3D vane mounted but hidden; the controller decides when it is live.
+    if (view.compact) this.setViewCssMotion(view, this.activeCssCassettes.has(index))
     const scrubbedPitch = this.scrubbedPitches.get(index)
     if (scrubbedPitch) {
       this.renderScrubbedPitchView(
@@ -352,18 +357,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     }
   }
 
-  subscribeCssCassette(index: number, listener: (active: boolean) => void) {
-    const listeners = this.cssCassetteListeners.get(index) ?? new Set<(active: boolean) => void>()
-    listeners.add(listener)
-    this.cssCassetteListeners.set(index, listeners)
-    listener(this.activeCssCassettes.has(index))
-
-    return () => {
-      listeners.delete(listener)
-      if (listeners.size === 0) this.cssCassetteListeners.delete(index)
-    }
-  }
-
   subscribeMechanicalEvents(listener: SplitFlapMechanicalEventListener) {
     this.mechanicalEventListeners.add(listener)
     return () => {
@@ -391,9 +384,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
 
       if (runtime.running && (this.motion.variant !== 'cascade' || runtime.animationStarted)) {
         this.advanceRuntime(runtime, now)
-        if (!runtime.running && this.activeCssCassettes.delete(runtime.index)) {
-          this.emitCssCassette(runtime.index, false)
-        }
+        if (!runtime.running) this.deactivateCssCassette(runtime)
       }
       runtime.targetIndex = targetIndex
       if (runtime.running) {
@@ -479,9 +470,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
         runtime.running = false
         runtime.animationStarted = false
         this.renderIdle(runtime)
-        if (this.activeCssCassettes.delete(runtime.index)) {
-          this.emitCssCassette(runtime.index, false)
-        }
+        this.deactivateCssCassette(runtime)
         return
       }
 
@@ -544,7 +533,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       runtime.views.clear()
     })
     this.canvasRenderers.clear()
-    this.cssCassetteListeners.clear()
     this.mechanicalEventListeners.clear()
     this.scrubbedPitches.clear()
   }
@@ -553,11 +541,28 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     if (this.activeCssCassettes.size === 0) return
     const activeIndices = Array.from(this.activeCssCassettes)
     this.activeCssCassettes.clear()
-    activeIndices.forEach((index) => this.emitCssCassette(index, false))
+    activeIndices.forEach((index) => this.setRuntimeCssMotion(this.runtimes[index], false))
   }
 
-  private emitCssCassette(index: number, active: boolean) {
-    this.cssCassetteListeners.get(index)?.forEach((listener) => listener(active))
+  private deactivateCssCassette(runtime: SplitFlapRuntime) {
+    if (!this.activeCssCassettes.delete(runtime.index)) return
+    this.setRuntimeCssMotion(runtime, false)
+  }
+
+  private setRuntimeCssMotion(runtime: SplitFlapRuntime, active: boolean) {
+    runtime.views.forEach((view) => {
+      if (view.compact) this.setViewCssMotion(view, active)
+    })
+  }
+
+  // Toggles the hidden 3D vane and the cassette's own compositing layer without touching React.
+  private setViewCssMotion(view: SplitFlapView, active: boolean) {
+    view.compactMotion = active
+    if (active) {
+      view.root.setAttribute(activeCssCassetteAttribute, '')
+    } else {
+      view.root.removeAttribute(activeCssCassetteAttribute)
+    }
   }
 
   private startPitch(runtime: SplitFlapRuntime, startAt: number, animate = true) {
@@ -617,15 +622,17 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
         // available slot gets the same preparation frame from its actual slot time.
         if (now >= runtime.pitchStart) runtime.pitchStart = now + cssMotionPrewarmMs
         this.activeCssCassettes.add(runtime.index)
-        this.emitCssCassette(runtime.index, true)
+        this.setRuntimeCssMotion(runtime, true)
+        // Park the now-visible vane in its waiting pose; the next frame starts the pitch.
+        this.renderIdle(runtime, 'waiting')
       }
 
       if (mechanicalEvents) this.collectMechanicalEvent(runtime, now, mechanicalEvents)
       this.advanceRuntime(runtime, now)
       if (runtime.running) {
         hasRunningRuntime = true
-      } else if (this.activeCssCassettes.delete(runtime.index)) {
-        this.emitCssCassette(runtime.index, false)
+      } else {
+        this.deactivateCssCassette(runtime)
       }
     })
 
@@ -754,27 +761,18 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     view.spareLeafPack.style.setProperty(stackShiftProperty, '0px')
     setGlyphPosition(view.outgoingLowerGlyph, position, true)
     setGlyphPosition(view.arrivingUpperGlyph, position, false)
-    if (view.movingFrontGlyph !== view.outgoingLowerGlyph) {
+    // A hidden compact vane is refreshed when it activates, so skip its glyphs while dormant.
+    if (!view.compact || view.compactMotion) {
       setGlyphPosition(view.movingFrontGlyph, position, false)
-    }
-    if (view.movingBackGlyph !== view.arrivingUpperGlyph) {
       setGlyphPosition(view.movingBackGlyph, position, true)
     }
     view.outgoingLower.style.opacity = '1'
     view.outgoingLower.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
     view.arrivingUpper.style.opacity = '1'
     view.arrivingUpper.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
-    if (view.compactMotion) {
-      view.movingVane.style.opacity = '0'
-      view.movingVane.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
-    } else if (view.compact) {
-      view.movingVane.style.opacity = '1'
-      view.movingVane.style.transform = ''
-    } else if (!view.compact) {
-      view.movingVane.style.opacity = '0'
-      view.movingVane.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
-      view.movingVane.style.setProperty(specularProperty, '0')
-    }
+    view.movingVane.style.opacity = '0'
+    view.movingVane.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
+    if (!view.compact) view.movingVane.style.setProperty(specularProperty, '0')
     view.root.dataset.displayedCharacter =
       position.character.trim() === '' ? 'blank' : position.character
     view.root.dataset.splitFlapPhase = phase

@@ -130,6 +130,14 @@ function SplitFlapRuntimeProvider({
   scrubPitch?: ScrubPitch
 }) {
   const [controller] = useState(() => new SplitFlapMotionController(layout.cells))
+  // Renderers only read topology and highlighting. Targets travel to the controller through the
+  // effect below, so the layout handed to React stays referentially stable across value updates
+  // and memoized rows/cassettes bail out instead of re-rendering the whole board.
+  const viewLayoutKey = `${layout.layoutKey}:${layout.rows
+    .map((row) => Number(Boolean(row.highlighted)))
+    .join('')}`
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const viewLayout = useMemo(() => layout, [viewLayoutKey])
 
   useEffect(() => {
     controller.setMotion({ ...motion, specularStrength: splitFlapSpecularStrength })
@@ -169,11 +177,11 @@ function SplitFlapRuntimeProvider({
   const value = useMemo(
     () => ({
       controller,
-      layout,
+      layout: viewLayout,
       motion: { ...motion, specularStrength: splitFlapSpecularStrength },
       presentation,
     }),
-    [controller, layout, motion, presentation],
+    [controller, viewLayout, motion, presentation],
   )
 
   return <SplitFlapContext value={value}>{children}</SplitFlapContext>

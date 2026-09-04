@@ -1,12 +1,59 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  activeCssCassetteAttribute,
   signedLeafNoise,
   SplitFlapMotionController,
   type MotionTuning,
   type SplitFlapRuntime,
+  type SplitFlapView,
 } from './runtime'
 import { resolveSplitFlapSource } from '../layout'
+
+/** Minimal element stand-in covering the DOM surface the controller touches. */
+function fakeElement() {
+  const attributes = new Map<string, string>()
+  const element = {
+    animate: () => ({
+      cancel() {},
+      currentTime: 0,
+      effect: { setKeyframes() {}, updateTiming() {} },
+      pause() {},
+      play() {},
+      playState: 'running',
+    }),
+    dataset: {} as Record<string, string | undefined>,
+    hasAttribute: (name: string) => attributes.has(name),
+    removeAttribute: (name: string) => attributes.delete(name),
+    setAttribute: (name: string, value: string) => attributes.set(name, value),
+    style: { setProperty() {} } as Record<string, unknown>,
+    textContent: '',
+  }
+  return element as unknown as HTMLSpanElement
+}
+
+function fakeView(): SplitFlapView {
+  return {
+    animations: [],
+    arrivingUpper: fakeElement(),
+    arrivingUpperGlyph: fakeElement(),
+    compact: true,
+    compactMotion: false,
+    cssRiffleDuration: null,
+    cssRiffleTargetIndex: null,
+    movingBackGlyph: fakeElement(),
+    movingFrontGlyph: fakeElement(),
+    movingVane: fakeElement(),
+    outgoingLower: fakeElement(),
+    outgoingLowerGlyph: fakeElement(),
+    root: fakeElement(),
+    spareLeafPack: fakeElement(),
+  }
+}
+
+function isActive(view: SplitFlapView) {
+  return view.root.hasAttribute(activeCssCassetteAttribute)
+}
 
 const cascadeMotion: MotionTuning = {
   cadenceVariationPct: 0,
@@ -143,20 +190,35 @@ describe('Flapkit motion controller', () => {
       maximumConcurrentCassettes: 1,
       withinRowJitterMs: 16,
     })
-    const activity = [vi.fn(), vi.fn()]
-    controller.subscribeCssCassette(0, activity[0])
-    controller.subscribeCssCassette(1, activity[1])
+    const views = [fakeView(), fakeView()]
+    controller.registerView(0, views[0])
+    controller.registerView(1, views[1])
+    expect(views.map(isActive)).toEqual([false, false])
 
     controller.setTargets(cells('AA', 2).targetIndices)
     frame(0)
 
     expect(controller.readPerformanceCounters().activeCssCassettes).toBe(1)
-    expect(activity.map((listener) => listener.mock.calls)).toEqual([[[false], [true]], [[false]]])
+    expect(views.map(isActive)).toEqual([true, false])
+    expect(views.map((view) => view.compactMotion)).toEqual([true, false])
 
     frame(200)
     frame(201)
-    expect(activity[0]).toHaveBeenLastCalledWith(false)
-    expect(activity[1]).toHaveBeenLastCalledWith(true)
+    expect(views.map(isActive)).toEqual([false, true])
+    expect(views.map((view) => view.compactMotion)).toEqual([false, true])
+  })
+
+  it('reflects current CSS activity onto views registered mid-animation', () => {
+    const controller = new SplitFlapMotionController(cells(' ').cells)
+    controller.setMotion({ ...cascadeMotion, withinRowJitterMs: 16 })
+
+    controller.setTargets(cells('A').targetIndices)
+    frame(0)
+    const view = fakeView()
+    controller.registerView(0, view)
+
+    expect(isActive(view)).toBe(true)
+    expect(view.compactMotion).toBe(true)
   })
 
   it('publishes one look-ahead mechanical impact with final and pan metadata', () => {
@@ -183,10 +245,8 @@ describe('Flapkit motion controller', () => {
   it('cancels frames and clears subscriptions on destroy', () => {
     const controller = new SplitFlapMotionController(cells(' ').cells)
     controller.setMotion(cascadeMotion)
-    const cssListener = vi.fn()
     const eventListener = vi.fn()
     const canvasRenderer = vi.fn()
-    controller.subscribeCssCassette(0, cssListener)
     controller.subscribeMechanicalEvents(eventListener)
     controller.registerCanvasRenderer(canvasRenderer)
     controller.setTargets(cells('A').targetIndices)

@@ -1458,16 +1458,63 @@ h2 {
   line-height: 1.5;
 }
 
-.anatomy-depth-1 {
-  margin-left: 16px;
+.composition-preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
 }
 
-.anatomy-depth-2 {
-  margin-left: 32px;
+.anatomy-guides {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-.anatomy-depth-3 {
-  margin-left: 48px;
+.anatomy-guide-veil,
+.anatomy-guide-cover {
+  position: absolute;
+  background: color-mix(in oklch, var(--flare) 16%, transparent);
+}
+
+.anatomy-guide-veil {
+  inset: 0;
+}
+
+.anatomy-guide-h,
+.anatomy-guide-v {
+  position: absolute;
+  background: color-mix(in oklch, var(--flare) 58%, transparent);
+}
+
+.anatomy-guide-h {
+  right: 0;
+  left: 0;
+  height: 1px;
+}
+
+.anatomy-guide-v {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.anatomy-guide-box {
+  position: absolute;
+  box-shadow: inset 0 0 0 1px var(--flare);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .anatomy > li {
+    cursor: default;
+  }
+
+  .anatomy > li:hover code,
+  .anatomy > li[data-active] code {
+    color: var(--flare);
+  }
 }
 
 .option-list,
@@ -2364,18 +2411,6 @@ h2 {
     gap: 6px;
   }
 
-  .anatomy-depth-1 {
-    margin-left: 10px;
-  }
-
-  .anatomy-depth-2 {
-    margin-left: 20px;
-  }
-
-  .anatomy-depth-3 {
-    margin-left: 30px;
-  }
-
   .code-block {
     width: calc(100% + 20px);
   }
@@ -2395,5 +2430,11 @@ h2 {
 
   .section-index {
     animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .anatomy-guide-veil {
+    background: color-mix(in oklch, var(--flare) 28%, transparent);
   }
 }

@@ -3,6 +3,7 @@ import { useClipboard } from 'foxact/use-clipboard'
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -332,6 +333,228 @@ function QuickStartPreview() {
     >
       <DepartureBoard look={look} motion={motion} />
     </Exhibit>
+  )
+}
+
+const anatomyParts = [
+  {
+    id: 'root',
+    name: 'Root',
+    note: 'Motion and optional sound',
+    selector: '[data-anatomy="root"]',
+  },
+  {
+    id: 'board',
+    name: 'Board',
+    note: 'Framed display with grain, labels, and optional header',
+    selector: '[data-slot="split-flap-board"]',
+    cover: '.flapkit-board-header, .flapkit-grid',
+  },
+  {
+    id: 'grid',
+    name: 'Grid',
+    note: 'Frameless display with the same cassette grid',
+    selector: '.flapkit-grid',
+  },
+  {
+    id: 'header',
+    name: 'Header',
+    note: 'Optional board title. Board only',
+    selector: '.flapkit-board-header',
+  },
+  {
+    id: 'row',
+    name: 'Row',
+    note: (
+      <>
+        One horizontal record. <code>highlighted</code> lifts a row
+      </>
+    ),
+    selector: '[data-split-flap-row]',
+  },
+  {
+    id: 'group',
+    name: 'Group',
+    note: 'Optional adjacent region with shared settings',
+    selector: '[data-split-flap-group]',
+  },
+  {
+    id: 'cell',
+    name: 'Cell / WideCell',
+    note: 'One independently driven cassette. A group cannot mix widths',
+    selector: '[data-slot="cassette"]',
+    firstOnly: true,
+  },
+] as const
+
+type AnatomyPartId = (typeof anatomyParts)[number]['id']
+
+type GuideBox = {
+  height: number
+  left: number
+  top: number
+  width: number
+}
+
+function measureAnatomyTargets(
+  root: HTMLElement,
+  selector: string,
+  firstOnly = false,
+): GuideBox[] {
+  const rootBox = root.getBoundingClientRect()
+  const nodes = firstOnly
+    ? root.querySelector<HTMLElement>(selector)
+    : root.querySelectorAll<HTMLElement>(selector)
+  const elements = nodes instanceof Element ? [nodes] : nodes ? [...nodes] : []
+
+  return elements.map((element) => {
+    const box = element.getBoundingClientRect()
+    return {
+      top: box.top - rootBox.top + root.scrollTop,
+      left: box.left - rootBox.left + root.scrollLeft,
+      width: box.width,
+      height: box.height,
+    }
+  })
+}
+
+function anatomyVeilMask(boxes: readonly GuideBox[]) {
+  return {
+    WebkitMaskImage: ['linear-gradient(#000 0 0)', ...boxes.map(() => 'linear-gradient(#000 0 0)')].join(
+      ', ',
+    ),
+    maskImage: ['linear-gradient(#000 0 0)', ...boxes.map(() => 'linear-gradient(#000 0 0)')].join(', '),
+    WebkitMaskSize: ['100% 100%', ...boxes.map((box) => `${box.width}px ${box.height}px`)].join(', '),
+    maskSize: ['100% 100%', ...boxes.map((box) => `${box.width}px ${box.height}px`)].join(', '),
+    WebkitMaskPosition: ['0 0', ...boxes.map((box) => `${box.left}px ${box.top}px`)].join(', '),
+    maskPosition: ['0 0', ...boxes.map((box) => `${box.left}px ${box.top}px`)].join(', '),
+    WebkitMaskRepeat: 'no-repeat',
+    maskRepeat: 'no-repeat',
+    WebkitMaskComposite: 'xor',
+    maskComposite: 'exclude',
+  } as const
+}
+
+function AnatomyGuides({
+  boxes,
+  covers,
+}: {
+  boxes: readonly GuideBox[]
+  covers?: readonly GuideBox[]
+}) {
+  const xs = [...new Set(boxes.flatMap((box) => [box.left, box.left + box.width]))]
+  const ys = [...new Set(boxes.flatMap((box) => [box.top, box.top + box.height]))]
+
+  return (
+    <div className="anatomy-guides" aria-hidden="true">
+      <span className="anatomy-guide-veil" style={anatomyVeilMask(boxes)} />
+      {(covers ?? []).map((box, index) => (
+        <span
+          key={`cover:${index}`}
+          className="anatomy-guide-cover"
+          style={{
+            top: box.top,
+            left: box.left,
+            width: box.width,
+            height: box.height,
+          }}
+        />
+      ))}
+      {ys.map((top) => (
+        <span key={`h:${top}`} className="anatomy-guide-h" style={{ top }} />
+      ))}
+      {xs.map((left) => (
+        <span key={`v:${left}`} className="anatomy-guide-v" style={{ left }} />
+      ))}
+      {boxes.map((box, index) => (
+        <span
+          key={`box:${index}`}
+          className="anatomy-guide-box"
+          style={{
+            top: box.top,
+            left: box.left,
+            width: box.width,
+            height: box.height,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function CompositionAnatomy() {
+  const stageRef = useRef<HTMLDivElement>(null)
+  const [hover, setHover] = useState<AnatomyPartId | null>(null)
+  const [boxes, setBoxes] = useState<GuideBox[]>([])
+  const [covers, setCovers] = useState<GuideBox[]>([])
+
+  useLayoutEffect(() => {
+    const root = stageRef.current
+    const part = anatomyParts.find((item) => item.id === hover)
+    if (!root || !part) {
+      setBoxes([])
+      setCovers([])
+      return
+    }
+
+    const update = () => {
+      setBoxes(measureAnatomyTargets(root, part.selector, 'firstOnly' in part && part.firstOnly))
+      setCovers('cover' in part ? measureAnatomyTargets(root, part.cover) : [])
+    }
+
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(root)
+    for (const element of root.querySelectorAll(part.selector)) {
+      observer.observe(element)
+    }
+    if ('cover' in part) {
+      for (const element of root.querySelectorAll(part.cover)) {
+        observer.observe(element)
+      }
+    }
+    const stage = root.closest('.exhibit-stage')
+    stage?.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    return () => {
+      observer.disconnect()
+      stage?.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [hover])
+
+  return (
+    <>
+      <Exhibit look="airport" motion="riffle" deck="A–Z">
+        <div className="composition-preview" ref={stageRef}>
+          <div data-anatomy="root">
+            <Flapkit.Root motion={Flapkit.riffle()}>
+              <Flapkit.Board className="flapkit-airport preview-board">
+                <Flapkit.Header>Departures</Flapkit.Header>
+                <Flapkit.Row highlighted id="LH401">
+                  <Flapkit.Group label="STATUS">{cells('BOARDING', 8)}</Flapkit.Group>
+                  <Flapkit.Group label="GATE">{cells('A12', 3)}</Flapkit.Group>
+                </Flapkit.Row>
+              </Flapkit.Board>
+            </Flapkit.Root>
+          </div>
+          {boxes.length > 0 ? <AnatomyGuides boxes={boxes} covers={covers} /> : null}
+        </div>
+      </Exhibit>
+      <ul className="anatomy" aria-label="Flapkit component tree">
+        {anatomyParts.map((item) => (
+          <li
+            key={item.id}
+            data-active={hover === item.id ? '' : undefined}
+            onPointerEnter={() => setHover(item.id)}
+            onPointerLeave={() => setHover((current) => (current === item.id ? null : current))}
+          >
+            <code>{item.name}</code>
+            <span>{item.note}</span>
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }
 
@@ -826,47 +1049,7 @@ export function DocsPage({ highlightedCode }: { highlightedCode: HighlightedDocs
             adjacent regions need different settings. Give Row and Group stable ids when items can
             reorder so cassette identity survives.
           </p>
-          <Exhibit look="airport" motion="riffle" deck="A–Z">
-            <Flapkit.Root motion={Flapkit.riffle()}>
-              <Flapkit.Board className="flapkit-airport preview-board">
-                <Flapkit.Header>Departures</Flapkit.Header>
-                <Flapkit.Row highlighted id="LH401">
-                  <Flapkit.Group label="STATUS">{cells('BOARDING', 8)}</Flapkit.Group>
-                  <Flapkit.Group label="GATE">{cells('A12', 3)}</Flapkit.Group>
-                </Flapkit.Row>
-              </Flapkit.Board>
-            </Flapkit.Root>
-          </Exhibit>
-          <ul className="anatomy" aria-label="Flapkit component tree">
-            <li>
-              <code>Root</code>
-              <span>Motion and optional sound</span>
-            </li>
-            <li className="anatomy-depth-1">
-              <code>Board</code>
-              <span>Framed display with grain, labels, and optional header</span>
-            </li>
-            <li className="anatomy-depth-1">
-              <code>Grid</code>
-              <span>Frameless display with the same cassette grid</span>
-            </li>
-            <li className="anatomy-depth-2">
-              <code>Header</code>
-              <span>Optional board title. Board only</span>
-            </li>
-            <li className="anatomy-depth-2">
-              <code>Row</code>
-              <span>One horizontal record. <code>highlighted</code> lifts a row</span>
-            </li>
-            <li className="anatomy-depth-3">
-              <code>Group</code>
-              <span>Optional adjacent region with shared settings</span>
-            </li>
-            <li className="anatomy-depth-3">
-              <code>Cell / WideCell</code>
-              <span>One independently driven cassette. A group cannot mix widths</span>
-            </li>
-          </ul>
+          <CompositionAnatomy />
           <p>
             <code>deck</code>, <code>sequence</code>, <code>variant</code>, and <code>label</code>{' '}
             cascade from Row to Group to Cell. Set them on the nearest owner.

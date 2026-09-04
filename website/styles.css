@@ -867,13 +867,14 @@ h2 {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 620;
+  font-weight: 600;
   letter-spacing: 0.06em;
   line-height: 1;
   text-transform: uppercase;
 }
 
 .instrument-field dt {
+  font-weight: 620;
   opacity: 0.4;
   color: var(--ink);
 }
@@ -895,16 +896,16 @@ h2 {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--ink);
+  color: var(--muted);
 }
 
 .instrument-field button {
   cursor: pointer;
-  opacity: 0.4;
 }
 
+.instrument-field dd,
 .instrument-field button[aria-pressed='true'] {
-  opacity: 1;
+  color: var(--ink);
 }
 
 .instrument-field .choice-switch-mark {
@@ -1086,6 +1087,7 @@ h2 {
   overflow: visible;
   padding: 4px 0;
   font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none;

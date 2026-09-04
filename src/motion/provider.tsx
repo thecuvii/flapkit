@@ -57,6 +57,7 @@ type SplitFlapContextValue = {
 
 type ScrubPitch = {
   cellIndex: number
+  final?: boolean
   fromIndex: number
   progress: number
   settle: boolean
@@ -138,6 +139,7 @@ function SplitFlapRuntimeProvider({
         scrubPitch.fromIndex,
         scrubPitch.progress,
         scrubPitch.settle,
+        scrubPitch.final ?? scrubPitch.settle,
       )
       return
     }
@@ -261,6 +263,7 @@ export function RiffleProvider(
 /** @internal Controlled renderer used by the documentation mechanism preview. */
 export function ScrubProvider({
   children,
+  final,
   fromIndex,
   mode,
   presentation,
@@ -268,6 +271,7 @@ export function ScrubProvider({
   source,
 }: SplitFlapEffectProps &
   SplitFlapPresentationProps & {
+    final?: boolean
     fromIndex: number
     mode: 'cascade' | 'riffle'
     progress: number
@@ -288,8 +292,14 @@ export function ScrubProvider({
     [],
   )
   const scrubPitch = useMemo(
-    () => ({ cellIndex: 0, fromIndex, progress, settle: mode === 'cascade' }),
-    [fromIndex, mode, progress],
+    () => ({
+      cellIndex: 0,
+      final,
+      fromIndex,
+      progress,
+      settle: mode === 'cascade',
+    }),
+    [final, fromIndex, mode, progress],
   )
 
   return (

@@ -26,14 +26,13 @@
       1px 0 0 rgba(210, 207, 176, 0.025) inset, 0 -2px 4px rgba(0, 0, 0, 0.46) inset,
       0 5px 13px rgba(0, 0, 0, 0.7), 0 22px 54px rgba(0, 0, 0, 0.38);
     --flapkit-board-unit: 8.2px;
+    --flapkit-bottom-edge-highlight: rgb(255 255 255 / 0.08);
     --flapkit-bottom-face-color: #111313;
     --flapkit-bottom-face-shadow:
-      0 0.02cqw 0 rgba(255, 255, 255, 0.018) inset, 0 -0.12cqw 0.2cqw rgba(0, 0, 0, 0.34) inset,
-      0.04cqw 0.18cqw 0.28cqw rgba(0, 0, 0, 0.54);
+      0 0.02cqw 0 rgba(255, 255, 255, 0.018) inset, 0 -0.12cqw 0.2cqw rgba(0, 0, 0, 0.34) inset;
     --flapkit-bottom-face-surface: linear-gradient(
       180deg,
-      rgba(0, 0, 0, 0.18) 0%,
-      rgba(0, 0, 0, 0.035) 37%,
+      transparent 0%,
       transparent 72%,
       rgba(255, 255, 255, 0.018) 100%
     );
@@ -149,16 +148,25 @@
     --flapkit-frame-left: 27.06px;
     --flapkit-frame-right: 25.83px;
     --flapkit-frame-top: 16.81px;
-    --flapkit-glyph-font-family: 'D-DIN Condensed', 'Arial Narrow', sans-serif;
+    --flapkit-glyph-font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
     --flapkit-glyph-font-weight: 700;
-    --flapkit-glyph-orange: #f1f1ed;
+    --flapkit-glyph-orange: #cf9138;
     --flapkit-glyph-opacity: 0.98;
-    --flapkit-glyph-yellow: #f1f1ed;
-    --flapkit-glyph-size: 12.45cqw;
+    --flapkit-glyph-yellow: #e4c22f;
+    --flapkit-glyph-size: 11.35cqw;
     --flapkit-glyph-tracking: -0.018em;
     --flapkit-glyph-white: currentColor;
+    --flapkit-glyph-scale-y: 0.78;
     --flapkit-glyph-width: 0.88;
     --flapkit-glyph-y: 0.42cqw;
+    --flapkit-detailed-glyph-y: 2.55cqw;
+    --flapkit-cjk-glyph-font-family:
+      'PingFang SC', 'Hiragino Sans', 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif;
+    --flapkit-cjk-glyph-size: 9.55cqw;
+    --flapkit-cjk-glyph-font-weight: 600;
+    --flapkit-cjk-glyph-width: 0.66;
+    --flapkit-cjk-glyph-scale-y: 0.82;
+    --flapkit-cjk-detailed-glyph-y: 2.3cqw;
     --flapkit-grid-background-color: #070808;
     --flapkit-grid-background-image: linear-gradient(
       108deg,
@@ -185,16 +193,61 @@
       0 0.1cqw 0.16cqw rgba(0, 0, 0, 0.54);
     --flapkit-seam-opacity: 0.94;
     --flapkit-seam-thickness: 0.18cqw;
+    --flapkit-spare-leaf-base-color: #030404;
+    --flapkit-spare-leaf-border-color: rgb(0 0 0 / 0.42);
+    --flapkit-spare-leaf-border-width: 0.03cqw;
+    --flapkit-spare-leaf-cast-blur: 0cqw;
+    --flapkit-spare-leaf-cast-opacity: 0.42;
+    --flapkit-spare-leaf-cast-y: 0.02cqw;
+    --flapkit-spare-leaf-edge-color: #020303;
+    --flapkit-spare-leaf-highlight-alpha: 0;
+    --flapkit-spare-leaf-highlight-inset: 0cqw;
+    --flapkit-spare-leaf-highlight-rgb: 0 0 0;
+    --flapkit-spare-leaf-lower-color: #0a0b0b;
+    --flapkit-spare-leaf-middle-color: #0c0d0d;
+    --flapkit-spare-leaf-middle-stop: 97%;
+    --flapkit-spare-leaf-pack-opacity: 1;
+    --flapkit-spare-leaf-tail-color: #050606;
+    --flapkit-spare-leaf-top-color: #0c0d0d;
     --flapkit-title-only-header-height: 25.5px;
     --flapkit-top-face-color: #171919;
     --flapkit-top-face-shadow:
-      0 0.025cqw 0 rgba(255, 255, 255, 0.025) inset, 0 -0.1cqw 0.18cqw rgba(0, 0, 0, 0.32) inset,
-      0.04cqw 0.16cqw 0.26cqw rgba(0, 0, 0, 0.5);
+      0 0.025cqw 0 rgba(255, 255, 255, 0.025) inset, 0 -0.1cqw 0.18cqw rgba(0, 0, 0, 0.32) inset;
     --flapkit-top-face-surface: linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.026) 0%,
       transparent 34%,
-      rgba(0, 0, 0, 0.15) 100%
+      transparent 100%
     );
+  }
+
+  :where(.flapkit-industrial) :where(.flapkit-cavity-back-plane) {
+    background-color: #050606;
+    background-image: linear-gradient(180deg, #040505 0%, #070808 100%);
+    box-shadow: none;
+  }
+
+  :where(.flapkit-industrial) :where(.flapkit-cavity-wall-top) {
+    background-color: #080909;
+    background-image: none;
+  }
+
+  :where(.flapkit-industrial) :where(.flapkit-cavity-wall-bottom) {
+    background-color: #080909;
+    background-image: none;
+  }
+
+  :where(.flapkit-industrial) :where(.flapkit-spare-leaf-plate) {
+    filter: none !important;
+  }
+
+  :where(.flapkit-industrial) [data-split-flap-script='cjk'] {
+    --flapkit-active-detailed-glyph-y: var(--flapkit-cjk-detailed-glyph-y);
+    --flapkit-active-glyph-scale-y: var(--flapkit-cjk-glyph-scale-y);
+    --flapkit-active-glyph-width: var(--flapkit-cjk-glyph-width);
+
+    font-family: var(--flapkit-cjk-glyph-font-family);
+    font-size: var(--flapkit-cjk-glyph-size);
+    font-weight: var(--flapkit-cjk-glyph-font-weight);
   }
 }

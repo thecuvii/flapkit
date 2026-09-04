@@ -1,0 +1,214 @@
+@layer flapkit {
+  :where(.flapkit-signal) {
+    color: #e24f12;
+    font-family: var(--flapkit-glyph-font-family);
+    font-stretch: normal;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: var(--flapkit-glyph-font-weight);
+    font-feature-settings: normal;
+    --flapkit-axle-background:
+      linear-gradient(
+        90deg,
+        rgba(48, 14, 4, 0.98) 0%,
+        rgba(180, 70, 20, 0.4) 34%,
+        rgba(42, 12, 4, 0.96) 72%,
+        rgba(28, 8, 2, 0.98) 100%
+      ),
+      radial-gradient(ellipse at 42% 31%, rgba(226, 79, 18, 0.14) 0 14%, transparent 34%);
+    --flapkit-axle-height: 1.48cqw;
+    --flapkit-axle-opacity: 0.92;
+    --flapkit-axle-shadow:
+      0 0 0 0.025cqw rgba(226, 79, 18, 0.12), 0.04cqw 0 0.08cqw rgba(255, 227, 74, 0.08) inset,
+      -0.08cqw 0 0.14cqw rgba(80, 50, 0, 0.55) inset, 0 0 0.1cqw rgba(80, 50, 0, 0.45);
+    --flapkit-axle-width: 0.56cqw;
+    --flapkit-board-background-color: #2a1208;
+    --flapkit-board-background-image:
+      radial-gradient(ellipse 90% 55% at 34% -8%, rgba(255, 227, 74, 0.06), transparent 62%),
+      linear-gradient(104deg, #3a1608 0%, #4a1c0a 44%, #2e1006 100%);
+    --flapkit-board-shadow:
+      0 0 0 1px #1a0804, 0 1px 0 rgba(255, 227, 74, 0.08) inset,
+      0 5px 13px rgba(40, 8, 0, 0.7);
+    --flapkit-board-unit: 12.3px;
+    --flapkit-bottom-edge-highlight: rgb(226 79 18 / 0.2);
+    --flapkit-bottom-face-color: #e8c41c;
+    --flapkit-bottom-face-shadow:
+      0 0.02cqw 0 rgba(255, 247, 180, 0.18) inset, 0 -0.09cqw 0.14cqw rgba(120, 80, 0, 0.22) inset;
+    --flapkit-bottom-face-surface: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 70%,
+      rgba(255, 247, 180, 0.16) 100%
+    );
+    --flapkit-cassette-background-color: #f0d020;
+    --flapkit-cassette-background-image:
+      radial-gradient(ellipse 82% 46% at 28% 10%, rgba(255, 247, 180, 0.28), transparent 72%),
+      linear-gradient(180deg, #ffe34a 0%, #e8c41c 100%);
+    --flapkit-cassette-radius: 0.03cqw;
+    --flapkit-cassette-shadow:
+      -0.025cqw 0 0 rgba(255, 247, 180, 0.2), 0.07cqw 0 0.12cqw rgba(80, 40, 0, 0.28),
+      0 0 0 0.035cqw rgba(120, 70, 0, 0.55) inset;
+    --flapkit-cavity-bottom: 7%;
+    --flapkit-cavity-color: #c9a010;
+    --flapkit-cavity-left: 8%;
+    --flapkit-cavity-right: 8%;
+    --flapkit-cavity-shadow:
+      0 0.22cqw 0.38cqw rgba(80, 50, 0, 0.4) inset, 0.12cqw 0 0.22cqw rgba(80, 50, 0, 0.2) inset,
+      0 -0.05cqw 0.08cqw rgba(255, 247, 180, 0.1) inset;
+    --flapkit-cavity-top: 17%;
+    --flapkit-cell-height: 52.1px;
+    --flapkit-cell-track: 30.87px;
+    --flapkit-compact-cover-detail:
+      linear-gradient(
+        180deg,
+        transparent 0%,
+        transparent 16.45%,
+        rgba(226, 79, 18, 0.1) 16.72%,
+        rgba(80, 40, 0, 0.28) 17.18%,
+        transparent 17.95%
+      ),
+      linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 7.28%,
+        rgba(226, 79, 18, 0.08) 7.7%,
+        rgba(80, 40, 0, 0.22) 8.3%,
+        transparent 9.15%,
+        transparent 90.85%,
+        rgba(80, 40, 0, 0.22) 91.7%,
+        transparent 92.7%
+      ),
+      linear-gradient(
+        0deg,
+        transparent 0%,
+        transparent 6.25%,
+        rgba(80, 40, 0, 0.32) 7.15%,
+        transparent 8.1%
+      );
+    --flapkit-compact-half-cell: 5.83cqw;
+    --flapkit-compact-hardware-background:
+      radial-gradient(
+        ellipse at 42% 31%,
+        rgba(226, 79, 18, 0.14) 0 10%,
+        rgba(180, 70, 20, 0.45) 20%,
+        rgba(42, 12, 4, 0.98) 68%,
+        rgba(28, 8, 2, 0.98) 100%
+      ),
+      radial-gradient(
+        ellipse at 42% 31%,
+        rgba(226, 79, 18, 0.14) 0 10%,
+        rgba(180, 70, 20, 0.45) 20%,
+        rgba(42, 12, 4, 0.98) 68%,
+        rgba(28, 8, 2, 0.98) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(48 14 4 / calc(0.98 * var(--compact-seam-base-opacity) * var(--compact-seam-visibility)))
+          0%,
+        rgba(
+            72 24 8 / calc(0.94 * var(--compact-seam-base-opacity) * var(--compact-seam-visibility))
+          )
+          38%,
+        rgba(42 12 4 / calc(var(--compact-seam-base-opacity) * var(--compact-seam-visibility))) 78%,
+        rgba(28 8 2 / calc(0.97 * var(--compact-seam-base-opacity) * var(--compact-seam-visibility)))
+          100%
+      );
+    --flapkit-compact-hardware-position: calc(8% + 0.3cqw) 55%, calc(92% - 0.3cqw) 55%, center 55%;
+    --flapkit-compact-hardware-size:
+      0.56cqw 1.48cqw, 0.56cqw 1.48cqw, calc(84% - 0.2cqw) var(--compact-seam-height);
+    --flapkit-cover-bottom-background: linear-gradient(
+      180deg,
+      rgba(80, 40, 0, 0.22) 0,
+      transparent 0.12cqw
+    );
+    --flapkit-cover-bottom-shadow:
+      0 -0.04cqw 0.07cqw rgba(80, 40, 0, 0.25), 0 0.12cqw 0.2cqw rgba(80, 40, 0, 0.4);
+    --flapkit-cover-left-background: linear-gradient(
+      90deg,
+      transparent calc(100% - 0.05cqw),
+      rgba(226, 79, 18, 0.1) 100%
+    );
+    --flapkit-cover-left-shadow:
+      -0.025cqw 0 0 rgba(255, 247, 180, 0.16), 0.04cqw 0 0.07cqw rgba(80, 40, 0, 0.2);
+    --flapkit-cover-right-background: linear-gradient(
+      90deg,
+      rgba(80, 40, 0, 0.18) 0,
+      transparent 0.1cqw
+    );
+    --flapkit-cover-right-shadow: -0.04cqw 0 0.07cqw rgba(80, 40, 0, 0.22);
+    --flapkit-cover-top-background: linear-gradient(
+      180deg,
+      transparent calc(100% - 0.05cqw),
+      rgba(226, 79, 18, 0.1) 100%
+    );
+    --flapkit-cover-top-shadow:
+      0 -0.025cqw 0 rgba(255, 247, 180, 0.16), 0 0.05cqw 0.07cqw rgba(80, 40, 0, 0.22);
+    --flapkit-face-inset-x: 0.12cqw;
+    --flapkit-face-inset-y: 0.18cqw;
+    --flapkit-face-radius: 0.03cqw;
+    --flapkit-frame-bottom: 38.75px;
+    --flapkit-frame-left: 40.59px;
+    --flapkit-frame-right: 38.75px;
+    --flapkit-frame-top: 25.22px;
+    --flapkit-glyph-font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+    --flapkit-glyph-font-weight: 700;
+    --flapkit-glyph-orange: #c93d0c;
+    --flapkit-glyph-opacity: 0.98;
+    --flapkit-glyph-yellow: #ff7a2e;
+    --flapkit-glyph-size: 9.55cqw;
+    --flapkit-glyph-tracking: 0.02em;
+    --flapkit-glyph-white: #e24f12;
+    --flapkit-glyph-scale-y: 0.78;
+    --flapkit-glyph-width: 0.72;
+    --flapkit-glyph-y: 0.15cqw;
+    --flapkit-grid-background-color: transparent;
+    --flapkit-grid-background-image: none;
+    --flapkit-grid-shadow: none;
+    --flapkit-header-height: 71.34px;
+    --flapkit-highlight-face: #fff08a;
+    --flapkit-highlight-glyph: #ff6a18;
+    --flapkit-label-font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+    --flapkit-leaf-thickness: 0.24cqw;
+    --flapkit-row-background-color: transparent;
+    --flapkit-row-background-image: none;
+    --flapkit-row-shadow: none;
+    --flapkit-seam-opacity: 0.82;
+    --flapkit-seam-thickness: 0.22cqw;
+    --flapkit-spare-leaf-base-color: #8a6a08;
+    --flapkit-spare-leaf-border-color: rgb(80 50 0 / 0.36);
+    --flapkit-spare-leaf-border-width: 0.03cqw;
+    --flapkit-spare-leaf-cast-blur: 0cqw;
+    --flapkit-spare-leaf-cast-opacity: 0.28;
+    --flapkit-spare-leaf-cast-y: 0.02cqw;
+    --flapkit-spare-leaf-edge-color: #7a5c06;
+    --flapkit-spare-leaf-highlight-alpha: 0;
+    --flapkit-spare-leaf-highlight-inset: 0cqw;
+    --flapkit-spare-leaf-highlight-rgb: 0 0 0;
+    --flapkit-spare-leaf-lower-color: #c4960c;
+    --flapkit-spare-leaf-middle-color: #d4a810;
+    --flapkit-spare-leaf-middle-stop: 97%;
+    --flapkit-spare-leaf-pack-opacity: 1;
+    --flapkit-spare-leaf-tail-color: #a07e0a;
+    --flapkit-spare-leaf-top-color: #d4a810;
+    --flapkit-title-only-header-height: 38.25px;
+    --flapkit-top-face-color: #ffe34a;
+    --flapkit-top-face-shadow:
+      0 0.03cqw 0 rgba(255, 247, 180, 0.28) inset, 0 -0.07cqw 0.12cqw rgba(120, 70, 0, 0.18) inset;
+    --flapkit-top-face-surface: linear-gradient(
+      180deg,
+      rgba(255, 247, 180, 0.28) 0%,
+      transparent 38%,
+      transparent 100%
+    );
+  }
+
+  :where(.flapkit-signal) :where(.flapkit-cavity-back-plane) {
+    background-color: #c4960c;
+    background-image: linear-gradient(180deg, #b88a0c 0%, #d4a810 100%);
+    box-shadow: none;
+  }
+
+  :where(.flapkit-signal) :where(.flapkit-spare-leaf-plate) {
+    filter: none !important;
+  }
+}

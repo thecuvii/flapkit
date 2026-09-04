@@ -218,22 +218,6 @@
   :where(.flapkit-compact-cell) {
     isolation: isolate;
   }
-  :where(.flapkit-compact-cell)::before {
-    position: absolute;
-    z-index: 4;
-    top: 50%;
-    right: 0.08cqw;
-    bottom: 0.08cqw;
-    left: 0.08cqw;
-    content: '';
-    opacity: var(--compact-motion-shadow-opacity);
-    background-image:
-      radial-gradient(ellipse 96% 20% at 47% 0%, rgba(0, 0, 0, 0.98), transparent 70%),
-      linear-gradient(180deg, rgba(0, 0, 0, 0.62), transparent 39%);
-    transform: var(--compact-motion-shadow-transform);
-    transform-origin: 50% 50%;
-    pointer-events: none;
-  }
   :where(.flapkit-compact-cell)::after {
     position: absolute;
     z-index: 6;
@@ -408,6 +392,7 @@
   :where(.flapkit-moving-vane-face) {
     position: absolute;
     inset: 0;
+    isolation: isolate;
     backface-visibility: hidden;
     pointer-events: none;
   }
@@ -417,25 +402,33 @@
   :where(.flapkit-moving-vane-back) {
     transform: rotateX(180deg);
   }
-  :where(.flapkit-moving-vane-specular) {
+  /* Flat wash in the leaf plane. A positioned streak or background-attachment:
+     fixed sits in screen space and slips as soon as the vane leaves 0deg. */
+  :where(.flapkit-moving-vane-face)::after {
     position: absolute;
+    inset: 0;
     z-index: 6;
+    content: '';
     opacity: var(--flapkit-specular, 0);
-    border-radius: 0.025cqw;
+    background-color: rgb(231 229 211 / 0.2);
+    mix-blend-mode: soft-light;
     pointer-events: none;
   }
-  :where(.flapkit-moving-vane-back-specular) {
-    background-image: linear-gradient(
-      102deg,
-      transparent 0%,
-      transparent 45%,
-      rgba(185, 184, 169, 0.16) 48%,
-      rgba(231, 229, 211, 0.32) 52%,
-      rgba(171, 173, 160, 0.1) 56%,
-      transparent 61%,
-      transparent 100%
+  :where(.flapkit-moving-vane-front)::after {
+    clip-path: inset(
+      var(--flapkit-face-inset-y) var(--flapkit-face-inset-x) 50% var(--flapkit-face-inset-x)
     );
   }
+  :where(.flapkit-moving-vane-back)::after {
+    clip-path: inset(
+      50% var(--flapkit-face-inset-x) var(--flapkit-face-inset-y) var(--flapkit-face-inset-x)
+    );
+  }
+  :where(.flapkit-moving-vane .flapkit-face) {
+    box-shadow: none;
+  }
+  /* Catch light on the face so it turns with the leaf. Compact glyphs already
+     occupy ::before, so the idle lower leaf uses ::after instead. */
   :where(.flapkit-moving-vane-edge) {
     position: absolute;
     z-index: 7;
@@ -469,23 +462,6 @@
   :where(.flapkit-moving-vane-side-right) {
     transform: rotateY(-90deg);
     transform-origin: 50% 50%;
-  }
-  :where(.flapkit-motion-shadow) {
-    position: absolute;
-    z-index: 3;
-    right: 0.1cqw;
-    left: 0.1cqw;
-    opacity: 0;
-    pointer-events: none;
-    transform-origin: 50% 50%;
-    will-change: opacity, transform;
-  }
-  :where(.flapkit-lower-motion-shadow) {
-    top: 50%;
-    bottom: 0.1cqw;
-    background-image:
-      radial-gradient(ellipse 96% 20% at 47% 0%, rgba(0, 0, 0, 0.98), transparent 70%),
-      linear-gradient(180deg, rgba(0, 0, 0, 0.62), transparent 39%);
   }
   :where(.flapkit-cassette-cover) {
     position: absolute;
@@ -576,7 +552,10 @@
     display: block;
     grid-row: 1;
     text-align: center;
-    transform: var(--wide-glyph-transform);
+    transform:
+      translateX(var(--wide-glyph-x-offset, 0cqw))
+      scaleX(var(--flapkit-active-glyph-width, var(--flapkit-glyph-width)))
+      scaleY(var(--flapkit-active-glyph-scale-y, var(--flapkit-glyph-scale-y, 0.78)));
     transform-origin: 50% 50%;
   }
   :where(.flapkit-compact-wide-glyph-part) {
@@ -600,22 +579,10 @@
   }
   :where(.flapkit-top-glyph-half) {
     inset: 0 0 50%;
-    mask-image: linear-gradient(
-      180deg,
-      #000 0%,
-      #000 calc(100% - 0.18cqw),
-      rgba(0, 0, 0, 0.76) 100%
-    );
   }
   :where(.flapkit-bottom-glyph-half) {
     inset: 0;
     clip-path: inset(50% 0 0);
-    mask-image: linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.82) 50%,
-      #000 calc(50% + 0.16cqw),
-      #000 100%
-    );
   }
   :where(.flapkit-moving-glyph-half) {
     mask-image: none;
@@ -643,7 +610,6 @@
     left: 0.1cqw;
     height: 0.08cqw;
     background-color: rgba(7, 8, 6, 0.55);
-    filter: blur(0.015cqw);
     transform: translateY(-50%);
   }
   :where(.flapkit-upper-seam-shadow) {
@@ -749,22 +715,24 @@
     height: calc(50% - 0.18cqw);
     border-bottom-left-radius: 0.03cqw;
     border-bottom-right-radius: 0.03cqw;
-    border-bottom-width: 0.13cqw;
+    border-bottom-width: var(--flapkit-spare-leaf-border-width, 0.13cqw);
     border-bottom-style: solid;
-    border-bottom-color: rgba(3, 4, 2, 0.96);
-    background-color: #1a1b16;
+    border-bottom-color: var(--flapkit-spare-leaf-border-color, rgba(3, 4, 2, 0.96));
+    background-color: var(--flapkit-spare-leaf-middle-color, #1a1b16);
     background-image: linear-gradient(
       180deg,
-      #24251e 0%,
-      #1a1b16 68%,
-      #0b0c09 91%,
-      #35362c 95.5%,
-      #151610 98%,
-      #080906 100%
+      var(--flapkit-spare-leaf-top-color, #24251e) 0%,
+      var(--flapkit-spare-leaf-middle-color, #1a1b16)
+        var(--flapkit-spare-leaf-middle-stop, 68%),
+      var(--flapkit-spare-leaf-lower-color, #0b0c09) 91%,
+      var(--flapkit-spare-leaf-edge-color, #35362c) 95.5%,
+      var(--flapkit-spare-leaf-tail-color, #151610) 98%,
+      var(--flapkit-spare-leaf-base-color, #080906) 100%
     );
     box-shadow:
-      0 0.045cqw 0.065cqw rgba(0, 0, 0, 0.62),
-      0 -0.2cqw 0 rgba(190, 182, 143, 0.18) inset;
+      0 var(--flapkit-spare-leaf-highlight-inset, -0.2cqw) 0
+        rgb(var(--flapkit-spare-leaf-highlight-rgb, 190 182 143) /
+          var(--flapkit-spare-leaf-highlight-alpha, 0.18)) inset;
     clip-path: polygon(
       0.03cqw 0,
       calc(100% - 0.02cqw) 0,

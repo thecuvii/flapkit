@@ -16,10 +16,12 @@ export function SpecStrip({
   look,
   motion,
   deck,
+  className,
 }: {
   look?: string
   motion?: string
   deck?: string
+  className?: string
 }) {
   const items = [
     look ? (['LOOK', look] as const) : null,
@@ -30,7 +32,7 @@ export function SpecStrip({
   if (items.length === 0) return null
 
   return (
-    <dl className="spec-strip">
+    <dl className={['spec-strip', className].filter(Boolean).join(' ')}>
       {items.map(([label, value]) => (
         <div key={label}>
           <dt>{label}</dt>

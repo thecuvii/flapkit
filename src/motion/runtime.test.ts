@@ -90,6 +90,24 @@ describe('Flapkit motion controller', () => {
     expect(runtime?.finalPitch).toBe(false)
   })
 
+  it('publishes a mechanical impact when a scrubbed pitch crosses the settle point', () => {
+    const controller = new SplitFlapMotionController(cells(' ').cells)
+    const listener = vi.fn()
+    controller.subscribeMechanicalEvents(listener)
+
+    controller.seekPitch(0, 2, 0.7, true, false)
+    expect(listener).not.toHaveBeenCalled()
+
+    controller.seekPitch(0, 2, 0.8, true, false)
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(listener.mock.calls[0][0]).toEqual([
+      { at: expect.any(Number), final: false, index: 0, pan: 0 },
+    ])
+
+    controller.seekPitch(0, 2, 0.95, true, false)
+    expect(listener).toHaveBeenCalledTimes(1)
+  })
+
   it('starts only cells whose targets differ', () => {
     const controller = new SplitFlapMotionController(cells('  ', 2).cells)
     controller.setMotion(cascadeMotion)

@@ -24,6 +24,7 @@ export default defineConfig({
       'src/styles/flapkit.css',
       'src/styles/airport.css',
       'src/styles/industrial.css',
+      'src/styles/signal.css',
     ],
     format: ['esm'],
     platform: 'neutral',

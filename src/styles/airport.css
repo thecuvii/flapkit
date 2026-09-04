@@ -32,14 +32,13 @@
       1px 0 0 rgba(210, 207, 176, 0.025) inset, 0 -2px 4px rgba(0, 0, 0, 0.46) inset,
       0 5px 13px rgba(0, 0, 0, 0.7), 0 22px 54px rgba(0, 0, 0, 0.38);
     --flapkit-board-unit: 8.2px;
+    --flapkit-bottom-edge-highlight: rgb(190 182 143 / 0.12);
     --flapkit-bottom-face-color: #25261e;
     --flapkit-bottom-face-shadow:
-      0 0.02cqw 0 rgba(224, 216, 177, 0.018) inset, 0 -0.09cqw 0.14cqw rgba(0, 0, 0, 0.19) inset,
-      0.05cqw 0.15cqw 0.22cqw rgba(0, 0, 0, 0.32);
+      0 0.02cqw 0 rgba(224, 216, 177, 0.018) inset, 0 -0.09cqw 0.14cqw rgba(0, 0, 0, 0.19) inset;
     --flapkit-bottom-face-surface: linear-gradient(
       180deg,
-      rgba(0, 0, 0, 0.108) 0%,
-      rgba(0, 0, 0, 0.026) 34%,
+      transparent 0%,
       transparent 70%,
       rgba(214, 207, 170, 0.02) 100%
     );
@@ -161,6 +160,7 @@
     --flapkit-glyph-size: 9.55cqw;
     --flapkit-glyph-tracking: 0.025em;
     --flapkit-glyph-white: currentColor;
+    --flapkit-glyph-scale-y: 0.78;
     --flapkit-glyph-width: 0.62;
     --flapkit-glyph-y: 0.15cqw;
     --flapkit-grid-background-color: #0c0d0b;
@@ -194,13 +194,12 @@
     --flapkit-title-only-header-height: 25.5px;
     --flapkit-top-face-color: #282921;
     --flapkit-top-face-shadow:
-      0 0.03cqw 0 rgba(224, 216, 177, 0.035) inset, 0 -0.07cqw 0.12cqw rgba(0, 0, 0, 0.18) inset,
-      0.05cqw 0.13cqw 0.2cqw rgba(0, 0, 0, 0.29);
+      0 0.03cqw 0 rgba(224, 216, 177, 0.035) inset, 0 -0.07cqw 0.12cqw rgba(0, 0, 0, 0.18) inset;
     --flapkit-top-face-surface: linear-gradient(
       180deg,
       rgba(224, 216, 177, 0.032) 0%,
       transparent 38%,
-      rgba(0, 0, 0, 0.082) 100%
+      transparent 100%
     );
   }
 }

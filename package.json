@@ -20,7 +20,8 @@
     },
     "./flapkit.css": "./dist/styles/flapkit.css",
     "./airport.css": "./dist/styles/airport.css",
-    "./industrial.css": "./dist/styles/industrial.css"
+    "./industrial.css": "./dist/styles/industrial.css",
+    "./signal.css": "./dist/styles/signal.css"
   },
   "scripts": {
     "build": "vp pack",

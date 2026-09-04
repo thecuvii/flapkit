@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ExperimentsRouteImport } from './routes/experiments'
+import { Route as LabRouteImport } from './routes/lab'
 import { Route as PerformanceRouteImport } from './routes/performance'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const ExperimentsRoute = ExperimentsRouteImport.update({
   path: '/experiments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LabRoute = LabRouteImport.update({
+  id: '/lab',
+  path: '/lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PerformanceRoute = PerformanceRouteImport.update({
   id: '/performance',
   path: '/performance',
@@ -32,30 +38,34 @@ const PerformanceRoute = PerformanceRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/experiments': typeof ExperimentsRoute
+  '/lab': typeof LabRoute
   '/performance': typeof PerformanceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/experiments': typeof ExperimentsRoute
+  '/lab': typeof LabRoute
   '/performance': typeof PerformanceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/experiments': typeof ExperimentsRoute
+  '/lab': typeof LabRoute
   '/performance': typeof PerformanceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/experiments' | '/performance'
+  fullPaths: '/' | '/experiments' | '/lab' | '/performance'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/experiments' | '/performance'
-  id: '__root__' | '/' | '/experiments' | '/performance'
+  to: '/' | '/experiments' | '/lab' | '/performance'
+  id: '__root__' | '/' | '/experiments' | '/lab' | '/performance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ExperimentsRoute: typeof ExperimentsRoute
+  LabRoute: typeof LabRoute
   PerformanceRoute: typeof PerformanceRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExperimentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lab': {
+      id: '/lab'
+      path: '/lab'
+      fullPath: '/lab'
+      preLoaderRoute: typeof LabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/performance': {
       id: '/performance'
       path: '/performance'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ExperimentsRoute: ExperimentsRoute,
+  LabRoute: LabRoute,
   PerformanceRoute: PerformanceRoute,
 }
 export const routeTree = rootRouteImport

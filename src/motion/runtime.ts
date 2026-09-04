@@ -135,7 +135,6 @@ export type SplitFlapView = {
   compactMotion: boolean
   cssRiffleDuration: number | null
   cssRiffleTargetIndex: number | null
-  lowerMotionShadow: HTMLSpanElement
   movingBackGlyph: HTMLSpanElement
   movingFrontGlyph: HTMLSpanElement
   movingVane: HTMLSpanElement
@@ -180,6 +179,23 @@ export type SplitFlapPerformanceCounters = {
   runningCassettes: number
 }
 
+const cjkGlyphPattern =
+  /[\u2e80-\u319f\u31c0-\u31ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\uf900-\ufaff\uff00-\uffef\u{20000}-\u{2ebef}]/u
+
+export type SplitFlapGlyphScript = 'cjk' | 'default'
+
+export function splitFlapGlyphScript(glyph: string): SplitFlapGlyphScript {
+  return cjkGlyphPattern.test(glyph) ? 'cjk' : 'default'
+}
+
+function setGlyphScript(element: HTMLElement, glyph: string) {
+  if (splitFlapGlyphScript(glyph) === 'cjk') {
+    element.dataset.splitFlapScript = 'cjk'
+  } else {
+    delete element.dataset.splitFlapScript
+  }
+}
+
 function setGlyph(element: HTMLSpanElement, character: string) {
   const glyph = character.trim() === '' ? '' : character
   if (element.hasAttribute('data-split-flap-wide-glyph')) {
@@ -187,10 +203,12 @@ function setGlyph(element: HTMLSpanElement, character: string) {
     const graphemes = splitFlapGraphemes(glyph)
     glyphParts.forEach((part, index) => {
       const partGlyph = graphemes[index] ?? ''
+      setGlyphScript(part, partGlyph)
       if (part.textContent !== partGlyph) part.textContent = partGlyph
     })
     return
   }
+  setGlyphScript(element, glyph)
   if (element.hasAttribute('data-split-flap-compact-glyph')) {
     if (element.dataset.glyph !== glyph) element.dataset.glyph = glyph
     return
@@ -222,7 +240,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   private mechanicalEventListeners = new Set<SplitFlapMechanicalEventListener>()
   private scrubbedPitches = new Map<
     number,
-    { fromIndex: number; progress: number; settle: boolean }
+    { final: boolean; fromIndex: number; progress: number; settle: boolean }
   >()
   private motion: MotionTuning = {
     cadenceVariationPct: 4,
@@ -390,7 +408,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     this.renderCanvases(now)
   }
 
-  seekPitch(cellIndex: number, fromIndex: number, progress: number, settle = true) {
+  seekPitch(cellIndex: number, fromIndex: number, progress: number, settle = true, final = settle) {
     const runtime = this.runtimes[cellIndex]
     if (!runtime || runtime.positions.length === 0) return
 
@@ -398,7 +416,9 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     const resolvedFromIndex =
       ((Math.floor(fromIndex) % positionCount) + positionCount) % positionCount
     const resolvedProgress = Math.max(0, Math.min(1, progress))
+    const previous = this.scrubbedPitches.get(cellIndex)
     this.scrubbedPitches.set(cellIndex, {
+      final,
       fromIndex: resolvedFromIndex,
       progress: resolvedProgress,
       settle,
@@ -411,6 +431,43 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     runtime.views.forEach((view) =>
       this.renderScrubbedPitchView(runtime, view, resolvedFromIndex, resolvedProgress, settle),
     )
+    this.emitScrubMechanicalEvents(
+      runtime,
+      previous,
+      resolvedFromIndex,
+      resolvedProgress,
+      settle,
+      final,
+    )
+  }
+
+  private emitScrubMechanicalEvents(
+    runtime: SplitFlapRuntime,
+    previous: { final: boolean; fromIndex: number; progress: number; settle: boolean } | undefined,
+    fromIndex: number,
+    progress: number,
+    settle: boolean,
+    final: boolean,
+  ) {
+    if (!previous || this.mechanicalEventListeners.size === 0) return
+
+    const impactOf = (isSettle: boolean) => (isSettle ? 0.78 : 0.82)
+    const now = performance.now()
+    const events: SplitFlapMechanicalEvent[] = []
+    const push = (soundFinal: boolean) => {
+      events.push({ at: now, final: soundFinal, index: runtime.index, pan: runtime.pan })
+    }
+
+    if (fromIndex === previous.fromIndex) {
+      const impact = impactOf(settle)
+      if (previous.progress < impact && progress >= impact) push(final)
+    } else if (fromIndex > previous.fromIndex || fromIndex + 1 < previous.fromIndex) {
+      if (previous.progress < impactOf(previous.settle)) push(previous.final)
+      if (progress >= impactOf(settle)) push(final)
+    }
+
+    if (events.length === 0) return
+    this.mechanicalEventListeners.forEach((listener) => listener(events))
   }
 
   private replanRuntime(runtime: SplitFlapRuntime, now: number) {
@@ -710,19 +767,18 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     if (view.compactMotion) {
       view.movingVane.style.opacity = '0'
       view.movingVane.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
-      this.setLowerMotionShadow(view, '0', 'translate3d(0, 0, 0) scaleY(0.45)')
     } else if (view.compact) {
       view.movingVane.style.opacity = '1'
       view.movingVane.style.transform = ''
-      this.setLowerMotionShadow(view, '0', 'translate3d(0, 0, 0) scaleY(0.45)')
     } else if (!view.compact) {
+      view.movingVane.style.opacity = '0'
       view.movingVane.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
       view.movingVane.style.setProperty(specularProperty, '0')
-      this.setLowerMotionShadow(view, '0', 'translate3d(0, 0, 0) scaleY(0.45)')
     }
     view.root.dataset.displayedCharacter =
       position.character.trim() === '' ? 'blank' : position.character
     view.root.dataset.splitFlapPhase = phase
+    delete view.root.dataset.pitchHalf
     view.root.dataset.variant = position.variant
   }
 
@@ -734,6 +790,12 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     settle: boolean,
   ) {
     const nextIndex = (fromIndex + 1) % runtime.positions.length
+    if (progress <= 0) {
+      runtime.currentIndex = fromIndex
+      runtime.targetIndex = fromIndex
+      this.renderIdleView(runtime, view, 'scrub')
+      return
+    }
     if (progress >= 1) {
       runtime.currentIndex = nextIndex
       runtime.targetIndex = nextIndex
@@ -783,15 +845,15 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     view.arrivingUpper.style.opacity = '1'
     view.arrivingUpper.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
     view.movingVane.style.opacity = '1'
+    const pitchProgress = Math.max(0, Math.min(1, elapsed / runtime.duration))
     view.root.dataset.displayedCharacter =
       currentPosition.character.trim() === '' ? 'blank' : currentPosition.character
     view.root.dataset.splitFlapPhase =
       delay > 0 ? 'waiting' : runtime.finalPitch ? 'settle' : 'riffle'
+    view.root.dataset.pitchHalf = pitchProgress <= 0.5 ? 'outgoing' : 'incoming'
     view.root.dataset.variant = currentPosition.variant
 
     if (view.compact) {
-      this.setLowerMotionShadow(view, '0.52', 'translate3d(0, 0, 0) scaleY(0.78)')
-
       if (
         !runtime.finalPitch &&
         view.cssRiffleDuration === runtime.duration &&
@@ -900,71 +962,17 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
             [specularProperty]: 0,
           },
         ]
-    const shadowKeyframes: Keyframe[] = runtime.finalPitch
-      ? [
-          { offset: 0, opacity: 0, transform: 'translate3d(0, 0, 0) scaleY(0.45)' },
-          {
-            offset: 0.5,
-            opacity: 0.58,
-            transform: 'translate3d(0, -7%, 0) scaleY(1.17)',
-          },
-          {
-            offset: 0.78,
-            opacity: 0.72,
-            transform: 'translate3d(0, 0, 0) scaleY(0.72)',
-          },
-          {
-            offset: 0.9,
-            opacity: 0.22,
-            transform: 'translate3d(0, 0, 0) scaleY(0.55)',
-          },
-          { offset: 1, opacity: 0, transform: 'translate3d(0, 0, 0) scaleY(0.45)' },
-        ]
-      : [
-          { offset: 0, opacity: 0, transform: 'translate3d(0, 0, 0) scaleY(0.45)' },
-          {
-            offset: 0.5,
-            opacity: 0.45,
-            transform: 'translate3d(0, -5%, 0) scaleY(1.08)',
-          },
-          {
-            offset: 0.82,
-            opacity: 0.62,
-            transform: 'translate3d(0, 0, 0) scaleY(0.68)',
-          },
-          { offset: 1, opacity: 0, transform: 'translate3d(0, 0, 0) scaleY(0.45)' },
-        ]
     view.movingVane.style.setProperty(specularProperty, '0')
 
     this.playViewAnimation(view, 0, view.movingVane, vaneKeyframes, timing, elapsed, paused)
     this.playViewAnimation(
       view,
       1,
-      view.lowerMotionShadow,
-      shadowKeyframes,
-      timing,
-      elapsed,
-      paused,
-    )
-    this.playViewAnimation(
-      view,
-      2,
       view.spareLeafPack,
       runtime.finalPitch ? settleStackKeyframes : riffleStackKeyframes,
       timing,
       elapsed,
       paused,
     )
-  }
-
-  private setLowerMotionShadow(view: SplitFlapView, opacity: string, transform: string) {
-    if (view.compact) {
-      view.lowerMotionShadow.style.setProperty('--compact-motion-shadow-opacity', opacity)
-      view.lowerMotionShadow.style.setProperty('--compact-motion-shadow-transform', transform)
-      return
-    }
-
-    view.lowerMotionShadow.style.opacity = opacity
-    view.lowerMotionShadow.style.transform = transform
   }
 }

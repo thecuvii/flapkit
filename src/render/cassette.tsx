@@ -130,7 +130,7 @@ function FaceGlyph({
         lower ? styles.bottomGlyphHalf : styles.topGlyphHalf,
         moving && styles.movingGlyphHalf,
       )}
-      style={lower ? { clipPath: `inset(50% 0 ${activeBottomInset} 0)` } : undefined}
+      style={lower ? { clipPath: 'inset(50% 0 0)' } : undefined}
     >
       <span
         ref={glyphRef}
@@ -141,9 +141,9 @@ function FaceGlyph({
             ...glyphStyle,
             color: `var(${activeGlyphColorProperty}, ${color})`,
             textShadow: `0 0 ${lower ? '0.04' : '0.05'}cqw color-mix(in srgb, var(${activeGlyphColorProperty}, ${color}) ${lower ? 5 : 6}%, transparent)`,
-            top: splitFlapLook.glyphY,
-            transform: `translateX(-50%)${lower ? ` translateX(${lowerGlyphXOffset}cqw)` : ''}${wide ? '' : ` scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`}`,
-            '--wide-glyph-transform': `scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
+            top: 'var(--flapkit-active-detailed-glyph-y, var(--flapkit-detailed-glyph-y, var(--flapkit-glyph-y)))',
+            transform: `translateX(-50%)${lower ? ` translateX(${lowerGlyphXOffset}cqw)` : ''}${wide ? '' : ` scaleX(var(--flapkit-active-glyph-width, ${splitFlapLook.glyphWidth})) scaleY(var(--flapkit-active-glyph-scale-y, var(--flapkit-glyph-scale-y, 0.78)))`}`,
+            '--wide-glyph-x-offset': lower ? `${lowerGlyphXOffset}cqw` : '0cqw',
           } as CSSProperties
         }
       >
@@ -177,7 +177,6 @@ export const FlapCell = memo(function FlapCell({
   const movingVaneRef = useRef<HTMLSpanElement>(null)
   const movingFrontGlyphRef = useRef<HTMLSpanElement>(null)
   const movingBackGlyphRef = useRef<HTMLSpanElement>(null)
-  const lowerMotionShadowRef = useRef<HTMLSpanElement>(null)
   const compactMovingStackRef = useRef<HTMLSpanElement>(null)
   const spareLeafPackRef = useRef<HTMLSpanElement>(null)
   const glyphOffset = glyphOffsets[index % glyphOffsets.length]
@@ -276,17 +275,9 @@ export const FlapCell = memo(function FlapCell({
     `rgba(9 10 7 / calc(0.94 * ${splitFlapLook.seamOpacity})) 38%, ` +
     `rgba(5 6 4 / ${splitFlapLook.seamOpacity}) 78%, ` +
     `rgba(3 4 3 / calc(0.97 * ${splitFlapLook.seamOpacity})) 100%)`
-  const upperSeamShadow =
-    'linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.035) 42%, rgba(0, 0, 0, 0.13) 100%)'
-  const lowerSeamShadow =
-    'linear-gradient(180deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0.06) 34%, rgba(179, 173, 137, 0.025) 62%, transparent 100%)'
-  const seamContactShadow =
-    '0.03cqw 0.08cqw 0.14cqw rgba(0, 0, 0, 0.24), 0 -0.03cqw 0.07cqw rgba(0, 0, 0, 0.13)'
-  const halfSeamThickness = `calc(${splitFlapLook.seamThickness} / 2)`
   const activeLeafReveal = activeLeafClearance + spareLeafStep * Math.max(0, spareLeafCount - 1)
   const activeBottomInset = `calc(${splitFlapLook.faceInsetY} + ${activeLeafReveal}cqw)`
-  const bottomFaceBoxShadow = `${splitFlapLook.bottomFaceShadow}, 0 0.2cqw 0.32cqw rgba(0, 0, 0, 0.46), 0 -0.09cqw 0 rgba(190, 182, 143, 0.12) inset`
-  const spareLeafShadowOpacity = 0.62
+  const bottomFaceBoxShadow = splitFlapLook.bottomFaceShadow
   const spareLeafVariation = 1
   const spareLeafRevealScale = 1 + signedLeafNoise(index, 181) * 0.14 * spareLeafVariation
   const spareLeafGroupX = signedLeafNoise(index, 187) * 0.035 * spareLeafVariation
@@ -302,8 +293,6 @@ export const FlapCell = memo(function FlapCell({
     const edgeStrength =
       1 -
       (0.12 + ((signedLeafNoise(index, 229 + leafIndex * 23) + 1) / 2) * 0.16) * spareLeafVariation
-    const shadowStrength =
-      1 + signedLeafNoise(index, 251 + leafIndex * 29) * 0.18 * spareLeafVariation
     const edgeMix = Math.round(Math.min(70, brightness * edgeStrength * 80))
 
     return {
@@ -313,10 +302,8 @@ export const FlapCell = memo(function FlapCell({
         (spareLeafRevealScale +
           signedLeafNoise(index, 277 + leafIndex * 31) * 0.035 * spareLeafVariation),
       boxShadow:
-        `0 ${0.09 * shadowStrength}cqw ` +
-        `${0.13 * shadowStrength}cqw ` +
-        `rgba(0, 0, 0, ${Math.min(0.72, spareLeafShadowOpacity * shadowStrength)}), ` +
-        `0 -0.2cqw 0 rgba(190, 182, 143, ${0.18 * edgeStrength}) inset`,
+        `0 var(--flapkit-spare-leaf-highlight-inset, -0.08cqw) 0 ` +
+        `rgb(var(--flapkit-spare-leaf-highlight-rgb, 190 182 143) / calc(${edgeStrength} * var(--flapkit-spare-leaf-highlight-alpha, 0.08))) inset`,
       brightness,
       edgeMix,
       leafIndex,
@@ -354,12 +341,10 @@ export const FlapCell = memo(function FlapCell({
     return `linear-gradient(rgba(${channel}, ${opacity}), rgba(${channel}, ${opacity}))`
   }
   const compactTopFaceBackground = [
-    'linear-gradient(180deg, transparent 0%, transparent calc(50% - 0.54cqw), rgba(0, 0, 0, 0.18) 50%, transparent 50%)',
     compactBrightnessLayer(topBrightness),
     topFaceBackground,
   ].join(', ')
   const compactBottomFaceBackground = [
-    'linear-gradient(180deg, transparent 0%, transparent 50%, rgba(0, 0, 0, 0.31) 50%, transparent calc(50% + 0.42cqw), transparent 100%)',
     compactBrightnessLayer(bottomBrightness),
     bottomFaceBackground,
   ].join(', ')
@@ -369,20 +354,20 @@ export const FlapCell = memo(function FlapCell({
       '--compact-glyph-margin-left': `${glyphOffsetValue}cqw`,
       '--compact-glyph-opacity': splitFlapLook.glyphOpacity,
       '--compact-glyph-top': top,
-      '--compact-glyph-transform': `translateX(-50%)${lower ? ` translateX(${lowerGlyphXOffset}cqw)` : ''} scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
-      '--wide-glyph-transform': `${lower ? `translateX(${lowerGlyphXOffset}cqw) ` : ''}scaleX(${splitFlapLook.glyphWidth}) scaleY(0.78)`,
+      '--compact-glyph-transform': `translateX(-50%)${lower ? ` translateX(${lowerGlyphXOffset}cqw)` : ''} scaleX(var(--flapkit-active-glyph-width, ${splitFlapLook.glyphWidth})) scaleY(var(--flapkit-active-glyph-scale-y, var(--flapkit-glyph-scale-y, 0.78)))`,
       '--compact-glyph-width': `calc(${cell.span} * 10cqw)`,
+      '--wide-glyph-x-offset': lower ? `${lowerGlyphXOffset}cqw` : '0cqw',
     }) as CSSProperties
   const compactSpareLeafLayers = [...spareLeaves]
     .reverse()
     .map(({ bottomOffset, brightness, edgeMix, shadowOpacity, xOffset }) => {
       const darkness = Math.min(28, Math.max(0, (1 - brightness) * 100))
-      const upperColor = `color-mix(in srgb, #24251e ${100 - darkness}%, black)`
-      const middleColor = `color-mix(in srgb, #171812 ${100 - darkness}%, black)`
-      const lowerColor = `color-mix(in srgb, #090a07 ${100 - darkness}%, black)`
-      const edgeColor = `color-mix(in srgb, #585644 ${edgeMix}%, black)`
+      const topColor = `color-mix(in srgb, var(--flapkit-spare-leaf-top-color, #24251e) ${100 - darkness}%, black)`
+      const middleColor = `color-mix(in srgb, var(--flapkit-spare-leaf-middle-color, #171812) ${100 - darkness}%, black)`
+      const lowerColor = `color-mix(in srgb, var(--flapkit-spare-leaf-lower-color, #090a07) ${100 - darkness}%, black)`
+      const edgeColor = `color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black)`
 
-      return `linear-gradient(180deg, ${upperColor} 0%, ${middleColor} 86%, ${edgeColor} 91%, ${edgeColor} 93%, ${lowerColor} 96%, rgba(0, 0, 0, ${shadowOpacity}) 100%) calc(50% + ${xOffset}cqw) calc(100% - ${splitFlapLook.faceInsetY} - ${bottomOffset}cqw) / calc(100% - ${splitFlapLook.faceInsetX} - ${splitFlapLook.faceInsetX} + 0.12cqw) calc(50% - ${splitFlapLook.faceInsetY}) no-repeat`
+      return `linear-gradient(180deg, ${topColor} 0%, ${middleColor} var(--flapkit-spare-leaf-middle-stop, 86%), ${edgeColor} 91%, ${edgeColor} 93%, ${lowerColor} 96%, rgba(0, 0, 0, ${shadowOpacity}) 100%) calc(50% + ${xOffset}cqw) calc(100% - ${splitFlapLook.faceInsetY} - ${bottomOffset}cqw) / calc(100% - ${splitFlapLook.faceInsetX} - ${splitFlapLook.faceInsetX} + 0.12cqw) calc(50% - ${splitFlapLook.faceInsetY}) no-repeat`
     })
   const compactCavityBackground = [
     ...compactSpareLeafLayers,
@@ -405,7 +390,6 @@ export const FlapCell = memo(function FlapCell({
     const movingBackGlyph =
       detailed || css3dMotion ? movingBackGlyphRef.current : arrivingUpperRef.current
     const movingVane = detailed || css3dMotion ? movingVaneRef.current : compactCellRef.current
-    const lowerMotionShadow = detailed ? lowerMotionShadowRef.current : compactCellRef.current
     const spareLeafPack = detailed
       ? (spareLeafPackRef.current ?? rootRef.current)
       : (compactMovingStackRef.current ?? compactCellRef.current)
@@ -419,7 +403,6 @@ export const FlapCell = memo(function FlapCell({
       !movingVane ||
       !(movingFrontGlyph instanceof HTMLSpanElement) ||
       !(movingBackGlyph instanceof HTMLSpanElement) ||
-      !lowerMotionShadow ||
       !spareLeafPack
     ) {
       return
@@ -433,7 +416,6 @@ export const FlapCell = memo(function FlapCell({
       compactMotion: !detailed && css3dMotion,
       cssRiffleDuration: null,
       cssRiffleTargetIndex: null,
-      lowerMotionShadow,
       movingBackGlyph,
       movingFrontGlyph,
       movingVane,
@@ -471,8 +453,6 @@ export const FlapCell = memo(function FlapCell({
             {
               '--compact-bezel-background': cassetteBezelBackground,
               '--compact-bezel-opacity': 0.92,
-              '--compact-motion-shadow-opacity': 0,
-              '--compact-motion-shadow-transform': 'translate3d(0, 0, 0) scaleY(0.45)',
               background: compactCavityBackground,
               backgroundColor: splitFlapLook.cavityColor,
               boxShadow: splitFlapLook.cavityShadow,
@@ -670,7 +650,7 @@ export const FlapCell = memo(function FlapCell({
             ref={spareLeafPackRef}
             {...classProps(styles.spareLeafPack)}
             style={{
-              opacity: 0.92,
+              opacity: 'var(--flapkit-spare-leaf-pack-opacity, 0.92)',
               transform: `translate3d(0, var(${stackShiftProperty}, 0px), 0)`,
             }}
           >
@@ -690,7 +670,7 @@ export const FlapCell = memo(function FlapCell({
                   style={{
                     bottom: `calc(${splitFlapLook.faceInsetY} + ${bottomOffset}cqw)`,
                     boxShadow,
-                    backgroundImage: `linear-gradient(180deg, #24251e 0%, #1a1b16 68%, #0b0c09 91%, color-mix(in srgb, #585644 ${edgeMix}%, black) 95.5%, #151610 98%, #080906 100%)`,
+                    backgroundImage: `linear-gradient(180deg, var(--flapkit-spare-leaf-top-color, #24251e) 0%, var(--flapkit-spare-leaf-middle-color, #1a1b16) var(--flapkit-spare-leaf-middle-stop, 68%), var(--flapkit-spare-leaf-lower-color, #0b0c09) 91%, color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black) 95.5%, var(--flapkit-spare-leaf-tail-color, #151610) 98%, var(--flapkit-spare-leaf-base-color, #080906) 100%)`,
                     filter: `brightness(${brightness.toFixed(3)}) saturate(${saturation.toFixed(3)})`,
                     height: `calc(50% - ${splitFlapLook.faceInsetY})`,
                     left: `calc(${splitFlapLook.faceInsetX} - 0.06cqw)`,
@@ -820,16 +800,6 @@ export const FlapCell = memo(function FlapCell({
                 moving
                 wide={cell.span === 2}
               />
-              <span
-                {...classProps(styles.movingVaneSpecular, styles.movingVaneBackSpecular)}
-                style={{
-                  bottom: activeBottomInset,
-                  height: `calc(50% - ${activeBottomInset})`,
-                  left: splitFlapLook.faceInsetX,
-                  right: splitFlapLook.faceInsetX,
-                  top: '50%',
-                }}
-              />
             </span>
             <span
               {...classProps(styles.movingVaneEdge)}
@@ -860,29 +830,10 @@ export const FlapCell = memo(function FlapCell({
             />
           </span>
           <span
-            ref={lowerMotionShadowRef}
-            {...classProps(styles.motionShadow, styles.lowerMotionShadow)}
-          />
-          <span
-            {...classProps(styles.upperSeamShadow)}
-            style={{
-              backgroundImage: upperSeamShadow,
-              bottom: `calc(50% + ${halfSeamThickness})`,
-            }}
-          />
-          <span
-            {...classProps(styles.lowerSeamShadow)}
-            style={{
-              backgroundImage: lowerSeamShadow,
-              top: `calc(50% + ${halfSeamThickness})`,
-            }}
-          />
-          <span
             {...classProps(styles.seam)}
             style={{
               backgroundColor: `rgba(7 8 6 / ${splitFlapLook.seamOpacity})`,
               backgroundImage: seamBackground,
-              boxShadow: seamContactShadow,
               height: splitFlapLook.seamThickness,
             }}
           />

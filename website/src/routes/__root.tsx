@@ -1,8 +1,13 @@
 import type { ReactNode } from 'react'
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
+import '@fontsource/commit-mono/400.css'
+import '@fontsource/commit-mono/500.css'
+import '@fontsource/commit-mono/600.css'
+import '@fontsource/commit-mono/700.css'
 import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 import '@thecuvii/flapkit/industrial.css'
+import '@thecuvii/flapkit/signal.css'
 import '../../styles.css'
 
 export const Route = createRootRoute({
@@ -23,7 +28,7 @@ export const Route = createRootRoute({
       { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
       {
         rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap',
+        href: 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400..700&display=swap',
       },
     ],
   }),

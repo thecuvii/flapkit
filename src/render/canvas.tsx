@@ -16,8 +16,10 @@ import {
 import {
   activeGlyphColorProperty,
   signedLeafNoise,
+  splitFlapGlyphScript,
   splitFlapVariantVariable,
   type SplitFlapCanvasRenderer,
+  type SplitFlapGlyphScript,
   type MotionTuning,
   type SplitFlapRuntime,
 } from '../motion/runtime'
@@ -25,7 +27,7 @@ import { splitFlapGraphemes, splitFlapVariants, type Variant } from '../deck'
 import { classProps, styles } from './classes'
 
 type CanvasCassetteGeometry = {
-  baseline: number
+  baselines: Record<SplitFlapGlyphScript, number>
   bottomFaceHeight: number
   bottomFaceY: number
   bottomSurface: CanvasGradient
@@ -36,9 +38,9 @@ type CanvasCassetteGeometry = {
   edge: CanvasGradient
   faceWidth: number
   faceX: number
-  glyphStyle: CanvasGlyphStyle
-  lowerShadow: CanvasGradient
+  glyphStyles: Record<SplitFlapGlyphScript, CanvasGlyphStyle>
   seamY: number
+  spareLeafEdgeColor: string
   topFaceHeight: number
   topFaceY: number
   topSurface: CanvasGradient
@@ -47,6 +49,7 @@ type CanvasCassetteGeometry = {
 
 type CanvasGlyphStyle = {
   family: string
+  height: number
   opacity: number
   size: number
   stretch: CanvasFontStretch
@@ -92,8 +95,13 @@ function getCanvasGlyphAtlas(
   glyphStyle: CanvasGlyphStyle,
   color: string,
   characters: readonly string[],
+  script: SplitFlapGlyphScript,
 ) {
   const fontSize = glyphStyle.size
+  const matchingCharacters = characters.filter(
+    (character) => character === ' ' || splitFlapGlyphScript(character) === script,
+  )
+  if (!matchingCharacters.includes(' ')) matchingCharacters.unshift(' ')
   const key = [
     fontSize.toFixed(3),
     glyphStyle.family,
@@ -102,9 +110,10 @@ function getCanvasGlyphAtlas(
     glyphStyle.stretch,
     glyphStyle.variantCaps,
     glyphStyle.width.toFixed(3),
+    glyphStyle.height.toFixed(3),
     glyphStyle.opacity.toFixed(3),
     color,
-    characters.join('\u0000'),
+    matchingCharacters.join('\u0000'),
   ].join('|')
   const cached = canvasGlyphAtlases.get(key)
   if (cached) return cached
@@ -116,9 +125,9 @@ function getCanvasGlyphAtlas(
   const baseline = fontSize * 1.08
   const usesOffscreenCanvas = typeof OffscreenCanvas !== 'undefined'
   const canvas = usesOffscreenCanvas
-    ? new OffscreenCanvas(slotWidthPixels * characters.length, slotHeightPixels)
+    ? new OffscreenCanvas(slotWidthPixels * matchingCharacters.length, slotHeightPixels)
     : document.createElement('canvas')
-  canvas.width = slotWidthPixels * characters.length
+  canvas.width = slotWidthPixels * matchingCharacters.length
   canvas.height = slotHeightPixels
   const context = canvas.getContext('2d')
 
@@ -134,13 +143,13 @@ function getCanvasGlyphAtlas(
     context.shadowColor = color
     context.shadowBlur = fontSize * 0.0042
 
-    for (let index = 0; index < characters.length; index += 1) {
-      const character = characters[index]
+    for (let index = 0; index < matchingCharacters.length; index += 1) {
+      const character = matchingCharacters[index]
       if (character === ' ') continue
 
       context.save()
       context.translate(index * slotWidth + slotWidth / 2, baseline)
-      context.scale(glyphStyle.width, 0.78)
+      context.scale(glyphStyle.width, glyphStyle.height)
       context.fillText(character, 0, 0)
       context.restore()
     }
@@ -148,12 +157,12 @@ function getCanvasGlyphAtlas(
 
   const atlas = {
     baseline,
-    characterIndices: new Map(characters.map((character, index) => [character, index])),
+    characterIndices: new Map(matchingCharacters.map((character, index) => [character, index])),
     source:
       usesOffscreenCanvas && canvas instanceof OffscreenCanvas
         ? canvas.transferToImageBitmap()
         : canvas,
-    slots: characters.length,
+    slots: matchingCharacters.length,
     slotHeight,
     slotHeightPixels,
     slotWidth,
@@ -185,11 +194,12 @@ function drawCanvasGlyphSlot(
 ) {
   if (character === ' ') return 0
 
-  const atlas = getCanvasGlyphAtlas(geometry.glyphStyle, color, characters)
+  const script = splitFlapGlyphScript(character)
+  const atlas = getCanvasGlyphAtlas(geometry.glyphStyles[script], color, characters, script)
   const index = atlas.characterIndices.get(character) ?? atlas.characterIndices.get(' ') ?? 0
   const destinationX =
     centerX + geometry.unit * (glyphOffset + (lower ? lowerGlyphXOffset : 0)) - atlas.slotWidth / 2
-  const destinationY = geometry.baseline - atlas.baseline
+  const destinationY = geometry.baselines[script] - atlas.baseline
   const clippedLeft = Math.max(destinationX, geometry.faceX)
   const clippedTop = Math.max(destinationY, faceY)
   const clippedRight = Math.min(destinationX + atlas.slotWidth, geometry.faceX + geometry.faceWidth)
@@ -365,13 +375,57 @@ function canvasStackShift(runtime: SplitFlapRuntime, now: number) {
   )
 }
 
-function canvasGlyphScaleX(transform: string) {
+function canvasGlyphScale(transform: string, axis: 'x' | 'y') {
   if (!transform || transform === 'none') return 1
   try {
-    return Math.abs(new DOMMatrixReadOnly(transform).a) || 1
+    const matrix = new DOMMatrixReadOnly(transform)
+    return Math.abs(axis === 'x' ? matrix.a : matrix.d) || 1
   } catch {
     return 1
   }
+}
+
+function measureCanvasGlyph(
+  element: HTMLElement,
+  script: SplitFlapGlyphScript,
+  topFaceY: number,
+  pseudoElement: '::before' | null,
+) {
+  const previousScript = element.dataset.splitFlapScript
+  if (script === 'cjk') {
+    element.dataset.splitFlapScript = 'cjk'
+  } else {
+    delete element.dataset.splitFlapScript
+  }
+
+  const computedStyle = getComputedStyle(element, pseudoElement)
+  const size = Number.parseFloat(computedStyle.fontSize)
+  const lineHeight = Number.parseFloat(computedStyle.lineHeight)
+  const top = Number.parseFloat(computedStyle.top)
+  const glyphStyle: CanvasGlyphStyle = {
+    family: computedStyle.fontFamily,
+    height: canvasGlyphScale(computedStyle.transform, 'y'),
+    opacity: Number.parseFloat(computedStyle.opacity) || 1,
+    size,
+    stretch: computedStyle.fontStretch as CanvasFontStretch,
+    style: computedStyle.fontStyle,
+    variantCaps: computedStyle.fontVariantCaps as CanvasFontVariantCaps,
+    weight: computedStyle.fontWeight,
+    width: canvasGlyphScale(computedStyle.transform, 'x'),
+  }
+  const baseline =
+    topFaceY +
+    (Number.isFinite(top) ? top : 0) +
+    ((Number.isFinite(lineHeight) ? lineHeight : size * 1.2) - size) / 2 +
+    size * 0.79
+
+  if (previousScript) {
+    element.dataset.splitFlapScript = previousScript
+  } else {
+    delete element.dataset.splitFlapScript
+  }
+
+  return { baseline, glyphStyle }
 }
 
 export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geometryKey: string }) {
@@ -490,7 +544,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           edge,
           faceWidth,
           faceX,
-          lowerShadow,
           seamY,
           topFaceHeight,
           topFaceY,
@@ -525,15 +578,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           )
           staticGlyphIndices[runtime.index] = runtime.currentIndex
           drawOperations += 1
-        }
-
-        if (edgeOn > 0.01) {
-          context.save()
-          context.globalAlpha = edgeOn
-          context.fillStyle = lowerShadow
-          context.fillRect(cellX + 0.1 * unit, seamY, cellWidth - 0.2 * unit, cellHeight / 2)
-          drawOperations += 1
-          context.restore()
         }
 
         if (Math.abs(stackShift) > 0.002) {
@@ -587,7 +631,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
               stackShift * unit
 
             context.globalAlpha = (0.42 + layerProgress * 0.16) * stackMotion
-            context.fillStyle = `rgb(${Math.round(88 * edgeMix)}, ${Math.round(86 * edgeMix)}, ${Math.round(68 * edgeMix)})`
+            context.fillStyle = `color-mix(in srgb, ${geometry.spareLeafEdgeColor} ${Math.round(edgeMix * 100)}%, black)`
             context.fillRect(faceX + xOffset * unit, edgeY, faceWidth, Math.max(0.45, 0.04 * unit))
             drawOperations += 1
           })
@@ -758,6 +802,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         const upperRectangle = upperFace.getBoundingClientRect()
         const lowerRectangle = lowerFace.getBoundingClientRect()
         const scaleRectangle = scaleContext.getBoundingClientRect()
+        const cassetteStyle = getComputedStyle(cassette)
         const unit = scaleRectangle.width / 100
         const cellX = rectangle.left - canvasRect.left
         const cellY = rectangle.top - canvasRect.top
@@ -770,25 +815,23 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         const topFaceHeight = upperRectangle.height
         const bottomFaceY = lowerRectangle.top - canvasRect.top
         const bottomFaceHeight = lowerRectangle.height
-        const computedGlyphStyle = getComputedStyle(upperFace, '::before')
-        const glyphSize = Number.parseFloat(computedGlyphStyle.fontSize)
-        const glyphLineHeight = Number.parseFloat(computedGlyphStyle.lineHeight)
-        const glyphTop = Number.parseFloat(computedGlyphStyle.top)
-        const glyphStyle = {
-          family: computedGlyphStyle.fontFamily,
-          opacity: Number.parseFloat(computedGlyphStyle.opacity) || 1,
-          size: glyphSize,
-          stretch: computedGlyphStyle.fontStretch as CanvasFontStretch,
-          style: computedGlyphStyle.fontStyle,
-          variantCaps: computedGlyphStyle.fontVariantCaps as CanvasFontVariantCaps,
-          weight: computedGlyphStyle.fontWeight,
-          width: canvasGlyphScaleX(computedGlyphStyle.transform),
-        }
-        const baseline =
-          topFaceY +
-          (Number.isFinite(glyphTop) ? glyphTop : 0) +
-          ((Number.isFinite(glyphLineHeight) ? glyphLineHeight : glyphSize * 1.2) - glyphSize) / 2 +
-          glyphSize * 0.79
+        const wideGlyphPart = upperFace.querySelector<HTMLElement>(
+          '[data-split-flap-glyph-part]',
+        )
+        const glyphMeasureElement = wideGlyphPart ?? upperFace
+        const glyphPseudoElement = wideGlyphPart ? null : '::before'
+        const defaultGlyph = measureCanvasGlyph(
+          glyphMeasureElement,
+          'default',
+          topFaceY,
+          glyphPseudoElement,
+        )
+        const cjkGlyph = measureCanvasGlyph(
+          glyphMeasureElement,
+          'cjk',
+          topFaceY,
+          glyphPseudoElement,
+        )
         const topSurface = context.createLinearGradient(0, topFaceY, 0, topFaceY + topFaceHeight)
         topSurface.addColorStop(0, 'rgba(224, 216, 177, 0.032)')
         topSurface.addColorStop(0.38, 'rgba(0, 0, 0, 0)')
@@ -802,10 +845,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         bottomSurface.addColorStop(0, 'rgba(0, 0, 0, 0.18)')
         bottomSurface.addColorStop(0.38, 'rgba(0, 0, 0, 0.035)')
         bottomSurface.addColorStop(1, 'rgba(214, 207, 170, 0.025)')
-        const lowerShadow = context.createLinearGradient(0, seamY, 0, cellY + cellHeight)
-        lowerShadow.addColorStop(0, 'rgba(0, 0, 0, 0.66)')
-        lowerShadow.addColorStop(0.34, 'rgba(0, 0, 0, 0.2)')
-        lowerShadow.addColorStop(1, 'rgba(0, 0, 0, 0)')
         const edge = context.createLinearGradient(faceX, 0, faceX + faceWidth, 0)
         edge.addColorStop(0, '#080a08')
         edge.addColorStop(0.22, '#30342f')
@@ -813,7 +852,10 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         edge.addColorStop(0.63, '#2a2e2a')
         edge.addColorStop(1, '#070807')
         geometryRef.current[index] = {
-          baseline,
+          baselines: {
+            cjk: cjkGlyph.baseline,
+            default: defaultGlyph.baseline,
+          },
           bottomFaceHeight,
           bottomFaceY,
           bottomSurface,
@@ -824,9 +866,13 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           edge,
           faceWidth,
           faceX,
-          glyphStyle,
-          lowerShadow,
+          glyphStyles: {
+            cjk: cjkGlyph.glyphStyle,
+            default: defaultGlyph.glyphStyle,
+          },
           seamY,
+          spareLeafEdgeColor:
+            cassetteStyle.getPropertyValue('--flapkit-spare-leaf-edge-color').trim() || '#585644',
           topFaceHeight,
           topFaceY,
           topSurface,
@@ -839,38 +885,14 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         cellVisuals: resolvedVisuals,
       }
 
-      const glyphAtlases = new Set<CanvasGlyphAtlas>()
-      geometryRef.current.forEach((geometry, index) => {
-        const visual = resolvedVisuals[index]
-        if (!geometry || !visual) return
-        const deckVariants = new Set(
-          activeLayout.cells[index]?.flapDeck.map((position) => position.variant),
-        )
-        deckVariants.forEach((variant) => {
-          glyphAtlases.add(
-            getCanvasGlyphAtlas(
-              geometry.glyphStyle,
-              visual.glyphColors[variant].top,
-              visual.characters,
-            ),
-          )
-          glyphAtlases.add(
-            getCanvasGlyphAtlas(
-              geometry.glyphStyle,
-              visual.glyphColors[variant].bottom,
-              visual.characters,
-            ),
-          )
-        })
-      })
-
-      // Upload each immutable atlas before motion starts. Without this warm-up,
-      // the first active frame pays the texture upload cost for every group and variant.
-      for (const targetContext of [context, staticContext]) {
-        targetContext.save()
-        targetContext.globalAlpha = 0.001
-        let atlasIndex = 0
-        glyphAtlases.forEach((atlas) => {
+      const warmedAtlases = new WeakSet<CanvasGlyphAtlas>()
+      let atlasIndex = 0
+      const warmAtlas = (atlas: CanvasGlyphAtlas) => {
+        if (warmedAtlases.has(atlas)) return
+        warmedAtlases.add(atlas)
+        for (const targetContext of [context, staticContext]) {
+          targetContext.save()
+          targetContext.globalAlpha = 0.001
           targetContext.drawImage(
             atlas.source,
             0,
@@ -882,10 +904,39 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
             1,
             1,
           )
-          atlasIndex += 1
-        })
-        targetContext.restore()
+          targetContext.restore()
+        }
+        atlasIndex += 1
       }
+
+      geometryRef.current.forEach((geometry, index) => {
+        const visual = resolvedVisuals[index]
+        if (!geometry || !visual) return
+        const deckVariants = new Set(
+          activeLayout.cells[index]?.flapDeck.map((position) => position.variant),
+        )
+        const glyphScripts = new Set(visual.characters.map(splitFlapGlyphScript))
+        deckVariants.forEach((variant) => {
+          glyphScripts.forEach((script) => {
+            warmAtlas(
+              getCanvasGlyphAtlas(
+                geometry.glyphStyles[script],
+                visual.glyphColors[variant].top,
+                visual.characters,
+                script,
+              ),
+            )
+            warmAtlas(
+              getCanvasGlyphAtlas(
+                geometry.glyphStyles[script],
+                visual.glyphColors[variant].bottom,
+                visual.characters,
+                script,
+              ),
+            )
+          })
+        })
+      })
 
       controller.requestCanvasRender()
     }

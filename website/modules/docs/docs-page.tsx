@@ -224,7 +224,7 @@ function CodeCopyButton({ source }: { source: string }) {
       aria-live="polite"
       onClick={copySource}
     >
-      <TextMorph as="span" numbers={false}>
+      <TextMorph as="span">
         {copied ? 'Copied' : 'Copy'}
       </TextMorph>
     </button>
@@ -515,7 +515,7 @@ function DepartureBoard({
 }) {
   const Frame = frame ? Flapkit.Board : Flapkit.Grid
   const rows = departureRows.map((row) => (
-    <Flapkit.Row key={row.id} highlighted={row.highlighted} id={row.id}>
+    <Flapkit.Row key={row.id} highlighted={'highlighted' in row && row.highlighted} id={row.id}>
       <Flapkit.Group deck={departureFlightDeck} id="flight" label="FLIGHT">
         <Flapkit.WideCell>{row.flight}</Flapkit.WideCell>
       </Flapkit.Group>

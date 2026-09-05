@@ -126,7 +126,7 @@ export function SpecStrip({
     look ? (['LOOK', look] as const) : null,
     motion ? (['MOTION', motion] as const) : null,
     deck ? (['DECK', deck] as const) : null,
-  ].filter((item): item is readonly [string, string] => item !== null)
+  ].filter((item): item is NonNullable<typeof item> => item !== null)
 
   if (items.length === 0) return null
 

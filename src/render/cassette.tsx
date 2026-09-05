@@ -105,7 +105,6 @@ function CompactHardware({ wide }: { wide: boolean }) {
 }
 
 function FaceGlyph({
-  activeBottomInset,
   color,
   glyphOffset,
   glyphRef,
@@ -114,7 +113,6 @@ function FaceGlyph({
   moving = false,
   wide = false,
 }: {
-  activeBottomInset: string
   color: string
   glyphOffset: (typeof glyphOffsets)[number]
   glyphRef: RefObject<HTMLSpanElement | null>
@@ -692,7 +690,6 @@ export const FlapCell = memo(function FlapCell({
               }}
             />
             <FaceGlyph
-              activeBottomInset={activeBottomInset}
               color={bottomGlyphColor}
               glyphOffset={glyphOffset}
               glyphRef={outgoingLowerGlyphRef}
@@ -720,7 +717,6 @@ export const FlapCell = memo(function FlapCell({
               }}
             />
             <FaceGlyph
-              activeBottomInset={activeBottomInset}
               color={glyphColor}
               glyphOffset={glyphOffset}
               glyphRef={arrivingUpperGlyphRef}
@@ -752,7 +748,6 @@ export const FlapCell = memo(function FlapCell({
                 }}
               />
               <FaceGlyph
-                activeBottomInset={activeBottomInset}
                 color={glyphColor}
                 glyphOffset={glyphOffset}
                 glyphRef={movingFrontGlyphRef}
@@ -784,7 +779,6 @@ export const FlapCell = memo(function FlapCell({
                 }}
               />
               <FaceGlyph
-                activeBottomInset={activeBottomInset}
                 color={bottomGlyphColor}
                 glyphOffset={glyphOffset}
                 glyphRef={movingBackGlyphRef}

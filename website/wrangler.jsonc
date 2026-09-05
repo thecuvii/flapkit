@@ -1,0 +1,24 @@
+{
+  "name": "flapkit",
+  "compatibility_date": "2026-09-05",
+  // NEXT_PUBLIC_POSTHOG_* is inlined by `next build`. Set it in
+  // Workers Builds → Settings → Build → Variables and secrets, not here.
+  "assets": {
+    "directory": "./out",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+  },
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true,
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+    },
+  },
+}

@@ -51,6 +51,7 @@
   "scripts": {
     "build": "tsdown",
     "build:website": "pnpm build && pnpm --filter website build",
+    "deploy": "pnpm build:website && npx wrangler deploy --config website/wrangler.jsonc",
     "check": "pnpm build && vp check && tsc -p website/tsconfig.json",
     "check:fix": "pnpm build && vp check --fix && tsc -p website/tsconfig.json",
     "dev": "pnpm --filter website dev",

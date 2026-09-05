@@ -7,6 +7,11 @@ const workspaceRoot = path.resolve(import.meta.dirname, '..')
 // export condition in `next dev`, and to `dist/` in `next build`.
 const nextConfig: NextConfig = {
   agentRules: false,
+  images: {
+    unoptimized: true,
+  },
+  output: 'export',
+  trailingSlash: true,
   outputFileTracingRoot: workspaceRoot,
   transpilePackages: ['@thecuvii/flapkit'],
   turbopack: {

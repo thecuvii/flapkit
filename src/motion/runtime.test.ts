@@ -39,8 +39,6 @@ function fakeView(): SplitFlapView {
     arrivingUpperGlyph: fakeElement(),
     compact: true,
     compactMotion: false,
-    cssRiffleDuration: null,
-    cssRiffleTargetIndex: null,
     movingBackGlyph: fakeElement(),
     movingFrontGlyph: fakeElement(),
     movingVane: fakeElement(),
@@ -58,7 +56,6 @@ function isActive(view: SplitFlapView) {
 const cascadeMotion: MotionTuning = {
   cadenceVariationPct: 0,
   finalSettleMs: 100,
-  maximumConcurrentCassettes: 32,
   pitchMs: 20,
   reboundDeg: 2,
   rowDelayMs: 0,
@@ -183,32 +180,26 @@ describe('Flapkit motion controller', () => {
     expect(runtime?.pitchStart).toBeCloseTo(spreadPosition ** 2 * 480)
   })
 
-  it('prewarms CSS cassettes and respects the concurrency limit', () => {
+  it('does not promote compact cascade views onto CSS 3D', () => {
     const controller = new SplitFlapMotionController(cells('  ', 2).cells)
     controller.setMotion({
       ...cascadeMotion,
-      maximumConcurrentCassettes: 1,
       withinRowJitterMs: 16,
     })
     const views = [fakeView(), fakeView()]
     controller.registerView(0, views[0])
     controller.registerView(1, views[1])
-    expect(views.map(isActive)).toEqual([false, false])
 
     controller.setTargets(cells('AA', 2).targetIndices)
     frame(0)
-
-    expect(controller.readPerformanceCounters().activeCssCassettes).toBe(1)
-    expect(views.map(isActive)).toEqual([true, false])
-    expect(views.map((view) => view.compactMotion)).toEqual([true, false])
-
     frame(200)
-    frame(201)
-    expect(views.map(isActive)).toEqual([false, true])
-    expect(views.map((view) => view.compactMotion)).toEqual([false, true])
+
+    expect(controller.readPerformanceCounters().activeCssCassettes).toBe(0)
+    expect(views.map(isActive)).toEqual([false, false])
+    expect(views.map((view) => view.compactMotion)).toEqual([false, false])
   })
 
-  it('reflects current CSS activity onto views registered mid-animation', () => {
+  it('leaves a compact view unpromoted when it registers mid-cascade', () => {
     const controller = new SplitFlapMotionController(cells(' ').cells)
     controller.setMotion({ ...cascadeMotion, withinRowJitterMs: 16 })
 
@@ -217,8 +208,8 @@ describe('Flapkit motion controller', () => {
     const view = fakeView()
     controller.registerView(0, view)
 
-    expect(isActive(view)).toBe(true)
-    expect(view.compactMotion).toBe(true)
+    expect(isActive(view)).toBe(false)
+    expect(view.compactMotion).toBe(false)
   })
 
   it('publishes one look-ahead mechanical impact with final and pan metadata', () => {

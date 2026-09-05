@@ -396,7 +396,7 @@ export function PerformancePage() {
             }}
           >
             <option value="riffle">Riffle · Canvas</option>
-            <option value="cascade">Cascade · CSS 3D</option>
+            <option value="cascade">Cascade · canvas</option>
           </select>
         </label>
         <label>

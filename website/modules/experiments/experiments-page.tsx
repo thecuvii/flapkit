@@ -114,7 +114,7 @@ export function ExperimentsPage() {
           motion="cascade"
           deck="A–Z"
           title="Row-staggered 3D leaves"
-          description="CSS 3D cassettes move in a controlled row cascade with per-cell cadence variation."
+          description="The same canvas leaf as riffle, with starts staggered across rows and per-cell cadence variation."
         >
           <Flapkit.Root motion={Flapkit.cascade()}>
             <Flapkit.Board className="flapkit-industrial">

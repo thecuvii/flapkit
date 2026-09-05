@@ -5,7 +5,6 @@ import type { SplitFlapMechanicalEvent, SplitFlapMechanicalEventSource } from '.
 
 export type SplitFlapMotionVariant = 'riffle' | 'cascade' | 'scrub'
 
-const cssMotionPrewarmMs = 17
 const mechanicalSoundLookaheadMs = 60
 const mechanicalSoundMaxLatenessMs = 34
 export const specularProperty = '--flapkit-specular'
@@ -13,15 +12,6 @@ export const stackShiftProperty = '--flapkit-stack-shift'
 export const activeGlyphColorProperty = '--flapkit-active-glyph-color'
 let specularPropertyRegistered = false
 let stackShiftPropertyRegistered = false
-
-const compactRiffleVaneKeyframes: Keyframe[] = [
-  { offset: 0, transform: 'translate3d(0, 0, 0) rotateX(0deg)' },
-  { offset: 0.28, transform: 'translate3d(0, 0, 0) rotateX(-55deg)' },
-  { offset: 0.5, transform: 'translate3d(0, 0, 0) rotateX(-90deg)' },
-  { offset: 0.68, transform: 'translate3d(0, 0, 0) rotateX(-125deg)' },
-  { offset: 0.82, transform: 'translate3d(0, 0, 0) rotateX(-180deg)' },
-  { offset: 1, transform: 'translate3d(0, 0, 0) rotateX(-180deg)' },
-]
 
 const riffleStackKeyframes: Keyframe[] = [
   { offset: 0, [stackShiftProperty]: '0cqw' },
@@ -40,39 +30,6 @@ const settleStackKeyframes: Keyframe[] = [
   { offset: 0.9, [stackShiftProperty]: '-0.045cqw' },
   { offset: 1, [stackShiftProperty]: '0cqw' },
 ]
-
-const riffleStackTransformKeyframes: Keyframe[] = [
-  { offset: 0, transform: 'translate3d(0, 0, 0)' },
-  { offset: 0.45, transform: 'translate3d(0, 0, 0)' },
-  { offset: 0.72, transform: 'translate3d(0, 0.08cqw, 0)' },
-  { offset: 0.82, transform: 'translate3d(0, 0.18cqw, 0)' },
-  { offset: 0.9, transform: 'translate3d(0, -0.03cqw, 0)' },
-  { offset: 1, transform: 'translate3d(0, 0, 0)' },
-]
-
-const settleStackTransformKeyframes: Keyframe[] = [
-  { offset: 0, transform: 'translate3d(0, 0, 0)' },
-  { offset: 0.42, transform: 'translate3d(0, 0, 0)' },
-  { offset: 0.65, transform: 'translate3d(0, 0.08cqw, 0)' },
-  { offset: 0.78, transform: 'translate3d(0, 0.2cqw, 0)' },
-  { offset: 0.9, transform: 'translate3d(0, -0.045cqw, 0)' },
-  { offset: 1, transform: 'translate3d(0, 0, 0)' },
-]
-
-function compactSettleVaneKeyframes(reboundDeg: number): Keyframe[] {
-  return [
-    { offset: 0, transform: 'translate3d(0, 0, 0) rotateX(0deg)' },
-    { offset: 0.34, transform: 'translate3d(0, 0, 0) rotateX(-55deg)' },
-    { offset: 0.5, transform: 'translate3d(0, 0, 0) rotateX(-90deg)' },
-    { offset: 0.62, transform: 'translate3d(0, 0, 0) rotateX(-125deg)' },
-    { offset: 0.78, transform: 'translate3d(0, 0, 0) rotateX(-180deg)' },
-    {
-      offset: 0.9,
-      transform: `translate3d(0, 0, 0) rotateX(${-180 + reboundDeg}deg)`,
-    },
-    { offset: 1, transform: 'translate3d(0, 0, 0) rotateX(-180deg)' },
-  ]
-}
 
 function ensureSpecularProperty() {
   if (specularPropertyRegistered || typeof CSS === 'undefined' || !CSS.registerProperty) return
@@ -116,7 +73,6 @@ export function signedLeafNoise(index: number, salt: number) {
 export type MotionTuning = {
   cadenceVariationPct: number
   finalSettleMs: number
-  maximumConcurrentCassettes: number
   pitchMs: number
   reboundDeg: number
   rowDelayMs: number
@@ -137,8 +93,6 @@ export type SplitFlapView = {
   compact: boolean
   /** Owned by the controller: true while a compact cassette is promoted for CSS 3D motion. */
   compactMotion: boolean
-  cssRiffleDuration: number | null
-  cssRiffleTargetIndex: number | null
   movingBackGlyph: HTMLSpanElement
   movingFrontGlyph: HTMLSpanElement
   movingVane: HTMLSpanElement
@@ -238,7 +192,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   private canvasFrameCount = 0
   private canvasOperationCount = 0
   private canvasRenderers = new Set<SplitFlapCanvasRenderer>()
-  private compactSettleKeyframes = compactSettleVaneKeyframes(1.2)
   private frameId: number | null = null
   private mechanicalEventListeners = new Set<SplitFlapMechanicalEventListener>()
   private scrubbedPitches = new Map<
@@ -248,7 +201,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   private motion: MotionTuning = {
     cadenceVariationPct: 4,
     finalSettleMs: 260,
-    maximumConcurrentCassettes: 32,
     pitchMs: 52,
     reboundDeg: 2,
     rowDelayMs: 150,
@@ -366,9 +318,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
 
   setMotion(motion: MotionTuning) {
     if (motion.variant !== 'cascade') this.clearActiveCssCassettes()
-    if (motion.reboundDeg !== this.motion.reboundDeg) {
-      this.compactSettleKeyframes = compactSettleVaneKeyframes(motion.reboundDeg)
-    }
     this.motion = motion
     this.renderCanvases(performance.now())
   }
@@ -474,11 +423,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
         return
       }
 
-      const startAt =
-        this.motion.variant === 'cascade'
-          ? Math.max(runtime.pitchStart, now + cssMotionPrewarmMs)
-          : runtime.pitchStart
-      this.startPitch(runtime, startAt)
+      this.startPitch(runtime, runtime.pitchStart)
       return
     }
 
@@ -495,7 +440,20 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     runtime.animationStarted = true
   }
 
+  private blankCompactStationaryGlyphs(runtimes: readonly SplitFlapRuntime[]) {
+    runtimes.forEach((runtime) => {
+      runtime.views.forEach((view) => {
+        if (!view.compact || view.compactMotion) return
+        setGlyph(view.outgoingLowerGlyph, ' ')
+        setGlyph(view.arrivingUpperGlyph, ' ')
+      })
+    })
+  }
+
   private startRuntimes(runtimes: SplitFlapRuntime[], now: number, noiseSalt: number) {
+    // Compact boards paint pitches on the shared canvas — same raster path as riffle.
+    this.blankCompactStationaryGlyphs(runtimes)
+
     if (this.motion.variant === 'cascade') {
       const affectedRows = Array.from(new Set(runtimes.map((runtime) => runtime.rowIndex))).sort(
         (a, b) => a - b,
@@ -513,11 +471,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     }
 
     runtimes.forEach((runtime) => {
-      runtime.views.forEach((view) => {
-        if (!view.compact || view.compactMotion) return
-        setGlyph(view.outgoingLowerGlyph, ' ')
-        setGlyph(view.arrivingUpperGlyph, ' ')
-      })
       const spreadPosition = (signedLeafNoise(runtime.index, noiseSalt) + 1) / 2
       // Keep the opening burst dense while a few late starters create a gradual board-level tail.
       const spread = spreadPosition * spreadPosition * this.motion.startSpreadMs
@@ -605,27 +558,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
 
     this.runtimes.forEach((runtime) => {
       if (!runtime.running) return
-
-      if (
-        this.motion.variant === 'cascade' &&
-        !runtime.animationStarted &&
-        now >= runtime.pitchStart - cssMotionPrewarmMs &&
-        !this.activeCssCassettes.has(runtime.index)
-      ) {
-        if (this.activeCssCassettes.size >= this.motion.maximumConcurrentCassettes) {
-          hasRunningRuntime = true
-          return
-        }
-
-        // Mount one frame before a scheduled start so the browser can rasterize
-        // and promote the 3D vane before it moves. A cassette that waited for an
-        // available slot gets the same preparation frame from its actual slot time.
-        if (now >= runtime.pitchStart) runtime.pitchStart = now + cssMotionPrewarmMs
-        this.activeCssCassettes.add(runtime.index)
-        this.setRuntimeCssMotion(runtime, true)
-        // Park the now-visible vane in its waiting pose; the next frame starts the pitch.
-        this.renderIdle(runtime, 'waiting')
-      }
 
       if (mechanicalEvents) this.collectMechanicalEvent(runtime, now, mechanicalEvents)
       this.advanceRuntime(runtime, now)
@@ -756,8 +688,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     const position = runtime.positions[runtime.currentIndex]
 
     this.cancelViewAnimations(view)
-    view.cssRiffleDuration = null
-    view.cssRiffleTargetIndex = null
     view.spareLeafPack.style.setProperty(stackShiftProperty, '0px')
     setGlyphPosition(view.outgoingLowerGlyph, position, true)
     setGlyphPosition(view.arrivingUpperGlyph, position, false)
@@ -819,9 +749,10 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     const currentPosition = runtime.positions[runtime.currentIndex]
     const nextPosition = runtime.positions[(runtime.currentIndex + 1) % runtime.positions.length]
 
-    if (view.compact && (!view.compactMotion || this.motion.variant !== 'cascade')) return
+    // Compact boards paint on the shared canvas. CSS 3D stays on detailed/scrub cassettes.
+    if (view.compact) return
     ensureStackShiftProperty()
-    if (!view.compact) ensureSpecularProperty()
+    ensureSpecularProperty()
     const paused = scrubProgress !== undefined
     const delay = paused ? 0 : Math.max(0, runtime.pitchStart - now)
     const elapsed = paused
@@ -850,44 +781,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       delay > 0 ? 'waiting' : runtime.finalPitch ? 'settle' : 'riffle'
     view.root.dataset.pitchHalf = pitchProgress <= 0.5 ? 'outgoing' : 'incoming'
     view.root.dataset.variant = currentPosition.variant
-
-    if (view.compact) {
-      if (
-        !runtime.finalPitch &&
-        view.cssRiffleDuration === runtime.duration &&
-        view.cssRiffleTargetIndex === runtime.targetIndex
-      ) {
-        return
-      }
-
-      const riffleIterations = Math.max(
-        1,
-        ((runtime.targetIndex - runtime.currentIndex + runtime.positions.length) %
-          runtime.positions.length) -
-          1,
-      )
-      view.cssRiffleDuration = runtime.finalPitch ? null : runtime.duration
-      view.cssRiffleTargetIndex = runtime.finalPitch ? null : runtime.targetIndex
-      this.playViewAnimation(
-        view,
-        0,
-        view.movingVane,
-        runtime.finalPitch ? this.compactSettleKeyframes : compactRiffleVaneKeyframes,
-        runtime.finalPitch ? timing : { ...timing, iterations: riffleIterations },
-        elapsed,
-        paused,
-      )
-      this.playViewAnimation(
-        view,
-        2,
-        view.spareLeafPack,
-        runtime.finalPitch ? settleStackTransformKeyframes : riffleStackTransformKeyframes,
-        runtime.finalPitch ? timing : { ...timing, iterations: riffleIterations },
-        elapsed,
-        paused,
-      )
-      return
-    }
 
     const specularPeak = Math.min(1, this.motion.specularStrength * 0.72)
     const vaneKeyframes: Keyframe[] = runtime.finalPitch

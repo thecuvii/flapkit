@@ -16,7 +16,6 @@ export type CascadeMotion = {
   cadenceVariationPct: number
   finalReboundDeg: number
   finalSettleMs: number
-  maximumConcurrentCassettes: number
   pitchMs: number
   rowDelayMs: number
   withinRowJitterMs: number
@@ -34,7 +33,6 @@ export const defaultCascadeMotion: CascadeMotion = {
   cadenceVariationPct: 6,
   finalReboundDeg: 2,
   finalSettleMs: 260,
-  maximumConcurrentCassettes: 32,
   pitchMs: 52,
   rowDelayMs: 150,
   withinRowJitterMs: 16,
@@ -207,7 +205,6 @@ function CascadeEffect({
     () => ({
       cadenceVariationPct: motion.cadenceVariationPct,
       finalSettleMs: motion.finalSettleMs,
-      maximumConcurrentCassettes: motion.maximumConcurrentCassettes,
       pitchMs: motion.pitchMs,
       reboundDeg: motion.finalReboundDeg,
       rowDelayMs: motion.rowDelayMs,
@@ -237,7 +234,6 @@ function RiffleEffect({
     () => ({
       cadenceVariationPct: motion.cadenceVariationPct,
       finalSettleMs: motion.finalSettleMs,
-      maximumConcurrentCassettes: defaultCascadeMotion.maximumConcurrentCassettes,
       pitchMs: motion.riffleMs,
       reboundDeg: motion.finalReboundDeg,
       rowDelayMs: 0,
@@ -288,7 +284,6 @@ export function ScrubProvider({
     () => ({
       cadenceVariationPct: 0,
       finalSettleMs: 1_000,
-      maximumConcurrentCassettes: 1,
       pitchMs: 1_000,
       reboundDeg: 2,
       rowDelayMs: 0,

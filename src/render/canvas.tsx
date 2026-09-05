@@ -526,7 +526,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       context.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio)
       let drawOperations = 1
-      if (motion.variant === 'cascade') {
+      if (motion.variant === 'scrub') {
         controller.recordCanvasFrame(drawOperations)
         return
       }

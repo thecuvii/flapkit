@@ -60,8 +60,8 @@ settings. `Row` and `Group` IDs are optional; provide stable IDs when items can
 reorder.
 
 `Flapkit.riffle()` provides lightweight, randomized rapid flipping for dense
-boards. Use `Flapkit.cascade()` for higher-fidelity CSS 3D motion that cascades
-across rows.
+boards. Use `Flapkit.cascade()` for the same canvas paint path with starts
+staggered across rows.
 
 Changing cell values updates only cassettes whose resolved deck positions
 changed. Stable optional row and group IDs preserve mechanical identity when

@@ -406,8 +406,6 @@ export const FlapCell = memo(function FlapCell({
       arrivingUpperGlyph,
       compact: !detailed,
       compactMotion: false,
-      cssRiffleDuration: null,
-      cssRiffleTargetIndex: null,
       movingBackGlyph,
       movingFrontGlyph,
       movingVane,

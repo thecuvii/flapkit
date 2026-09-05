@@ -1171,8 +1171,7 @@ export function DocsPage({
           <p>
             Both adapters drive the same component tree and preserve the same looks.{' '}
             <code>riffle()</code> is for dense boards: canvas-assisted, randomized starts.{' '}
-            <code>cascade()</code> is CSS 3D leaf motion that staggers across rows. Cascade limits how
-            many cassettes flip at once.
+            <code>cascade()</code> paints the same leaf as riffle and staggers starts across rows.
           </p>
           <MotionPreview />
           <div className="option-list">
@@ -1186,8 +1185,8 @@ export function DocsPage({
             <div>
               <code>cascade()</code>
               <span>
-                <code>pitchMs</code>, <code>rowDelayMs</code>, <code>withinRowJitterMs</code>,{' '}
-                <code>maximumConcurrentCassettes</code>, plus the shared settle options
+                <code>pitchMs</code>, <code>rowDelayMs</code>, <code>withinRowJitterMs</code>, plus
+                the shared settle options
               </span>
             </div>
           </div>
@@ -1299,7 +1298,6 @@ export function DocsPage({
               ['pitchMs', 'number', '52', 'Cascade pitch duration'],
               ['rowDelayMs', 'number', '150', 'Cascade delay between rows'],
               ['withinRowJitterMs', 'number', '16', 'Cascade start jitter inside a row'],
-              ['maximumConcurrentCassettes', 'number', '32', 'Cascade concurrency cap'],
               ['cadenceVariationPct', 'number', '4 / 6', 'Per-cassette timing noise'],
               ['finalSettleMs', 'number', '260', 'Settle after the last pitch'],
               ['finalReboundDeg', 'number', '2', 'Settle rebound angle'],

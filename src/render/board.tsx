@@ -122,7 +122,7 @@ function GridContent({
           presentation={presentation.rows[rowIndex]}
         />
       ))}
-      {motion.variant === 'riffle' && <MotionCanvas geometryKey={canvasGeometryKey} />}
+      {motion.variant !== 'scrub' && <MotionCanvas geometryKey={canvasGeometryKey} />}
     </div>
   )
 }

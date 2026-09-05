@@ -183,6 +183,9 @@
   :where(.flapkit-cassette) {
     font-size: var(--flapkit-glyph-size);
     letter-spacing: var(--flapkit-glyph-tracking);
+    /* Canvas text ignores the host's `antialiased` smoothing; keep the DOM glyph on the
+       same raster weight so the canvas -> DOM hand-off after a pitch does not jump. */
+    -webkit-font-smoothing: auto;
     position: relative;
     display: block;
     width: 100%;

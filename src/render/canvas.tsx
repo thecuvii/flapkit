@@ -19,7 +19,6 @@ import {
   splitFlapVariantVariable,
   type SplitFlapCanvasRenderer,
   type SplitFlapGlyphScript,
-  type MotionTuning,
   type SplitFlapRuntime,
 } from '../motion/runtime'
 import { splitFlapGraphemes, splitFlapVariants, type Variant } from '../deck'
@@ -48,6 +47,9 @@ type CanvasCassetteGeometry = {
 type CanvasGlyphStyle = {
   family: string
   height: number
+  /** CSS letter-spacing string; centered DOM text includes its trailing spacing. */
+  letterSpacing: string
+  lineHeight: number
   opacity: number
   size: number
   stretch: CanvasFontStretch
@@ -81,12 +83,69 @@ type CanvasGlyphAtlas = {
 
 const canvasGlyphAtlases = new Map<string, CanvasGlyphAtlas>()
 const canvasGlyphAtlasPixelRatio = 2
+const canvasFontMetricsCache = new Map<string, { ascent: number; descent: number }>()
 
 function disposeCanvasGlyphAtlases() {
   canvasGlyphAtlases.forEach((atlas) => {
     if (atlas.source instanceof ImageBitmap) atlas.source.close()
   })
   canvasGlyphAtlases.clear()
+  canvasFontMetricsCache.clear()
+}
+
+function canvasFontSignature(glyphStyle: CanvasGlyphStyle) {
+  return [
+    glyphStyle.size.toFixed(3),
+    glyphStyle.family,
+    glyphStyle.style,
+    glyphStyle.weight,
+    glyphStyle.stretch,
+    glyphStyle.variantCaps,
+    glyphStyle.letterSpacing,
+  ].join('|')
+}
+
+function applyCanvasFont(context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, glyphStyle: CanvasGlyphStyle) {
+  context.font = `${glyphStyle.style} ${glyphStyle.weight} ${glyphStyle.size}px ${glyphStyle.family}`
+  context.fontStretch = glyphStyle.stretch
+  context.fontVariantCaps = glyphStyle.variantCaps
+  // Older engines lack letterSpacing on the 2D context; the offset is sub-pixel there.
+  if ('letterSpacing' in context) context.letterSpacing = glyphStyle.letterSpacing
+}
+
+/** CSS line-box baseline: half-leading + font ascent, not a 0.79em guess. */
+function canvasFontMetrics(glyphStyle: CanvasGlyphStyle) {
+  const key = canvasFontSignature(glyphStyle)
+  const cached = canvasFontMetricsCache.get(key)
+  if (cached) return cached
+
+  const fallback = { ascent: glyphStyle.size * 0.8, descent: glyphStyle.size * 0.2 }
+  const canvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas')
+  const context = canvas.getContext('2d')
+  if (!context) {
+    canvasFontMetricsCache.set(key, fallback)
+    return fallback
+  }
+
+  applyCanvasFont(context, glyphStyle)
+  const metrics = context.measureText('Hg')
+  const ascent = metrics.fontBoundingBoxAscent
+  const descent = metrics.fontBoundingBoxDescent
+  const resolved =
+    Number.isFinite(ascent) && Number.isFinite(descent) && ascent + descent > 0
+      ? { ascent, descent }
+      : fallback
+  canvasFontMetricsCache.set(key, resolved)
+  return resolved
+}
+
+function canvasLineBoxBaseline(
+  top: number,
+  lineHeight: number,
+  metrics: { ascent: number; descent: number },
+) {
+  const fontHeight = metrics.ascent + metrics.descent
+  return top + (lineHeight - fontHeight) / 2 + metrics.ascent
 }
 
 function getCanvasGlyphAtlas(
@@ -107,12 +166,14 @@ function getCanvasGlyphAtlas(
     glyphStyle.weight,
     glyphStyle.stretch,
     glyphStyle.variantCaps,
+    glyphStyle.letterSpacing,
     glyphStyle.width.toFixed(3),
     glyphStyle.height.toFixed(3),
+    glyphStyle.lineHeight.toFixed(3),
     glyphStyle.opacity.toFixed(3),
     color,
     matchingCharacters.join('\u0000'),
-    'origin:box-center',
+    'origin:line-box',
   ].join('|')
   const cached = canvasGlyphAtlases.get(key)
   if (cached) return cached
@@ -121,7 +182,8 @@ function getCanvasGlyphAtlas(
   const slotHeightPixels = Math.ceil(fontSize * 1.5 * canvasGlyphAtlasPixelRatio)
   const slotWidth = slotWidthPixels / canvasGlyphAtlasPixelRatio
   const slotHeight = slotHeightPixels / canvasGlyphAtlasPixelRatio
-  const baseline = fontSize * 1.08
+  const fontMetrics = canvasFontMetrics(glyphStyle)
+  const baseline = canvasLineBoxBaseline(0, glyphStyle.lineHeight, fontMetrics)
   const usesOffscreenCanvas = typeof OffscreenCanvas !== 'undefined'
   const canvas = usesOffscreenCanvas
     ? new OffscreenCanvas(slotWidthPixels * matchingCharacters.length, slotHeightPixels)
@@ -132,24 +194,22 @@ function getCanvasGlyphAtlas(
 
   if (context) {
     context.scale(canvasGlyphAtlasPixelRatio, canvasGlyphAtlasPixelRatio)
-    context.font = `${glyphStyle.style} ${glyphStyle.weight} ${fontSize}px ${glyphStyle.family}`
-    context.fontStretch = glyphStyle.stretch
-    context.fontVariantCaps = glyphStyle.variantCaps
+    applyCanvasFont(context, glyphStyle)
     context.textAlign = 'center'
     context.textBaseline = 'alphabetic'
     context.fillStyle = color
     context.globalAlpha = glyphStyle.opacity
-    context.shadowColor = color
-    context.shadowBlur = fontSize * 0.0042
+    // No shadow: the looks' text-shadow is a 6% alpha halo that reads as
+    // nothing, while a full-strength canvas shadow doubles edge coverage and
+    // makes the raster glyph visibly bolder than the DOM glyph it hands to.
+
+    // Scale around the CSS line-height box center (transform-origin 50% 50%).
+    const boxCenterY = glyphStyle.lineHeight / 2
 
     for (let index = 0; index < matchingCharacters.length; index += 1) {
       const character = matchingCharacters[index]
       if (character === ' ') continue
 
-      // DOM uses transform-origin 50% 50% on the ::before box. Scaling around
-      // the alphabetic baseline pulls ink down and clips the top half to a
-      // seam sliver, which reads as a riffle/rest size mismatch.
-      const boxCenterY = baseline - fontSize * 0.29
       context.save()
       context.translate(index * slotWidth + slotWidth / 2, boxCenterY)
       context.scale(glyphStyle.width, glyphStyle.height)
@@ -324,7 +384,7 @@ function interpolateCanvasValue(progress: number, keyframes: readonly [number, n
   return keyframes[keyframes.length - 1][1]
 }
 
-function canvasVaneAngle(runtime: SplitFlapRuntime, motion: MotionTuning, now: number) {
+function canvasVaneAngle(runtime: SplitFlapRuntime, now: number) {
   if (now <= runtime.pitchStart) return 0
   const elapsed = Math.min(runtime.duration, now - runtime.pitchStart)
   const progress = elapsed / runtime.duration
@@ -338,7 +398,6 @@ function canvasVaneAngle(runtime: SplitFlapRuntime, motion: MotionTuning, now: n
           [0.5, -90],
           [0.62, -125],
           [0.78, -180],
-          [0.9, -180 + motion.reboundDeg],
           [1, -180],
         ]
       : [
@@ -364,7 +423,6 @@ function canvasStackShift(runtime: SplitFlapRuntime, now: number) {
           [0.42, 0],
           [0.65, 0.08],
           [0.78, 0.2],
-          [0.9, -0.045],
           [1, 0],
         ]
       : [
@@ -438,6 +496,9 @@ function measureCanvasGlyph(
   const glyphStyle: CanvasGlyphStyle = {
     family: computedStyle.fontFamily,
     height: canvasGlyphScale(computedStyle.transform, hostStyle, 'y'),
+    letterSpacing:
+      computedStyle.letterSpacing === 'normal' ? '0px' : computedStyle.letterSpacing,
+    lineHeight,
     opacity: Number.parseFloat(computedStyle.opacity) || 1,
     size,
     stretch: computedStyle.fontStretch as CanvasFontStretch,
@@ -446,7 +507,7 @@ function measureCanvasGlyph(
     weight: computedStyle.fontWeight,
     width: canvasGlyphScale(computedStyle.transform, hostStyle, 'x'),
   }
-  const baseline = topFaceY + top + (lineHeight - size) / 2 + size * 0.79
+  const baseline = topFaceY + canvasLineBoxBaseline(top, lineHeight, canvasFontMetrics(glyphStyle))
 
   if (previousScript) {
     element.dataset.splitFlapScript = previousScript
@@ -523,8 +584,13 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
       if (!canvas || !context || !staticCanvas || !staticContext) return
 
       const pixelRatio = Number(canvas.dataset.pixelRatio ?? 1)
-      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-      context.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio)
+      const snapX = Number(canvas.dataset.snapX ?? 0)
+      const snapY = Number(canvas.dataset.snapY ?? 0)
+      context.setTransform(1, 0, 0, 1, 0, 0)
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      // Same device-pixel snap offset measure() applied, so layout-space
+      // drawing lands on the pixels the DOM cassettes occupy.
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, snapX * pixelRatio, snapY * pixelRatio)
       let drawOperations = 1
       if (motion.variant === 'scrub') {
         controller.recordCanvasFrame(drawOperations)
@@ -558,9 +624,11 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           runtime.positions[(runtime.currentIndex + 1) % runtime.positions.length]
         const currentGlyphColors = visual.glyphColors[currentPosition.variant]
         const nextGlyphColors = visual.glyphColors[nextPosition.variant]
-        const angle = canvasVaneAngle(runtime, motion, now)
+        const angle = canvasVaneAngle(runtime, now)
         const angleRadians = (Math.abs(angle) * Math.PI) / 180
         const stackShift = canvasStackShift(runtime, now)
+        const landed = runtime.finalPitch && angle <= -180 + 1e-6
+        const settledStaticIndex = -2
         const {
           bottomFaceHeight,
           bottomFaceY,
@@ -577,6 +645,38 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           topSurface,
           unit,
         } = geometry
+
+        if (landed) {
+          if (staticGlyphIndices[runtime.index] !== settledStaticIndex) {
+            staticContext.clearRect(cellX, geometry.cellY, cellWidth, cellHeight)
+            drawOperations += drawCanvasGlyph(
+              staticContext,
+              geometry,
+              visual.glyphOffset,
+              visual.characters,
+              nextPosition.character,
+              nextGlyphColors.top,
+              visual.span,
+              topFaceY,
+              topFaceHeight,
+            )
+            drawOperations += drawCanvasGlyph(
+              staticContext,
+              geometry,
+              visual.glyphOffset,
+              visual.characters,
+              nextPosition.character,
+              nextGlyphColors.bottom,
+              visual.span,
+              bottomFaceY,
+              bottomFaceHeight,
+              true,
+            )
+            staticGlyphIndices[runtime.index] = settledStaticIndex
+            drawOperations += 1
+          }
+          return
+        }
 
         if (staticGlyphIndices[runtime.index] !== runtime.currentIndex) {
           staticContext.clearRect(cellX, geometry.cellY, cellWidth, cellHeight)
@@ -730,18 +830,48 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
       const parentRect = parent.getBoundingClientRect()
       const visualScaleX = layoutWidth > 0 ? parentRect.width / layoutWidth : 1
       const visualScaleY = layoutHeight > 0 ? parentRect.height / layoutHeight : 1
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
-      canvas.dataset.pixelRatio = `${pixelRatio}`
-      staticCanvas.dataset.pixelRatio = `${pixelRatio}`
-      canvas.width = Math.max(1, Math.round(layoutWidth * pixelRatio))
-      canvas.height = Math.max(1, Math.round(layoutHeight * pixelRatio))
-      staticCanvas.width = canvas.width
-      staticCanvas.height = canvas.height
+      const deviceRatio = window.devicePixelRatio || 1
+      const pixelRatio = Math.min(deviceRatio, 2)
+      // Snap the bitmap to the device pixel grid. cqw sizing leaves the board
+      // at a fractional device offset, and a canvas composited there is
+      // resampled bilinearly: every raster glyph goes soft while the DOM glyph
+      // it hands over to stays vector-crisp, which reads as a snap when the
+      // last leaf lands. Pull the canvas back by the fraction and draw
+      // forward by the same amount so content stays put but texels map 1:1.
+      // clientWidth/Height are rounded, so allow up to a pixel of drift
+      // before treating the difference as an ancestor transform.
+      const canSnap =
+        deviceRatio === pixelRatio &&
+        Math.abs(parentRect.width - layoutWidth) < 1 &&
+        Math.abs(parentRect.height - layoutHeight) < 1
+      const fraction = (value: number) => ((value % 1) + 1) % 1
+      const snapX = canSnap ? fraction(parentRect.left * pixelRatio) / pixelRatio : 0
+      const snapY = canSnap ? fraction(parentRect.top * pixelRatio) / pixelRatio : 0
+      const backingWidth = Math.max(1, Math.ceil((layoutWidth + snapX) * pixelRatio))
+      const backingHeight = Math.max(1, Math.ceil((layoutHeight + snapY) * pixelRatio))
+      for (const target of [canvas, staticCanvas]) {
+        target.dataset.pixelRatio = `${pixelRatio}`
+        target.dataset.snapX = `${snapX}`
+        target.dataset.snapY = `${snapY}`
+        target.width = backingWidth
+        target.height = backingHeight
+        target.style.left = `${-snapX}px`
+        target.style.top = `${-snapY}px`
+        target.style.width = `${backingWidth / pixelRatio}px`
+        target.style.height = `${backingHeight / pixelRatio}px`
+      }
       const context = canvas.getContext('2d')
       const staticContext = staticCanvas.getContext('2d')
       if (!context || !staticContext) return
-      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-      staticContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, snapX * pixelRatio, snapY * pixelRatio)
+      staticContext.setTransform(
+        pixelRatio,
+        0,
+        0,
+        pixelRatio,
+        snapX * pixelRatio,
+        snapY * pixelRatio,
+      )
 
       const toLayout = (rect: DOMRect) => ({
         x: (rect.left - parentRect.left) / visualScaleX,

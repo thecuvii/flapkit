@@ -27,7 +27,6 @@ const settleStackKeyframes: Keyframe[] = [
   { offset: 0.42, [stackShiftProperty]: '0cqw' },
   { offset: 0.65, [stackShiftProperty]: '0.08cqw' },
   { offset: 0.78, [stackShiftProperty]: '0.2cqw' },
-  { offset: 0.9, [stackShiftProperty]: '-0.045cqw' },
   { offset: 1, [stackShiftProperty]: '0cqw' },
 ]
 
@@ -633,8 +632,13 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
 
   private emitImpact(runtime: SplitFlapRuntime) {
     runtime.didImpact = true
+    const nextPosition = runtime.positions[(runtime.currentIndex + 1) % runtime.positions.length]
     runtime.views.forEach((view) => {
       if (view.compact) return
+      // The vane has landed flat over the lower half, so the swap is invisible.
+      // When the vane fades out at the end of a settle, the arriving glyph is
+      // already underneath and nothing jumps.
+      setGlyphPosition(view.outgoingLowerGlyph, nextPosition, true)
       view.root.dataset.splitFlapPhase = 'impact'
     })
   }
@@ -765,7 +769,12 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       fill: 'forwards' as const,
     }
 
-    setGlyphPosition(view.outgoingLowerGlyph, currentPosition, true)
+    const pitchProgress = Math.max(0, Math.min(1, elapsed / runtime.duration))
+    // This runs once per pitch (or per seek while scrubbing), so it only knows
+    // the progress at call time. Past the half-way point the vane already hides
+    // the lower half, so the stationary lower can show the arriving character.
+    // For a running pitch that starts at 0, emitImpact does the swap later.
+    setGlyphPosition(view.outgoingLowerGlyph, pitchProgress > 0.5 ? nextPosition : currentPosition, true)
     setGlyphPosition(view.movingFrontGlyph, currentPosition, false)
     setGlyphPosition(view.movingBackGlyph, nextPosition, true)
     setGlyphPosition(view.arrivingUpperGlyph, nextPosition, false)
@@ -774,7 +783,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     view.arrivingUpper.style.opacity = '1'
     view.arrivingUpper.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
     view.movingVane.style.opacity = '1'
-    const pitchProgress = Math.max(0, Math.min(1, elapsed / runtime.duration))
     view.root.dataset.displayedCharacter =
       currentPosition.character.trim() === '' ? 'blank' : currentPosition.character
     view.root.dataset.splitFlapPhase =
@@ -787,36 +795,45 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       ? [
           {
             offset: 0,
+            opacity: 1,
             transform: 'translate3d(0, 0, 0) rotateX(0deg)',
             [specularProperty]: 0,
           },
           {
             offset: 0.34,
+            opacity: 1,
             transform: 'translate3d(0, 0, 0) rotateX(-55deg)',
             [specularProperty]: specularPeak,
           },
           {
             offset: 0.5,
+            opacity: 1,
             transform: 'translate3d(0, 0, 0) rotateX(-90deg)',
             [specularProperty]: 0,
           },
           {
             offset: 0.62,
+            opacity: 1,
             transform: 'translate3d(0, 0, 0) rotateX(-125deg)',
             [specularProperty]: specularPeak * 0.72,
           },
           {
             offset: 0.78,
+            opacity: 1,
+            transform: 'translate3d(0, 0, 0) rotateX(-180deg)',
+            [specularProperty]: 0,
+          },
+          // Hold opaque past impact (0.78) so emitImpact has swapped the lower
+          // glyph underneath before the vane starts to fade.
+          {
+            offset: 0.86,
+            opacity: 1,
             transform: 'translate3d(0, 0, 0) rotateX(-180deg)',
             [specularProperty]: 0,
           },
           {
-            offset: 0.9,
-            transform: `translate3d(0, 0, 0) rotateX(${-180 + this.motion.reboundDeg}deg)`,
-            [specularProperty]: 0,
-          },
-          {
             offset: 1,
+            opacity: 0,
             transform: 'translate3d(0, 0, 0) rotateX(-180deg)',
             [specularProperty]: 0,
           },

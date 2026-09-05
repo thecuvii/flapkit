@@ -9,6 +9,7 @@
     "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "customConditions": ["development"],
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "skipLibCheck": true,

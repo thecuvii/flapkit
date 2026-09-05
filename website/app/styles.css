@@ -42,8 +42,8 @@
   /* One grid unit rules every horizontal measure. Snapped to 8px so lines stay crisp. */
   --u: round(down, clamp(64px, 6vw, 96px), 8px);
   --u4: calc(var(--u) / 4);
-  --sidebar-width: calc(4 * var(--u));
-  --well-center: calc(7 * var(--u));
+  --sidebar-width: calc(3 * var(--u));
+  --well-center: calc(9 * var(--u));
   --gutter: 48px;
   --band: var(--u4);
   --section-space: var(--u);
@@ -178,7 +178,7 @@ a:focus-visible {
  * --lead is the left gutter in whole units; --col-left is its viewport x.
  */
 .docs-well {
-  --lead: max(var(--u), round(nearest, calc((100vw - 11 * var(--u)) / 2), var(--u)));
+  --lead: max(var(--u), round(nearest, calc((100vw - 12 * var(--u)) / 2), var(--u)));
   --col-left: calc(var(--sidebar-width) + var(--lead));
   position: relative;
   display: grid;
@@ -475,21 +475,7 @@ h2 {
   content: '';
 }
 
-@property --fill-a {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 1;
-}
-
-@property --stroke-a {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 1;
-}
-
 .section-index {
-  --fill-a: 1;
-  --stroke-a: 1;
   position: absolute;
   right: 100%;
   bottom: 0;
@@ -498,9 +484,9 @@ h2 {
   place-items: center;
   padding: 6px;
   aspect-ratio: 1;
-  border: 2px solid color-mix(in oklch, var(--safety) calc(var(--stroke-a) * 100%), transparent);
-  background: color-mix(in oklch, var(--safety) calc(var(--fill-a) * 100%), transparent);
-  color: color-mix(in oklch, var(--flare) calc(var(--fill-a) * 100%), transparent);
+  border: 2px solid var(--safety);
+  background: var(--safety);
+  color: var(--flare);
   font-family: var(--font-mono);
   font-size: 28px;
   font-weight: 700;
@@ -508,54 +494,6 @@ h2 {
   letter-spacing: -0.06em;
   line-height: 1;
   translate: 0 12px;
-  animation: section-boot 800ms step-end both;
-}
-
-@keyframes section-boot {
-  0% {
-    --fill-a: 0;
-    --stroke-a: 0;
-  }
-  25% {
-    --fill-a: 0;
-    --stroke-a: 0.5;
-  }
-  33.75% {
-    --fill-a: 0;
-    --stroke-a: 0;
-  }
-  41.25% {
-    --fill-a: 0;
-    --stroke-a: 1;
-  }
-  50% {
-    --fill-a: 0;
-    --stroke-a: 0.5;
-  }
-  58.75% {
-    --fill-a: 0;
-    --stroke-a: 1;
-  }
-  66.25% {
-    --fill-a: 0.5;
-    --stroke-a: 1;
-  }
-  75% {
-    --fill-a: 0;
-    --stroke-a: 1;
-  }
-  83.75% {
-    --fill-a: 1;
-    --stroke-a: 1;
-  }
-  91.25% {
-    --fill-a: 0.5;
-    --stroke-a: 1;
-  }
-  100% {
-    --fill-a: 1;
-    --stroke-a: 1;
-  }
 }
 
 .docs-well h3 {
@@ -1770,7 +1708,7 @@ h2 {
 }
 
 .experiments-page {
-  --lead: max(var(--u), round(nearest, calc((100vw - 7 * var(--u)) / 2), var(--u)));
+  --lead: max(var(--u), round(nearest, calc((100vw - 9 * var(--u)) / 2), var(--u)));
   --col-left: var(--lead);
   position: relative;
   min-height: 100dvh;
@@ -2476,10 +2414,6 @@ h2 {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
-  }
-
-  .section-index {
-    animation: none;
   }
 
   .composition-preview[data-explode] :is(

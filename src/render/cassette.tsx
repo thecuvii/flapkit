@@ -302,10 +302,10 @@ export const FlapCell = memo(function FlapCell({
       leafIndex,
       saturation,
       shadowOpacity: Math.min(
-        0.98,
+        0.22,
         Math.max(
-          0.8,
-          0.92 + signedLeafNoise(index, 307 + leafIndex * 37) * 0.12 * spareLeafVariation,
+          0.12,
+          0.17 + signedLeafNoise(index, 307 + leafIndex * 37) * 0.05 * spareLeafVariation,
         ),
       ),
       xOffset:
@@ -357,10 +357,10 @@ export const FlapCell = memo(function FlapCell({
       const darkness = Math.min(28, Math.max(0, (1 - brightness) * 100))
       const topColor = `color-mix(in srgb, var(--flapkit-spare-leaf-top-color, #24251e) ${100 - darkness}%, black)`
       const middleColor = `color-mix(in srgb, var(--flapkit-spare-leaf-middle-color, #171812) ${100 - darkness}%, black)`
-      const lowerColor = `color-mix(in srgb, var(--flapkit-spare-leaf-lower-color, #090a07) ${100 - darkness}%, black)`
+      const lowerColor = `color-mix(in srgb, var(--flapkit-spare-leaf-lower-color, #181910) ${100 - darkness}%, black)`
       const edgeColor = `color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black)`
 
-      return `linear-gradient(180deg, ${topColor} 0%, ${middleColor} var(--flapkit-spare-leaf-middle-stop, 86%), ${lowerColor} var(--flapkit-spare-leaf-lower-stop, 88%), ${edgeColor} var(--flapkit-spare-leaf-edge-start, 97.6%), ${edgeColor} var(--flapkit-spare-leaf-edge-end, 98.3%), ${lowerColor} var(--flapkit-spare-leaf-tail-stop, 98.9%), rgba(0, 0, 0, ${shadowOpacity}) 100%) calc(50% + ${xOffset}cqw) calc(100% - ${splitFlapLook.faceInsetY} - ${bottomOffset}cqw) / calc(100% - ${splitFlapLook.faceInsetX} - ${splitFlapLook.faceInsetX} + 0.12cqw) calc(50% - ${splitFlapLook.faceInsetY}) no-repeat`
+      return `linear-gradient(180deg, ${topColor} 0%, ${middleColor} var(--flapkit-spare-leaf-middle-stop, 86%), ${lowerColor} var(--flapkit-spare-leaf-lower-stop, 96.2%), ${edgeColor} var(--flapkit-spare-leaf-edge-start, 97.6%), ${edgeColor} var(--flapkit-spare-leaf-edge-end, 98.3%), ${lowerColor} var(--flapkit-spare-leaf-tail-stop, 98.9%), rgba(0, 0, 0, ${shadowOpacity}) 100%) calc(50% + ${xOffset}cqw) calc(100% - ${splitFlapLook.faceInsetY} - ${bottomOffset}cqw) / calc(100% - ${splitFlapLook.faceInsetX} - ${splitFlapLook.faceInsetX} + 0.12cqw) calc(50% - ${splitFlapLook.faceInsetY}) no-repeat`
     })
   const compactCavityBackground = [
     ...compactSpareLeafLayers,
@@ -372,7 +372,7 @@ export const FlapCell = memo(function FlapCell({
   ].join(', ')
   const compactMovingStackBackground = [
     ...compactSpareLeafLayers,
-    `linear-gradient(#050605, #050605) bottom / 100% calc(${activeLeafReveal}cqw + ${splitFlapLook.faceInsetY}) no-repeat`,
+    `linear-gradient(rgba(5, 6, 5, 0.16), rgba(5, 6, 5, 0.16)) bottom / 100% calc(${activeLeafReveal}cqw + ${splitFlapLook.faceInsetY}) no-repeat`,
   ].join(', ')
 
   // The view registers once per mount; the controller toggles compact 3D motion by attribute.
@@ -662,7 +662,7 @@ export const FlapCell = memo(function FlapCell({
                   style={{
                     bottom: `calc(${splitFlapLook.faceInsetY} + ${bottomOffset}cqw)`,
                     boxShadow,
-                    backgroundImage: `linear-gradient(180deg, var(--flapkit-spare-leaf-top-color, #24251e) 0%, var(--flapkit-spare-leaf-middle-color, #1a1b16) var(--flapkit-spare-leaf-middle-stop, 68%), var(--flapkit-spare-leaf-lower-color, #0b0c09) var(--flapkit-spare-leaf-lower-stop, 88%), color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black) var(--flapkit-spare-leaf-edge-start, 97.6%), color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black) var(--flapkit-spare-leaf-edge-end, 98.3%), var(--flapkit-spare-leaf-tail-color, #151610) var(--flapkit-spare-leaf-tail-stop, 98.9%), var(--flapkit-spare-leaf-base-color, #080906) 100%)`,
+                    backgroundImage: `linear-gradient(180deg, var(--flapkit-spare-leaf-top-color, #24251e) 0%, var(--flapkit-spare-leaf-middle-color, #1a1b16) var(--flapkit-spare-leaf-middle-stop, 68%), var(--flapkit-spare-leaf-lower-color, #181910) var(--flapkit-spare-leaf-lower-stop, 96.2%), color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black) var(--flapkit-spare-leaf-edge-start, 97.6%), color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black) var(--flapkit-spare-leaf-edge-end, 98.3%), var(--flapkit-spare-leaf-tail-color, #1a1b16) var(--flapkit-spare-leaf-tail-stop, 98.9%), var(--flapkit-spare-leaf-base-color, #161710) 100%)`,
                     filter: `brightness(${brightness.toFixed(3)}) saturate(${saturation.toFixed(3)})`,
                     height: `calc(50% - ${splitFlapLook.faceInsetY})`,
                     left: `calc(${splitFlapLook.faceInsetX} - 0.06cqw)`,

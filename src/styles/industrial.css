@@ -49,8 +49,8 @@
     --flapkit-cavity-left: 7%;
     --flapkit-cavity-right: 7%;
     --flapkit-cavity-shadow:
-      0 0.3cqw 0.48cqw rgba(0, 0, 0, 0.76) inset, 0.18cqw 0 0.28cqw rgba(0, 0, 0, 0.48) inset,
-      -0.14cqw 0 0.24cqw rgba(0, 0, 0, 0.48) inset;
+      0 0.08cqw 0.14cqw rgba(0, 0, 0, 0.28) inset, 0.06cqw 0 0.1cqw rgba(0, 0, 0, 0.16) inset,
+      -0.05cqw 0 0.08cqw rgba(0, 0, 0, 0.16) inset;
     --flapkit-cavity-top: 13.5%;
     --flapkit-cell-height: 60px;
     --flapkit-cell-track: 30px;
@@ -119,7 +119,7 @@
       transparent 0.16cqw
     );
     --flapkit-cover-bottom-shadow:
-      0 -0.05cqw 0.09cqw rgba(0, 0, 0, 0.54), 0 0.14cqw 0.24cqw rgba(0, 0, 0, 0.72);
+      0 -0.03cqw 0.05cqw rgba(0, 0, 0, 0.22), 0 0.06cqw 0.1cqw rgba(0, 0, 0, 0.28);
     --flapkit-cover-left-background: linear-gradient(
       90deg,
       rgba(255, 255, 255, 0.012),
@@ -193,21 +193,22 @@
       0 0.1cqw 0.16cqw rgba(0, 0, 0, 0.54);
     --flapkit-seam-opacity: 0.94;
     --flapkit-seam-thickness: 0.18cqw;
-    --flapkit-spare-leaf-base-color: #030404;
-    --flapkit-spare-leaf-border-color: rgb(0 0 0 / 0.42);
+    --flapkit-spare-leaf-base-color: #0a0b0b;
+    --flapkit-spare-leaf-border-color: rgb(0 0 0 / 0.28);
     --flapkit-spare-leaf-border-width: 0.03cqw;
     --flapkit-spare-leaf-cast-blur: 0cqw;
-    --flapkit-spare-leaf-cast-opacity: 0.42;
+    --flapkit-spare-leaf-cast-opacity: 0.18;
     --flapkit-spare-leaf-cast-y: 0.02cqw;
-    --flapkit-spare-leaf-edge-color: #020303;
+    --flapkit-spare-leaf-edge-color: #0a0b0b;
     --flapkit-spare-leaf-highlight-alpha: 0;
     --flapkit-spare-leaf-highlight-inset: 0cqw;
     --flapkit-spare-leaf-highlight-rgb: 0 0 0;
-    --flapkit-spare-leaf-lower-color: #0a0b0b;
+    --flapkit-spare-leaf-lower-color: #0b0c0c;
+    --flapkit-spare-leaf-lower-stop: 96.2%;
     --flapkit-spare-leaf-middle-color: #0c0d0d;
-    --flapkit-spare-leaf-middle-stop: 97%;
+    --flapkit-spare-leaf-middle-stop: 96.2%;
     --flapkit-spare-leaf-pack-opacity: 1;
-    --flapkit-spare-leaf-tail-color: #050606;
+    --flapkit-spare-leaf-tail-color: #0c0d0d;
     --flapkit-spare-leaf-top-color: #0c0d0d;
     --flapkit-title-only-header-height: 25.5px;
     --flapkit-top-face-color: #171919;

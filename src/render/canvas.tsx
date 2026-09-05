@@ -721,7 +721,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           context.beginPath()
           context.rect(faceX, stackTop, faceWidth, Math.max(0, stackBottom - stackTop))
           context.clip()
-          context.globalAlpha = 0.72 * stackMotion
+          context.globalAlpha = 0.14 * stackMotion
           context.fillStyle = '#050605'
           context.fillRect(faceX, stackTop, faceWidth, stackBottom - stackTop)
           drawOperations += 1

@@ -4,11 +4,10 @@ import '@fontsource/commit-mono/400.css'
 import '@fontsource/commit-mono/500.css'
 import '@fontsource/commit-mono/600.css'
 import '@fontsource/commit-mono/700.css'
+import './styles.css'
 import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 import '@thecuvii/flapkit/industrial.css'
-import '@thecuvii/flapkit/signal.css'
-import './styles.css'
 
 export const metadata: Metadata = {
   title: 'Flapkit — Split-flap displays for React',

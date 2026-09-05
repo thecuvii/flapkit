@@ -29,6 +29,23 @@ function InstrumentMark({ visible }: { visible: boolean }) {
 const instrumentType =
   'm-0 font-mono text-[10px] font-semibold tracking-[0.06em] leading-none uppercase'
 
+const specType = 'm-0 font-mono text-[10px] font-[620] tracking-[0.06em] leading-none uppercase'
+
+function StripCorners() {
+  return (
+    <>
+      <span
+        aria-hidden
+        className="absolute -top-1 -left-1 box-border size-[7px] border border-ink bg-paper"
+      />
+      <span
+        aria-hidden
+        className="absolute -top-1 -right-1 box-border size-[7px] border border-ink bg-ink"
+      />
+    </>
+  )
+}
+
 export function InstrumentField<T extends string>({
   label,
   value,
@@ -80,10 +97,14 @@ export function InstrumentField<T extends string>({
 
 export function SiteFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="docs-shell">
+    <div className="relative grid min-h-dvh grid-cols-[minmax(0,1fr)] [overflow-x:clip]">
       <div className="docs-grid" aria-hidden="true" />
-      <div className="docs-frame">
-        <div className="docs-band" aria-hidden="true" />
+      <div className="relative col-start-1 row-start-1 min-w-0">
+        <div className="relative h-[6px]" aria-hidden="true">
+          <span className="absolute inset-y-0 left-0 w-2u bg-safety" />
+          <span className="absolute inset-y-0 right-4u w-u bg-ink" />
+          <span className="absolute inset-y-0 right-2u w-2u bg-flare" />
+        </div>
         {children}
       </div>
     </div>
@@ -110,11 +131,20 @@ export function SpecStrip({
   if (items.length === 0) return null
 
   return (
-    <dl className={cn('spec-strip', className)}>
+    <dl
+      className={cn(
+        'relative m-0 flex w-[var(--exhibit-span)] flex-col gap-3 px-u4 py-[calc((var(--u)-54px)/2)] max-[860px]:w-full',
+        className,
+      )}
+    >
+      <StripCorners />
       {items.map(([label, value]) => (
-        <div key={label}>
-          <dt>{label}</dt>
-          <dd>{value}</dd>
+        <div key={label} className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] items-baseline">
+          <dt className={cn(specType, 'text-ink opacity-40')}>{label}</dt>
+          <dd className={cn(specType, 'inline-flex items-center text-ink')}>
+            {value}
+            <span aria-hidden className="ml-2 inline-block size-2.5 bg-mark align-middle" />
+          </dd>
         </div>
       ))}
     </dl>
@@ -133,6 +163,7 @@ export function Exhibit<L extends string = string, M extends string = string>({
   onMotionChange,
   extras,
   footer,
+  stage = 'default',
 }: {
   children: ReactNode
   className?: string
@@ -145,6 +176,7 @@ export function Exhibit<L extends string = string, M extends string = string>({
   onMotionChange?: (value: M) => void
   extras?: ReactNode[]
   footer?: ReactNode
+  stage?: 'default' | 'board' | 'quick-start'
 }) {
   const controlled =
     Boolean(look && lookOptions && onLookChange) ||
@@ -179,15 +211,18 @@ export function Exhibit<L extends string = string, M extends string = string>({
 
   return (
     <figure className={cn('exhibit', className)}>
-      <div className="exhibit-aside" aria-hidden="true" />
-      <div className="exhibit-stage">{children}</div>
-      <div className="exhibit-aside" aria-hidden="true" />
+      <div className="exhibit-aside" data-aside="left" aria-hidden="true" />
+      <div className="exhibit-stage" data-stage={stage}>
+        {children}
+      </div>
+      <div className="exhibit-aside" data-aside="right" aria-hidden="true" />
       <div className="exhibit-meta">
         {controlled ? (
           <dl
-            className="instrument-strip"
+            className="relative m-0 grid w-[var(--exhibit-span)] grid-cols-[repeat(var(--instrument-cols,3),minmax(0,1fr))] gap-x-u4 gap-y-3 px-u4 py-[calc((var(--u)-54px)/2)] max-[960px]:grid-cols-[repeat(min(2,var(--instrument-cols,3)),minmax(0,1fr))] max-[680px]:grid-cols-1 max-[680px]:gap-4 max-[680px]:py-4"
             style={{ '--instrument-cols': columns.length } as CSSProperties}
           >
+            <StripCorners />
             {columns}
           </dl>
         ) : (

@@ -31,10 +31,6 @@
     "./industrial.css": {
       "development": "./src/styles/industrial.css",
       "default": "./dist/styles/industrial.css"
-    },
-    "./signal.css": {
-      "development": "./src/styles/signal.css",
-      "default": "./dist/styles/signal.css"
     }
   },
   "publishConfig": {
@@ -49,8 +45,7 @@
       },
       "./flapkit.css": "./dist/styles/flapkit.css",
       "./airport.css": "./dist/styles/airport.css",
-      "./industrial.css": "./dist/styles/industrial.css",
-      "./signal.css": "./dist/styles/signal.css"
+      "./industrial.css": "./dist/styles/industrial.css"
     }
   },
   "scripts": {

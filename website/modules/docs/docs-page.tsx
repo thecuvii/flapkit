@@ -126,6 +126,35 @@ const departureRows = [
   },
 ] as const
 
+function PreviewScale({
+  children,
+  fill = 4,
+  groups = 1,
+  tracks,
+}: {
+  children: ReactNode
+  fill?: number
+  groups?: number
+  tracks: number
+}) {
+  return (
+    <div
+      className="flapkit-airport relative overflow-visible"
+      style={{
+        width: `calc((${tracks} * var(--flapkit-cell-track) + ${Math.max(0, groups - 1)} * 0.8 * var(--flapkit-board-unit)) * ${fill})`,
+        height: `calc(var(--flapkit-cell-height) * ${fill})`,
+      }}
+    >
+      <div
+        className="absolute top-0 left-1/2 w-max origin-top"
+        style={{ transform: `translateX(-50%) scale(${fill})` }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 function cells(text: string, count: number, deck?: Flapkit.Deck) {
   return Array.from({ length: count }, (_, index) => (
     <Flapkit.Cell key={index} deck={deck}>
@@ -134,11 +163,39 @@ function cells(text: string, count: number, deck?: Flapkit.Deck) {
   ))
 }
 
+const codeBlockClass =
+  'relative my-u4 max-w-full max-[560px]:w-[calc(100%+20px)] [&_.shiki]:m-0 [&_.shiki]:w-max [&_.shiki]:min-w-full [&_.shiki]:bg-transparent! [&_.shiki]:p-0 [&_.shiki]:text-left'
+const codeBlockBodyClass =
+  'overflow-x-auto [overscroll-behavior-x:contain] [tab-size:2] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-ink [&_code]:block [&_code]:p-0 [&_code]:font-mono [&_code]:text-xs [&_code]:leading-[1.7]'
+const codeBlockLiveClass =
+  '[&_[torph-root]]:inline [&_[torph-root]]:align-baseline [&_[torph-root]:has([torph-id=empty]:only-child)]:hidden'
+const apiCellClass =
+  'border-b border-dashed border-rule py-[9px] pr-3 pl-0 text-left align-top [overflow-wrap:break-word]'
+const optionRowClass =
+  'grid grid-cols-[minmax(160px,0.7fr)_minmax(0,1.3fr)] gap-5 border-b border-dashed border-rule py-3.5 max-[560px]:grid-cols-1 max-[560px]:gap-[9px] [&_code]:font-mono [&_code]:text-xs [&_code]:font-[650] [&_code]:text-ink [&_code]:[overflow-wrap:anywhere]'
+const docSectionClass = cn(
+  'scroll-mt-4 py-[var(--section-space)] first:pt-[calc(var(--u)/2)] last:pb-[calc(var(--u)*2)] max-[560px]:py-11 max-[560px]:last:pb-20',
+  '[&>:not(h2):not(.exhibit):not(.principle-demo)]:mx-u4',
+  '[&>p]:mb-u4 [&>p]:text-base [&>p]:font-[430] [&>p]:tracking-[-0.006em] [&>p]:leading-u4 [&>p]:text-muted [&>p]:text-pretty',
+  '[&>p+p]:mt-u4',
+  '[&_p_code]:px-0.5 [&_p_code]:font-mono [&_p_code]:text-[0.86em] [&_p_code]:text-ink',
+  '[&_a]:text-link [&_a]:underline [&_a]:underline-offset-[3px] [&_a]:hover:text-ink',
+)
+
 function Logo() {
   return (
-    <a className="logo" href="#quick-start" aria-label="Flapkit documentation home">
-      <span aria-hidden="true">F</span>
-      <strong>Flapkit</strong>
+    <a
+      className="mb-9 inline-flex items-center gap-[9px] text-[13px] tracking-[0.02em] text-ink max-[860px]:mb-0"
+      href="#quick-start"
+      aria-label="Flapkit documentation home"
+    >
+      <span
+        aria-hidden="true"
+        className="grid size-[22px] place-items-center bg-ink font-mono text-xs font-bold text-on-ink"
+      >
+        F
+      </span>
+      <strong className="max-[860px]:hidden">Flapkit</strong>
     </a>
   )
 }
@@ -163,7 +220,7 @@ function CodeCopyButton({ source }: { source: string }) {
   return (
     <button
       type="button"
-      className="code-block-copy"
+      className="absolute top-0 right-0 z-1 min-h-8 cursor-pointer touch-manipulation border-0 bg-transparent py-1.5 pr-0 pl-2.5 font-mono text-[11px] font-[620] tracking-[0.04em] text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-ink"
       aria-live="polite"
       onClick={copySource}
     >
@@ -176,10 +233,10 @@ function CodeCopyButton({ source }: { source: string }) {
 
 function CodeBlock({ html, source }: { html: string; source: string }) {
   return (
-    <div className="code-block" role="region" aria-label="Code example">
+    <div className={codeBlockClass} role="region" aria-label="Code example">
       <CodeCopyButton source={source} />
       <div
-        className="code-block-body"
+        className={codeBlockBodyClass}
         tabIndex={0}
         // Shiki escapes source code before producing this trusted HTML.
         dangerouslySetInnerHTML={{ __html: html }}
@@ -287,9 +344,9 @@ function TorphCodeBlock({
   source: string
 }) {
   return (
-    <div className="code-block" role="region" aria-label="Code example">
+    <div className={codeBlockClass} role="region" aria-label="Code example">
       <CodeCopyButton source={source} />
-      <div className="code-block-body code-block-live" tabIndex={0}>
+      <div className={cn(codeBlockBodyClass, codeBlockLiveClass)} tabIndex={0}>
         <QuickStartSnippet lines={lines} options={options} />
       </div>
     </div>
@@ -340,10 +397,15 @@ function DocsNav() {
   }, [])
 
   return (
-    <nav aria-label="Documentation">
+    <nav
+      aria-label="Documentation"
+      className="grid min-w-0 gap-[22px] max-[860px]:flex max-[860px]:gap-4 max-[860px]:overflow-x-auto max-[860px]:pr-7 max-[860px]:[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[860px]:[-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[860px]:[overscroll-behavior-x:contain] max-[860px]:[scrollbar-width:none] max-[860px]:[&::-webkit-scrollbar]:hidden"
+    >
       {navigation.map((group) => (
-        <div key={group.label} className="nav-group">
-          <p>{group.label}</p>
+        <div key={group.label} className="grid min-w-0 gap-0.5 max-[860px]:contents">
+          <p className="mb-1 text-[10px] font-[650] tracking-[0.08em] text-[color-mix(in_oklch,var(--faint)_62%,var(--paper))] uppercase max-[860px]:hidden">
+            {group.label}
+          </p>
           {group.items.map(([label, id]) => (
             <DocsNavLink key={id} href={id} label={label} />
           ))}
@@ -363,49 +425,78 @@ function DocsNavLink({ href, label }: { href: SectionId; label: string }) {
   return (
     <a
       href={`#${href}`}
-      className={isActive ? 'is-active' : undefined}
+      className={cn(
+        'grid w-fit max-w-full grid-cols-[8px_minmax(0,1fr)] items-center gap-2 py-1 text-xs font-medium tracking-[0.02em] text-faint [overflow-wrap:anywhere] hover:text-ink',
+        'max-[860px]:inline-flex max-[860px]:shrink-0 max-[860px]:py-[5px]',
+        isActive && 'text-ink',
+      )}
       aria-current={isActive ? 'location' : undefined}
     >
+      <span
+        aria-hidden="true"
+        className={cn(
+          'justify-self-center max-[860px]:hidden',
+          isActive ? 'size-1.5 rounded-none bg-safety' : 'size-1 rounded-full bg-[oklch(0.5_0_0)]',
+        )}
+      />
       {label}
     </a>
   )
 }
 
 function ChoiceSwitch<T extends string>({
+  hangLabel,
   label,
   options,
   value,
   onChange,
 }: {
+  hangLabel?: boolean
   label: string
   options: readonly T[]
   value: T
   onChange: (value: T) => void
 }) {
   return (
-    <div className="choice-switch grid">
-      <span className="mb-[7px] block text-[10px] font-[650] tracking-[0.08em] text-muted uppercase">
+    <div className={cn('grid', hangLabel && 'relative')}>
+      <span
+        className={cn(
+          'mb-1.5 block text-end font-mono text-[10px] font-[620] leading-none tracking-[0.06em] text-ink uppercase opacity-40 max-[860px]:text-start',
+          hangLabel && 'absolute right-0 bottom-full max-[860px]:static',
+        )}
+      >
         {label}
       </span>
-      <div className="grid grid-cols-2 gap-0.5" role="group" aria-label={label}>
-        {options.map((option) => (
-          <button
-            key={option}
-            type="button"
-            aria-pressed={value === option}
-            className={cn(
-              'min-h-10 min-w-0 cursor-pointer overflow-hidden rounded-[3px] border-0 bg-transparent font-mono text-[11px] font-[620] text-ellipsis capitalize',
-              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
-              value === option
-                ? 'text-ink underline decoration-accent underline-offset-4'
-                : 'text-muted',
-            )}
-            onClick={() => onChange(option)}
-          >
-            {option}
-            <StreamlineBlockArrowheadsLeft className="choice-switch-mark" aria-hidden="true" />
-          </button>
-        ))}
+      <div
+        className="grid grid-cols-1 justify-items-end max-[860px]:justify-items-start"
+        role="group"
+        aria-label={label}
+      >
+        {options.map((option) => {
+          const pressed = value === option
+          return (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={pressed}
+              className={cn(
+                'relative inline-flex min-h-0 min-w-0 cursor-pointer items-center justify-end overflow-visible border-0 bg-transparent py-1 font-mono text-[10px] font-semibold tracking-[0.06em] uppercase',
+                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+                pressed ? 'text-ink' : 'text-muted',
+              )}
+              onClick={() => onChange(option)}
+            >
+              {option}
+              <StreamlineBlockArrowheadsLeft
+                className={cn(
+                  'absolute top-1/2 left-[calc(100%+4px)] block size-[7px] shrink-0 -translate-y-1/2 text-flare',
+                  pressed ? 'visible' : 'invisible',
+                )}
+                aria-hidden="true"
+              />
+            </button>
+          )
+        })}
       </div>
     </div>
   )
@@ -459,7 +550,7 @@ function DepartureBoard({
           key={motion}
           motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}
         >
-          <Frame aria-label="Airport departures" className={`flapkit-${look} preview-board`}>
+          <Frame aria-label="Airport departures" className={cn(`flapkit-${look}`, 'w-max')}>
             {header ? <Flapkit.Header>Departures</Flapkit.Header> : null}
             {rows}
           </Frame>
@@ -489,6 +580,7 @@ function QuickStartPreview({ lines }: { lines: readonly QuickStartToken[][] }) {
         motionOptions={['riffle', 'cascade'] as const}
         onLookChange={setLook}
         onMotionChange={setMotion}
+        stage="quick-start"
         extras={[
           <InstrumentField
             key="board"
@@ -565,32 +657,27 @@ function CompositionAnatomy() {
 
   return (
     <>
-      <Exhibit className="composition-exhibit" look="airport" motion="riffle" deck="A–Z">
+      <Exhibit look="airport" motion="riffle" deck="custom" stage="quick-start">
         <div
-          className="composition-preview"
+          className={cn('composition-preview', 'relative grid w-full')}
           data-explode={hover === 'row' || hover === 'group' || hover === 'cell' ? hover : undefined}
         >
-          <Flapkit.Root motion={Flapkit.riffle()}>
-            <Flapkit.Board className="flapkit-airport preview-board">
-              <Flapkit.Header>Departures</Flapkit.Header>
-              <Flapkit.Row highlighted id="LH401">
-                <Flapkit.Group label="STATUS">{cells('BOARDING', 8)}</Flapkit.Group>
-                <Flapkit.Group label="GATE">{cells('A12', 3)}</Flapkit.Group>
-              </Flapkit.Row>
-            </Flapkit.Board>
-          </Flapkit.Root>
+          <DepartureBoard look="airport" motion="riffle" frame header />
         </div>
       </Exhibit>
-      <ul className="anatomy" aria-label="Flapkit component tree">
+      <ul className="mt-7 grid list-none gap-0 p-0" aria-label="Flapkit component tree">
         {anatomyParts.map((item) => (
           <li
             key={item.id}
+            className="group grid grid-cols-[148px_minmax(0,1fr)] items-baseline gap-5 border-b border-dashed border-rule py-2.5 max-[560px]:grid-cols-1 max-[560px]:gap-1.5"
             data-active={hover === item.id ? '' : undefined}
             onPointerEnter={() => setHover(item.id)}
             onPointerLeave={() => setHover((current) => (current === item.id ? null : current))}
           >
-            <code>{item.name}</code>
-            <span>{item.note}</span>
+            <code className="font-mono text-xs font-[650] group-hover:text-flare group-data-active:text-flare">
+              {item.name}
+            </code>
+            <span className="text-[13px] leading-normal text-muted">{item.note}</span>
           </li>
         ))}
       </ul>
@@ -609,7 +696,7 @@ function StatusBoard({
     <Flapkit.Root key={motion} motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}>
       <Flapkit.Board
         aria-label="Package status"
-        className={`flapkit-${look} preview-board`}
+        className={cn(`flapkit-${look}`, 'w-max')}
       >
         <Flapkit.Row label="STATUS">{cells('FLAPKIT', 8)}</Flapkit.Row>
         <Flapkit.Row label="STATUS">{cells('READY', 8)}</Flapkit.Row>
@@ -706,9 +793,15 @@ function FlapPrinciple() {
   )
 
   return (
-    <div className="principle-demo">
-      <aside className="principle-spec">
+    <div className={cn('principle-demo', 'mt-u4 grid grid-cols-subgrid max-[860px]:block')}>
+      <aside
+        className={cn(
+          'col-start-1 mt-[calc(var(--u)/2)] mr-u4 grid w-auto max-w-[calc(var(--lead)-var(--u4))] justify-self-end self-start gap-u4',
+          'max-[860px]:mt-0 max-[860px]:mr-0 max-[860px]:mb-u4 max-[860px]:max-w-none max-[860px]:grid-cols-[repeat(2,max-content)] max-[860px]:justify-self-start max-[860px]:gap-6',
+        )}
+      >
         <ChoiceSwitch
+          hangLabel
           label="Look"
           options={lookNames}
           value={look}
@@ -724,78 +817,120 @@ function FlapPrinciple() {
           }}
         />
       </aside>
-      <div className="principle-main">
-        <div className="principle-stage">
-        <div className="principle-cassette-stage">
-          <div className="principle-cassette-scale">
-            <CassettePreview
-              className={`flapkit-${look} principle-cassette`}
-              deck={principleDeck}
-              fromIndex={fromIndex}
-              mode={motionMode}
-              progress={pitchProgress}
-            />
+      <div className="col-start-2 min-w-0">
+        <div
+          className={cn(
+            'grid min-h-[460px] grid-cols-[minmax(230px,0.9fr)_minmax(280px,1.1fr)] items-start gap-[clamp(32px,6vw,58px)] pt-[calc(var(--u)/2)] pb-u',
+            'max-[720px]:min-h-0 max-[720px]:grid-cols-1 max-[720px]:gap-10 max-[720px]:py-[42px]',
+          )}
+        >
+          <div className="grid justify-items-center">
+            <div className="grid h-[290px] w-[176px] justify-items-center content-start">
+              <CassettePreview
+                className={cn(`flapkit-${look}`, 'principle-cassette')}
+                deck={principleDeck}
+                fromIndex={fromIndex}
+                mode={motionMode}
+                progress={pitchProgress}
+              />
+            </div>
+          </div>
+
+          <div className="max-w-[360px] max-[720px]:justify-self-center max-[720px]:text-center">
+            <div
+              className="grid grid-cols-11 gap-[3px]"
+              aria-label="Complete Latin and CJK character deck"
+            >
+              {principleDeck.map(({ character, variant }, index) => (
+                <span
+                  key={`${character}-${index}`}
+                  className={cn(
+                    'grid aspect-square cursor-pointer place-items-center font-mono text-xs font-[650] leading-none whitespace-nowrap text-muted',
+                    'data-active:bg-ink data-active:text-on-ink',
+                    'data-[variant=yellow]:not-data-active:text-deck-yellow',
+                    'data-[variant=orange]:not-data-active:text-deck-orange',
+                    'data-active:data-[variant=yellow]:bg-deck-yellow-fill',
+                    'data-active:data-[variant=orange]:bg-deck-orange-fill',
+                  )}
+                  data-active={index === visibleIndex || undefined}
+                  data-variant={variant}
+                  onClick={() => {
+                    playToIndex(index)
+                  }}
+                >
+                  {character.trim() || '·'}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="principle-copy">
-          <div className="principle-deck" aria-label="Complete Latin and CJK character deck">
-            {principleDeck.map(({ character, variant }, index) => (
-              <span
-                key={`${character}-${index}`}
-                data-active={index === visibleIndex || undefined}
-                data-variant={variant}
-                onClick={() => {
-                  playToIndex(index)
-                }}
-              >
-                {character.trim() || '·'}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="principle-scrubber">
-        <label htmlFor="principle-deck-position">Deck position</label>
-        <output data-variant={visiblePosition.variant}>
-          {visiblePosition.character.trim() || 'Blank'} {visibleIndex + 1}/{principleDeck.length}
-        </output>
-        <div className="principle-controls">
-          <div className="principle-controls-bar">
-            <input
-              id="principle-deck-position"
-              type="range"
-              min="0"
-              max="1000"
-              value={Math.round(progress * 1000)}
-              style={{ '--fill': `${progress * 100}%` } as CSSProperties}
-              onChange={(event) => {
-                stopPlayback()
-                setProgress(Number(event.currentTarget.value) / 1000)
-              }}
-              onKeyDown={stopPlayback}
-              onPointerDown={stopPlayback}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={togglePlayback}
-            aria-label={isPlaying ? 'Pause deck playback' : 'Play deck to the final position'}
-            title={isPlaying ? 'Pause' : progress >= 1 ? 'Replay' : 'Play'}
+        <div className="grid grid-cols-[1fr_auto] items-end gap-x-[18px] gap-y-[calc(var(--spacing-u4)/2)] px-6 py-u4 max-[560px]:px-[18px]">
+          <label
+            htmlFor="principle-deck-position"
+            className="flex h-4 items-end text-[10px] font-[650] leading-none tracking-[0.08em] text-muted uppercase"
           >
-            {isPlaying ? (
-              <svg viewBox="0 0 16 16" aria-hidden="true">
-                <path d="M4.5 3.5h2v9h-2zm5 0h2v9h-2z" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 16 16" aria-hidden="true">
-                <path d="m5 3 8 5-8 5z" />
-              </svg>
+            Deck position
+          </label>
+          <output
+            className="flex h-4 items-end font-mono text-[10px] font-[650] leading-none tracking-[0.08em] text-safety uppercase tabular-nums data-[variant=yellow]:text-deck-yellow-ink data-[variant=orange]:text-deck-orange-ink"
+            data-variant={visiblePosition.variant}
+          >
+            {visiblePosition.character.trim() || 'Blank'} {visibleIndex + 1}/{principleDeck.length}
+          </output>
+          <div
+            className={cn(
+              'principle-controls',
+              'col-span-full grid grid-cols-[minmax(0,1fr)_24px] items-center gap-3',
             )}
-          </button>
+          >
+            <div className="relative grid h-6 items-center">
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute top-0 -left-[3px] font-mono text-[10px] leading-none text-faint"
+              >
+                +
+              </span>
+              <input
+                id="principle-deck-position"
+                type="range"
+                min="0"
+                max="1000"
+                value={Math.round(progress * 1000)}
+                style={{ '--fill': `${progress * 100}%` } as CSSProperties}
+                onChange={(event) => {
+                  stopPlayback()
+                  setProgress(Number(event.currentTarget.value) / 1000)
+                }}
+                onKeyDown={stopPlayback}
+                onPointerDown={stopPlayback}
+              />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute right-[-3px] bottom-0 font-mono text-[10px] leading-none text-faint"
+              >
+                ×
+              </span>
+            </div>
+            <button
+              type="button"
+              className="grid size-6 cursor-pointer place-items-center border border-rule-strong bg-transparent p-0 text-ink hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink [&_svg]:size-2.5 [&_svg]:fill-current"
+              onClick={togglePlayback}
+              aria-label={isPlaying ? 'Pause deck playback' : 'Play deck to the final position'}
+              title={isPlaying ? 'Pause' : progress >= 1 ? 'Replay' : 'Play'}
+            >
+              {isPlaying ? (
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M4.5 3.5h2v9h-2zm5 0h2v9h-2z" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="m5 3 8 5-8 5z" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
-      </div>
       </div>
     </div>
   )
@@ -811,8 +946,9 @@ function MotionPreview() {
       deck="A–Z"
       motionOptions={['riffle', 'cascade'] as const}
       onMotionChange={setMotion}
+      stage="board"
     >
-      <div className="motion-board-slot">
+      <div className="grid w-full place-items-center">
         <StatusBoard motion={motion} />
       </div>
     </Exhibit>
@@ -823,8 +959,13 @@ function LooksPreview() {
   const [look, setLook] = useState<LookName>('airport')
 
   return (
-    <Exhibit look={look} lookOptions={lookNames} onLookChange={setLook}>
-      <div className="looks-board-slot flapkit-industrial">
+    <Exhibit look={look} lookOptions={lookNames} onLookChange={setLook} stage="board">
+      <div
+        className={cn(
+          'flapkit-industrial',
+          'grid min-h-[calc(var(--flapkit-frame-top)+var(--flapkit-frame-bottom)+(2*var(--flapkit-cell-height))+(0.4*var(--flapkit-board-unit)))] w-full place-items-center',
+        )}
+      >
         <StatusBoard look={look} motion="cascade" />
       </div>
     </Exhibit>
@@ -841,30 +982,54 @@ function ApiTable({
   rows: readonly ApiRow[]
 }) {
   return (
-    <div className="api-block">
-      <h3>{caption}</h3>
-      <div className="api-table-wrap">
-        <table>
+    <div className="mt-8">
+      <h3 className="mb-[calc(var(--u4)/2)] text-[13px] font-[620] tracking-[-0.01em] leading-u4">
+        {caption}
+      </h3>
+      <div className="min-w-0 overflow-x-auto [overscroll-behavior-x:contain]">
+        <table className="w-full table-fixed border-collapse text-[13px]">
           <caption className="sr-only">{caption}</caption>
           <thead>
             <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Type</th>
-              <th scope="col">Default</th>
-              <th scope="col">Meaning</th>
+              <th
+                scope="col"
+                className={cn(apiCellClass, 'w-[34%] text-[10px] font-[650] tracking-[0.06em] text-faint uppercase')}
+              >
+                Name
+              </th>
+              <th
+                scope="col"
+                className={cn(apiCellClass, 'w-[16%] text-[10px] font-[650] tracking-[0.06em] text-faint uppercase')}
+              >
+                Type
+              </th>
+              <th
+                scope="col"
+                className={cn(apiCellClass, 'w-[15%] text-[10px] font-[650] tracking-[0.06em] text-faint uppercase')}
+              >
+                Default
+              </th>
+              <th
+                scope="col"
+                className={cn(apiCellClass, 'text-[10px] font-[650] tracking-[0.06em] text-faint uppercase')}
+              >
+                Meaning
+              </th>
             </tr>
           </thead>
           <tbody>
             {rows.map(([name, type, fallback, meaning]) => (
               <tr key={name}>
-                <th scope="row">
-                  <code>{name}</code>
+                <th scope="row" className={cn(apiCellClass, 'font-medium')}>
+                  <code className="font-mono text-xs font-[650]">{name}</code>
                 </th>
-                <td>
-                  <code>{type}</code>
+                <td className={cn(apiCellClass, 'leading-[1.45] text-muted')}>
+                  <code className="font-mono text-xs font-[650]">{type}</code>
                 </td>
-                <td>{fallback}</td>
-                <td>{meaning}</td>
+                <td className={cn(apiCellClass, 'leading-[1.45] text-muted tabular-nums')}>
+                  {fallback}
+                </td>
+                <td className={cn(apiCellClass, 'leading-[1.45] text-muted')}>{meaning}</td>
               </tr>
             ))}
           </tbody>
@@ -978,7 +1143,7 @@ function SidebarCoords() {
 
   return (
     <p
-      className="sidebar-coords"
+      className="m-0 min-h-6 min-w-[11ch] leading-3 whitespace-pre tabular-nums"
       aria-label="Made in Shenzhen"
       onPointerEnter={() => scrambleTo(sidebarPlaceText)}
       onPointerLeave={() => scrambleTo(sidebarCoordText)}
@@ -1004,16 +1169,19 @@ function DocSection({
   return (
     <section
       id={id}
-      className={['doc-section', className].filter(Boolean).join(' ')}
+      className={cn(docSectionClass, className)}
       data-index={index}
       data-title={title}
     >
-      <h2>
-        <span className="section-index" aria-hidden="true">
+      <h2 className="relative mb-u4 flex items-baseline gap-3.5 font-display text-[20px] font-[620] tracking-[-0.02em] leading-u4 text-balance">
+        <span
+          className="absolute right-full bottom-0 mr-u4 grid aspect-square translate-y-3 place-items-center border-2 border-safety bg-safety p-1.5 font-mono text-[28px] font-bold leading-none tracking-[-0.06em] text-flare tabular-nums max-[560px]:static max-[560px]:mr-0"
+          aria-hidden="true"
+        >
           {index}
         </span>
         <svg
-          className="section-mark"
+          className="size-2.5 shrink-0 self-center text-safety"
           aria-hidden="true"
           viewBox="0 0 16 16"
           xmlns="http://www.w3.org/2000/svg"
@@ -1021,6 +1189,10 @@ function DocSection({
           <path fill="currentColor" fillRule="evenodd" clipRule="evenodd" d="M9 15H0l7-7l-7-7h9l7 7z" />
         </svg>
         {title}
+        <span
+          aria-hidden="true"
+          className="h-2 min-w-12 flex-1 self-center bg-[image:var(--leader)] bg-[length:4px_4px] bg-repeat"
+        />
       </h2>
       {children}
     </section>
@@ -1036,19 +1208,22 @@ export function DocsPage({
 }) {
   return (
     <SiteFrame>
-      <div className="docs-body">
-          <aside className="sidebar">
-            <div className="sidebar-inner">
+      <div className="grid grid-cols-[var(--sidebar-width)_minmax(0,1fr)] max-[860px]:block">
+          <aside className="min-w-0 border-r border-dashed border-rule font-mono max-[860px]:sticky max-[860px]:top-0 max-[860px]:z-2 max-[860px]:border-r-0 max-[860px]:border-b">
+            <div className="sticky top-0 flex min-h-dvh flex-col items-start px-u4 pt-u4 pb-6 max-[860px]:static max-[860px]:min-h-0 max-[860px]:grid max-[860px]:grid-cols-[auto_minmax(0,1fr)] max-[860px]:items-center max-[860px]:gap-[18px] max-[860px]:bg-[color-mix(in_oklch,var(--paper)_92%,transparent)] max-[860px]:px-4 max-[860px]:py-2.5">
               <Logo />
               <DocsNav />
-              <div className="sidebar-stamp">
-                <div className="sidebar-stamp-loc">
-                  <i className="hatch" aria-hidden="true" />
+              <div className="mt-auto flex w-full items-end gap-u4 font-mono text-meta font-[620] tracking-[0.08em] text-faint uppercase max-[860px]:hidden">
+                <div className="grid gap-[calc(var(--spacing-u4)/2)]">
+                  <i
+                    aria-hidden="true"
+                    className="ml-1 inline-block h-3 w-[calc(var(--u)/3)] -skew-x-[20deg] bg-[repeating-linear-gradient(-60deg,var(--ink)_0_2px,transparent_2px_7px)] opacity-60"
+                  />
                   <SidebarCoords />
                 </div>
-                <div className="sidebar-stamp-meta">
+                <div className="ml-auto grid justify-items-end gap-[calc(var(--spacing-u4)/2)] text-end">
                   <a
-                    className="sidebar-version"
+                    className="m-0 inline-flex items-center gap-[0.45em] text-safety no-underline hover:text-ink [&_svg]:size-[0.85em] [&_svg]:shrink-0 [&_svg]:text-faint"
                     href="https://github.com/thecuvii/flapkit"
                     target="_blank"
                     rel="noreferrer"
@@ -1057,7 +1232,12 @@ export function DocsPage({
                     <span aria-hidden="true">0.0.0</span>
                     <GithubMark />
                   </a>
-                  <a href="https://x.com/thecuvii" target="_blank" rel="noreferrer">
+                  <a
+                    className="text-inherit no-underline hover:text-ink"
+                    href="https://x.com/thecuvii"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     by cuvii
                   </a>
                 </div>
@@ -1078,7 +1258,7 @@ export function DocsPage({
           <QuickStartPreview lines={quickStartLines} />
         </DocSection>
 
-        <DocSection id="how-it-works" index="02" title="How it works" className="principle-section">
+        <DocSection id="how-it-works" index="02" title="How it works">
           <p>
             Scrub one cassette through its full deck. Each step is one pitch — the leaf that is
             turning, while the rest stay packed.
@@ -1110,52 +1290,62 @@ export function DocsPage({
             cells. <code>WideCell</code> is one cassette whose leaves carry two graphemes. Rows in
             the same Board or Grid must share one Group / Cell / WideCell structure.
           </p>
-          <Exhibit className="decks-exhibit" look="airport" motion="riffle" deck="custom">
-            <div className="decks-stack">
-              <Flapkit.Root motion={Flapkit.riffle()}>
-                <Flapkit.Grid
-                  aria-label="Local service"
-                  className="flapkit-airport preview-board"
-                >
-                  <Flapkit.Row deck={localDeck} label="LOCAL">
-                    {cells('東京', 2, localDeck)}
-                  </Flapkit.Row>
-                </Flapkit.Grid>
-              </Flapkit.Root>
-              <Flapkit.Root motion={Flapkit.riffle()}>
-                <Flapkit.Grid
-                  aria-label="Flight number and gate"
-                  className="flapkit-airport preview-board"
-                >
-                  <Flapkit.Row>
-                    <Flapkit.Group deck={wideDeck} label="FLIGHT">
-                      <Flapkit.WideCell>14</Flapkit.WideCell>
-                    </Flapkit.Group>
-                    <Flapkit.Group sequence="numeric" label="GATE">
-                      <Flapkit.Cell>1</Flapkit.Cell>
-                      <Flapkit.Cell>2</Flapkit.Cell>
-                    </Flapkit.Group>
-                  </Flapkit.Row>
-                </Flapkit.Grid>
-              </Flapkit.Root>
+          <Exhibit look="airport" motion="riffle" deck="custom" stage="board">
+            <div className="grid w-full justify-items-center gap-10">
+              <PreviewScale tracks={2}>
+                <Flapkit.Root motion={Flapkit.riffle()}>
+                  <Flapkit.Grid
+                    aria-label="Local service"
+                    className="flapkit-airport w-max"
+                  >
+                    <Flapkit.Row deck={localDeck} label="LOCAL">
+                      {cells('東京', 2, localDeck)}
+                    </Flapkit.Row>
+                  </Flapkit.Grid>
+                </Flapkit.Root>
+              </PreviewScale>
+              <PreviewScale tracks={4} groups={2}>
+                <Flapkit.Root motion={Flapkit.riffle()}>
+                  <Flapkit.Grid
+                    aria-label="Flight number and gate"
+                    className="flapkit-airport w-max"
+                  >
+                    <Flapkit.Row>
+                      <Flapkit.Group deck={wideDeck} label="FLIGHT">
+                        <Flapkit.WideCell>14</Flapkit.WideCell>
+                      </Flapkit.Group>
+                      <Flapkit.Group sequence="numeric" label="GATE">
+                        <Flapkit.Cell>1</Flapkit.Cell>
+                        <Flapkit.Cell>2</Flapkit.Cell>
+                      </Flapkit.Group>
+                    </Flapkit.Row>
+                  </Flapkit.Grid>
+                </Flapkit.Root>
+              </PreviewScale>
             </div>
           </Exhibit>
-          <div className="option-list">
-            <div>
+          <div className="mt-2">
+            <div className={optionRowClass}>
               <code>alphanumeric</code>
-              <span>Letters, numbers, and <code>-./:</code>. The default sequence.</span>
+              <span className="text-[13px] leading-[1.55] text-muted">
+                Letters, numbers, and <code>-./:</code>. The default sequence.
+              </span>
             </div>
-            <div>
+            <div className={optionRowClass}>
               <code>numeric</code>
-              <span>Space and digits for clocks, gates, and counts.</span>
+              <span className="text-[13px] leading-[1.55] text-muted">
+                Space and digits for clocks, gates, and counts.
+              </span>
             </div>
-            <div>
+            <div className={optionRowClass}>
               <code>punctuation</code>
-              <span>Space, colon, period, slash, and hyphen.</span>
+              <span className="text-[13px] leading-[1.55] text-muted">
+                Space, colon, period, slash, and hyphen.
+              </span>
             </div>
-            <div>
+            <div className={optionRowClass}>
               <code>variant</code>
-              <span>
+              <span className="text-[13px] leading-[1.55] text-muted">
                 <code>white</code>, <code>yellow</code>, or <code>orange</code>. Pass variants as the
                 second argument to <code>createDeck</code>.
               </span>
@@ -1184,17 +1374,17 @@ export function DocsPage({
             <code>cascade()</code> paints the same leaf as riffle and staggers starts across rows.
           </p>
           <MotionPreview />
-          <div className="option-list">
-            <div>
+          <div className="mt-2">
+            <div className={optionRowClass}>
               <code>riffle()</code>
-              <span>
+              <span className="text-[13px] leading-[1.55] text-muted">
                 <code>riffleMs</code>, <code>startSpreadMs</code>, <code>cadenceVariationPct</code>,{' '}
                 <code>finalReboundDeg</code>, <code>finalSettleMs</code>
               </span>
             </div>
-            <div>
+            <div className={optionRowClass}>
               <code>cascade()</code>
-              <span>
+              <span className="text-[13px] leading-[1.55] text-muted">
                 <code>pitchMs</code>, <code>rowDelayMs</code>, <code>withinRowJitterMs</code>, plus
                 the shared settle options
               </span>
@@ -1219,7 +1409,7 @@ export function DocsPage({
             looks tree-shake independently, and there is no runtime style injection. Measure dense
             boards on the <a href="/performance">bench</a>.
           </p>
-          <div className="api-list">
+          <div className="mt-6 mb-9 grid [&_code]:border-b [&_code]:border-dashed [&_code]:border-rule [&_code]:py-[11px] [&_code]:font-mono [&_code]:text-xs [&_code]:font-[650] [&_code]:text-ink [&_code]:[overflow-wrap:anywhere]">
             <code>@thecuvii/flapkit</code>
             <code>@thecuvii/flapkit/sound</code>
             <code>@thecuvii/flapkit/flapkit.css</code>

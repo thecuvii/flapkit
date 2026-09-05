@@ -2,6 +2,7 @@
 
 import * as Flapkit from '@thecuvii/flapkit'
 import { useState, type ReactNode } from 'react'
+import { cn } from 'cn'
 import { Exhibit, SiteFrame } from '../site'
 
 const unicodeDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
@@ -17,6 +18,13 @@ const presets = [
 
 const unicodePresets = ['東京', '大阪', '成田', '羽田'] as const
 const widePresets = ['55', '30', '14', '05'] as const
+
+const headerType = 'font-sans text-[13px]/[1.2] font-[650]'
+const eyebrowType = 'text-[11px] font-[680] tracking-[0.1em] text-muted uppercase'
+const demoFrame = 'grid w-[340px] justify-items-center gap-[18px] py-[22px] pb-2'
+const demoLabels = 'grid gap-0.5 text-center text-[10px] font-[680] tracking-[0.06em] text-muted uppercase'
+const demoLabel = 'rounded bg-panel px-1 py-2'
+const demoKicker = 'text-xs font-[680] text-ink'
 
 function cells(text: string, count: number, deck?: Flapkit.Deck) {
   return Array.from({ length: count }, (_, index) => (
@@ -53,14 +61,14 @@ function Experiment({
   title: string
 }) {
   return (
-    <section className="experiment">
-      <div className="experiment-copy">
-        <span>{label}</span>
-        <h2>{title}</h2>
-        <p>{description}</p>
+    <section className="col-span-full grid min-w-0 grid-cols-subgrid border-b border-dashed border-rule">
+      <div className="col-start-2 max-w-none pt-12">
+        <span className={eyebrowType}>{label}</span>
+        <h2 className="mt-[13px] mb-4 font-display text-[27px]">{title}</h2>
+        <p className="m-0 text-sm leading-[1.65] text-muted">{description}</p>
       </div>
-      <Exhibit look={look} motion={motion} deck={deck}>
-        <div className="experiment-board">{children}</div>
+      <Exhibit className="col-span-full mt-6" look={look} motion={motion} deck={deck}>
+        <div className="mx-auto w-max">{children}</div>
       </Exhibit>
     </section>
   )
@@ -73,24 +81,49 @@ export function ExperimentsPage() {
 
   return (
     <SiteFrame>
-      <main className="experiments-page">
-        <header className="experiments-header">
-          <a href="/">← Docs</a>
+      <main
+        className={cn(
+          'experiments-page relative grid min-h-dvh [counter-reset:exhibit]',
+          'grid-cols-[var(--lead)_var(--well-center)_minmax(0,1fr)] pt-u4 pb-[calc(var(--u)+var(--u4))]',
+          'max-[860px]:grid-cols-[var(--gutter)_minmax(0,1fr)_var(--gutter)]',
+          'max-[560px]:grid-cols-[var(--gutter)_minmax(0,1fr)_var(--gutter)] max-[560px]:pt-[22px] max-[560px]:pb-[88px]',
+        )}
+        style={{
+          ['--lead' as string]:
+            'max(var(--u), round(nearest, calc((100vw - 9 * var(--u)) / 2), var(--u)))',
+          ['--col-left' as string]: 'var(--lead)',
+        }}
+      >
+        <header className="col-start-2 flex items-center justify-between gap-6 max-[560px]:flex-col max-[560px]:items-stretch">
+          <a className={cn(headerType, 'hover:text-muted')} href="/">
+            ← Docs
+          </a>
           <button
             type="button"
+            className={cn(
+              headerType,
+              'cursor-pointer rounded-[6px] border-0 bg-ink px-[15px] py-[11px] text-on-ink',
+              'hover:bg-ink-hover',
+              'focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-ink',
+              'max-[560px]:min-h-11',
+            )}
             onClick={() => setPresetIndex((index) => (index + 1) % presets.length)}
           >
             Update all boards
           </button>
         </header>
 
-        <div className="experiments-intro">
-          <span>01 / Lab</span>
-          <h1>Examples</h1>
-          <p>Compare motion engines, Unicode decks, and double-width cassettes with live updates.</p>
+        <div className="col-start-2 py-[72px] pb-16 max-[560px]:pt-20 max-[560px]:pb-16">
+          <span className={eyebrowType}>01 / Lab</span>
+          <h1 className="mt-[18px] font-display text-[clamp(36px,5vw,52px)] font-[650] leading-[1.02] tracking-[-0.02em] text-balance">
+            Examples
+          </h1>
+          <p className="mt-6 mb-0 max-w-[580px] text-base leading-[1.65] text-muted">
+            Compare motion engines, Unicode decks, and double-width cassettes with live updates.
+          </p>
         </div>
 
-        <div className="experiments-stack">
+        <div className="col-span-full grid grid-cols-subgrid">
         <Experiment
           label="Riffle · Airport"
           look="airport"
@@ -133,11 +166,11 @@ export function ExperimentsPage() {
           title="One grapheme per cell"
           description="Each CJK grapheme occupies one independently driven character cell with its own upper and lower leaves."
         >
-          <div className="unicode-demo">
+          <div className={demoFrame}>
             <Flapkit.Root motion={Flapkit.riffle()}>
               <Flapkit.Grid
                 aria-label="Two independent Unicode character cells"
-                className="flapkit-airport"
+                className={cn('flapkit-airport', 'my-[72px] origin-center scale-500')}
                 columnGap={2.4}
               >
                 <Flapkit.Row label="LOCAL">
@@ -145,11 +178,11 @@ export function ExperimentsPage() {
                 </Flapkit.Row>
               </Flapkit.Grid>
             </Flapkit.Root>
-            <div className="demo-labels" aria-hidden="true">
-              <span>Cell 1</span>
-              <span>Cell 2</span>
+            <div className={cn(demoLabels, 'w-[280px] grid-cols-2')} aria-hidden="true">
+              <span className={demoLabel}>Cell 1</span>
+              <span className={demoLabel}>Cell 2</span>
             </div>
-            <strong>Two independent cells</strong>
+            <strong className={demoKicker}>Two independent cells</strong>
           </div>
         </Experiment>
 
@@ -161,11 +194,11 @@ export function ExperimentsPage() {
           title="One leaf stack, two graphemes"
           description="Each double-width cassette has one deck and one motion state while every leaf position carries two graphemes."
         >
-          <div className="wide-demo">
+          <div className={demoFrame}>
             <Flapkit.Root motion={Flapkit.riffle()}>
               <Flapkit.Grid
                 aria-label="One double-width and one single-width numeric cassette"
-                className="flapkit-airport"
+                className={cn('flapkit-airport', 'my-[72px] origin-center scale-[4.8]')}
               >
                 <Flapkit.Row>
                   <Flapkit.Group label="DOUBLE" deck={wideDeck}>
@@ -177,11 +210,11 @@ export function ExperimentsPage() {
                 </Flapkit.Row>
               </Flapkit.Grid>
             </Flapkit.Root>
-            <div className="cassette-demo-labels" aria-hidden="true">
-              <span>Double-width</span>
-              <span>Single-width</span>
+            <div className={cn(demoLabels, 'w-[330px] grid-cols-[2fr_1fr]')} aria-hidden="true">
+              <span className={demoLabel}>Double-width</span>
+              <span className={demoLabel}>Single-width</span>
             </div>
-            <strong>One runtime per cassette</strong>
+            <strong className={demoKicker}>One runtime per cassette</strong>
           </div>
         </Experiment>
         </div>

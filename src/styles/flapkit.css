@@ -1,3 +1,7 @@
+/* Must be declared before this file or Tailwind is first loaded. Otherwise
+   @layer flapkit is created first and loses to Tailwind preflight (* { padding: 0 }). */
+@layer theme, base, components, flapkit, utilities;
+
 @layer flapkit {
   :where(.flapkit-board) {
     position: relative;
@@ -248,7 +252,7 @@
         transparent 0 0.27cqw,
         rgba(190, 182, 143, 0.07) 0.274cqw 0.282cqw
       );
-    box-shadow: 0 0.22cqw 0.44cqw rgba(0, 0, 0, 0.9) inset;
+    box-shadow: 0 0.04cqw 0.08cqw rgba(0, 0, 0, 0.2) inset;
     pointer-events: none;
   }
   :where(.flapkit-cavity-wall) {
@@ -737,24 +741,24 @@
     height: calc(50% - 0.18cqw);
     border-bottom-left-radius: 0.03cqw;
     border-bottom-right-radius: 0.03cqw;
-    border-bottom-width: var(--flapkit-spare-leaf-border-width, 0.13cqw);
+    border-bottom-width: var(--flapkit-spare-leaf-border-width, 0.03cqw);
     border-bottom-style: solid;
-    border-bottom-color: var(--flapkit-spare-leaf-border-color, rgba(3, 4, 2, 0.96));
+    border-bottom-color: var(--flapkit-spare-leaf-border-color, rgba(3, 4, 2, 0.28));
     background-color: var(--flapkit-spare-leaf-middle-color, #1a1b16);
     background-image: linear-gradient(
       180deg,
       var(--flapkit-spare-leaf-top-color, #24251e) 0%,
       var(--flapkit-spare-leaf-middle-color, #1a1b16)
         var(--flapkit-spare-leaf-middle-stop, 68%),
-      var(--flapkit-spare-leaf-lower-color, #0b0c09)
-        var(--flapkit-spare-leaf-lower-stop, 88%),
+      var(--flapkit-spare-leaf-lower-color, #181910)
+        var(--flapkit-spare-leaf-lower-stop, 96.2%),
       var(--flapkit-spare-leaf-edge-color, #35362c)
         var(--flapkit-spare-leaf-edge-start, 97.6%),
       var(--flapkit-spare-leaf-edge-color, #35362c)
         var(--flapkit-spare-leaf-edge-end, 98.3%),
-      var(--flapkit-spare-leaf-tail-color, #151610)
+      var(--flapkit-spare-leaf-tail-color, #1a1b16)
         var(--flapkit-spare-leaf-tail-stop, 98.9%),
-      var(--flapkit-spare-leaf-base-color, #080906) 100%
+      var(--flapkit-spare-leaf-base-color, #161710) 100%
     );
     /* Hairline lip, same scale as the stationary leaf's bottom catch. */
     box-shadow:

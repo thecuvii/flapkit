@@ -759,7 +759,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
 
             context.globalAlpha = (0.42 + layerProgress * 0.16) * stackMotion
             context.fillStyle = `color-mix(in srgb, ${geometry.spareLeafEdgeColor} ${Math.round(edgeMix * 100)}%, black)`
-            context.fillRect(faceX + xOffset * unit, edgeY, faceWidth, Math.max(0.45, 0.04 * unit))
+            context.fillRect(faceX + xOffset * unit, edgeY, faceWidth, Math.max(0.3, 0.015 * unit))
             drawOperations += 1
           })
           context.restore()
@@ -785,6 +785,11 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           )
         } else {
           const projection = Math.max(0.001, -Math.cos(angleRadians))
+          // Incoming vane is the arriving lower leaf — same short height as the
+          // idle face, so it never paints over the spare magazine.
+          context.beginPath()
+          context.rect(faceX, bottomFaceY, faceWidth, bottomFaceHeight)
+          context.clip()
           context.translate(0, seamY)
           context.scale(1, projection)
           context.translate(0, -seamY)

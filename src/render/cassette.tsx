@@ -295,8 +295,8 @@ export const FlapCell = memo(function FlapCell({
         (spareLeafRevealScale +
           signedLeafNoise(index, 277 + leafIndex * 31) * 0.035 * spareLeafVariation),
       boxShadow:
-        `0 var(--flapkit-spare-leaf-highlight-inset, -0.08cqw) 0 ` +
-        `rgb(var(--flapkit-spare-leaf-highlight-rgb, 190 182 143) / calc(${edgeStrength} * var(--flapkit-spare-leaf-highlight-alpha, 0.08))) inset`,
+        `0 var(--flapkit-spare-leaf-highlight-inset, -0.03cqw) 0 ` +
+        `rgb(var(--flapkit-spare-leaf-highlight-rgb, 190 182 143) / calc(${edgeStrength} * var(--flapkit-spare-leaf-highlight-alpha, 0.1))) inset`,
       brightness,
       edgeMix,
       leafIndex,
@@ -360,13 +360,13 @@ export const FlapCell = memo(function FlapCell({
       const lowerColor = `color-mix(in srgb, var(--flapkit-spare-leaf-lower-color, #090a07) ${100 - darkness}%, black)`
       const edgeColor = `color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black)`
 
-      return `linear-gradient(180deg, ${topColor} 0%, ${middleColor} var(--flapkit-spare-leaf-middle-stop, 86%), ${edgeColor} 91%, ${edgeColor} 93%, ${lowerColor} 96%, rgba(0, 0, 0, ${shadowOpacity}) 100%) calc(50% + ${xOffset}cqw) calc(100% - ${splitFlapLook.faceInsetY} - ${bottomOffset}cqw) / calc(100% - ${splitFlapLook.faceInsetX} - ${splitFlapLook.faceInsetX} + 0.12cqw) calc(50% - ${splitFlapLook.faceInsetY}) no-repeat`
+      return `linear-gradient(180deg, ${topColor} 0%, ${middleColor} var(--flapkit-spare-leaf-middle-stop, 86%), ${lowerColor} var(--flapkit-spare-leaf-lower-stop, 88%), ${edgeColor} var(--flapkit-spare-leaf-edge-start, 97.6%), ${edgeColor} var(--flapkit-spare-leaf-edge-end, 98.3%), ${lowerColor} var(--flapkit-spare-leaf-tail-stop, 98.9%), rgba(0, 0, 0, ${shadowOpacity}) 100%) calc(50% + ${xOffset}cqw) calc(100% - ${splitFlapLook.faceInsetY} - ${bottomOffset}cqw) / calc(100% - ${splitFlapLook.faceInsetX} - ${splitFlapLook.faceInsetX} + 0.12cqw) calc(50% - ${splitFlapLook.faceInsetY}) no-repeat`
     })
   const compactCavityBackground = [
     ...compactSpareLeafLayers,
     `linear-gradient(180deg, rgba(41, 40, 37, 0.74) 0%, rgba(18, 17, 16, 0.96) 54%, rgba(5, 5, 5, 0.98) 100%) top / 100% ${cavityGeometryDepth}cqw no-repeat`,
     `linear-gradient(90deg, rgba(14, 13, 12, 0.98) 0%, rgba(31, 29, 27, 0.84) 58%, rgba(4, 4, 4, 0.98) 100%) right / ${cavityGeometryDepth}cqw 100% no-repeat`,
-    `linear-gradient(0deg, rgba(4, 4, 4, 0.99) 0%, rgba(23, 22, 20, 0.9) 52%, rgba(8, 8, 8, 0.98) 100%) bottom / 100% ${cavityGeometryDepth}cqw no-repeat`,
+    `linear-gradient(0deg, rgba(4, 4, 4, 0.99) 0%, rgba(8, 8, 8, 0.98) 78%, rgba(36, 36, 32, 0.55) 94%, rgba(28, 28, 24, 0.7) 97%, rgba(8, 8, 8, 0.98) 100%) bottom / 100% ${cavityGeometryDepth}cqw no-repeat`,
     `linear-gradient(270deg, rgba(13, 12, 11, 0.98) 0%, rgba(29, 27, 25, 0.83) 58%, rgba(4, 4, 4, 0.98) 100%) left / ${cavityGeometryDepth}cqw 100% no-repeat`,
     'repeating-linear-gradient(180deg, transparent 0, transparent 0.28cqw, rgba(255, 255, 255, 0.016) 0.29cqw, rgba(0, 0, 0, 0.12) 0.31cqw), linear-gradient(180deg, #10100f 0%, #080808 50%, #050505 100%)',
   ].join(', ')
@@ -432,6 +432,7 @@ export const FlapCell = memo(function FlapCell({
             ...variantGlyphStyle,
             '--compact-seam-base-opacity': splitFlapLook.seamOpacity,
             '--compact-seam-height': splitFlapLook.seamThickness,
+            '--flapkit-active-bottom-inset': activeBottomInset,
           } as CSSProperties
         }
       >
@@ -601,7 +602,12 @@ export const FlapCell = memo(function FlapCell({
       data-split-flap-cassette-span={cell.span}
       data-split-flap-cell-id={cell.id}
       data-split-flap-index={index}
-      style={variantGlyphStyle}
+      style={
+        {
+          ...variantGlyphStyle,
+          '--flapkit-active-bottom-inset': activeBottomInset,
+        } as CSSProperties
+      }
     >
       <span
         {...classProps(styles.cell)}
@@ -656,7 +662,7 @@ export const FlapCell = memo(function FlapCell({
                   style={{
                     bottom: `calc(${splitFlapLook.faceInsetY} + ${bottomOffset}cqw)`,
                     boxShadow,
-                    backgroundImage: `linear-gradient(180deg, var(--flapkit-spare-leaf-top-color, #24251e) 0%, var(--flapkit-spare-leaf-middle-color, #1a1b16) var(--flapkit-spare-leaf-middle-stop, 68%), var(--flapkit-spare-leaf-lower-color, #0b0c09) 91%, color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black) 95.5%, var(--flapkit-spare-leaf-tail-color, #151610) 98%, var(--flapkit-spare-leaf-base-color, #080906) 100%)`,
+                    backgroundImage: `linear-gradient(180deg, var(--flapkit-spare-leaf-top-color, #24251e) 0%, var(--flapkit-spare-leaf-middle-color, #1a1b16) var(--flapkit-spare-leaf-middle-stop, 68%), var(--flapkit-spare-leaf-lower-color, #0b0c09) var(--flapkit-spare-leaf-lower-stop, 88%), color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black) var(--flapkit-spare-leaf-edge-start, 97.6%), color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) ${edgeMix}%, black) var(--flapkit-spare-leaf-edge-end, 98.3%), var(--flapkit-spare-leaf-tail-color, #151610) var(--flapkit-spare-leaf-tail-stop, 98.9%), var(--flapkit-spare-leaf-base-color, #080906) 100%)`,
                     filter: `brightness(${brightness.toFixed(3)}) saturate(${saturation.toFixed(3)})`,
                     height: `calc(50% - ${splitFlapLook.faceInsetY})`,
                     left: `calc(${splitFlapLook.faceInsetX} - 0.06cqw)`,
@@ -738,10 +744,11 @@ export const FlapCell = memo(function FlapCell({
                   backgroundColor: topFaceColor,
                   backgroundImage: topFaceBackground,
                   boxShadow: splitFlapLook.topFaceShadow,
-                  height: `calc(50% - ${splitFlapLook.faceInsetY})`,
+                  height:
+                    'var(--flapkit-moving-front-face-height, calc(50% - var(--flapkit-face-inset-y)))',
                   left: splitFlapLook.faceInsetX,
                   right: splitFlapLook.faceInsetX,
-                  top: splitFlapLook.faceInsetY,
+                  top: 'var(--flapkit-moving-front-face-top, var(--flapkit-face-inset-y))',
                 }}
               />
               <FaceGlyph
@@ -790,18 +797,14 @@ export const FlapCell = memo(function FlapCell({
             <span
               {...classProps(styles.movingVaneSide, styles.movingVaneSideLeft)}
               style={{
-                height: `calc(50% - ${splitFlapLook.faceInsetY})`,
                 left: `calc(${splitFlapLook.faceInsetX} - ${splitFlapLook.leafThickness} / 2)`,
-                top: splitFlapLook.faceInsetY,
                 width: splitFlapLook.leafThickness,
               }}
             />
             <span
               {...classProps(styles.movingVaneSide, styles.movingVaneSideRight)}
               style={{
-                height: `calc(50% - ${splitFlapLook.faceInsetY})`,
                 right: `calc(${splitFlapLook.faceInsetX} - ${splitFlapLook.leafThickness} / 2)`,
-                top: splitFlapLook.faceInsetY,
                 width: splitFlapLook.leafThickness,
               }}
             />

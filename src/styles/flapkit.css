@@ -245,8 +245,8 @@
       linear-gradient(180deg, #010201 0%, #070806 48%, #020302 100%),
       repeating-linear-gradient(
         180deg,
-        transparent 0 0.24cqw,
-        rgba(111, 113, 97, 0.1) 0.26cqw 0.3cqw
+        transparent 0 0.27cqw,
+        rgba(190, 182, 143, 0.07) 0.274cqw 0.282cqw
       );
     box-shadow: 0 0.22cqw 0.44cqw rgba(0, 0, 0, 0.9) inset;
     pointer-events: none;
@@ -277,7 +277,16 @@
     right: 0;
     bottom: 0;
     left: 0;
-    background-image: linear-gradient(180deg, #060706 0%, #1c1e19 100%);
+    /* Dark floor with a hairline at the front lip, matching the leaf edge catch. */
+    background-image: linear-gradient(
+      180deg,
+      #050605 0%,
+      #070807 88%,
+      #0a0b09 96%,
+      #2a2c24 98.6%,
+      #1c1e19 99.2%,
+      #0c0d0b 100%
+    );
     transform: rotateX(90deg);
     transform-origin: 50% 100%;
   }
@@ -433,7 +442,8 @@
   }
   :where(.flapkit-moving-vane-back)::after {
     clip-path: inset(
-      50% var(--flapkit-face-inset-x) var(--flapkit-face-inset-y) var(--flapkit-face-inset-x)
+      50% var(--flapkit-face-inset-x) var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y))
+        var(--flapkit-face-inset-x)
     );
   }
   :where(.flapkit-moving-vane .flapkit-face) {
@@ -442,10 +452,30 @@
   :where(.flapkit-moving-vane-side) {
     position: absolute;
     z-index: 7;
+    top: var(--flapkit-face-inset-y);
+    height: calc(50% - var(--flapkit-face-inset-y));
     background-color: #111310;
     background-image: linear-gradient(180deg, #252823 0%, #0a0c0a 48%, #1a1c18 100%);
     box-shadow: 0 0 0 0.012cqw rgba(0, 0, 0, 0.82);
     pointer-events: none;
+  }
+  /* After the vane crosses the seam it is the arriving lower leaf, which must
+     stop short of the spare magazine the same way the idle lower face does. */
+  :where([data-pitch-half='incoming'] .flapkit-moving-vane-side) {
+    top: var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y));
+    height: calc(50% - var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y)));
+  }
+  :where([data-pitch-half='incoming']) {
+    --flapkit-moving-front-face-top: var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y));
+    --flapkit-moving-front-face-height: calc(
+      50% - var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y))
+    );
+  }
+  :where([data-pitch-half='incoming'] .flapkit-moving-vane-front)::after {
+    clip-path: inset(
+      var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y)) var(--flapkit-face-inset-x) 50%
+        var(--flapkit-face-inset-x)
+    );
   }
   :where(.flapkit-moving-vane-side-left) {
     transform: rotateY(90deg);
@@ -716,15 +746,21 @@
       var(--flapkit-spare-leaf-top-color, #24251e) 0%,
       var(--flapkit-spare-leaf-middle-color, #1a1b16)
         var(--flapkit-spare-leaf-middle-stop, 68%),
-      var(--flapkit-spare-leaf-lower-color, #0b0c09) 91%,
-      var(--flapkit-spare-leaf-edge-color, #35362c) 95.5%,
-      var(--flapkit-spare-leaf-tail-color, #151610) 98%,
+      var(--flapkit-spare-leaf-lower-color, #0b0c09)
+        var(--flapkit-spare-leaf-lower-stop, 88%),
+      var(--flapkit-spare-leaf-edge-color, #35362c)
+        var(--flapkit-spare-leaf-edge-start, 97.6%),
+      var(--flapkit-spare-leaf-edge-color, #35362c)
+        var(--flapkit-spare-leaf-edge-end, 98.3%),
+      var(--flapkit-spare-leaf-tail-color, #151610)
+        var(--flapkit-spare-leaf-tail-stop, 98.9%),
       var(--flapkit-spare-leaf-base-color, #080906) 100%
     );
+    /* Hairline lip, same scale as the stationary leaf's bottom catch. */
     box-shadow:
-      0 var(--flapkit-spare-leaf-highlight-inset, -0.2cqw) 0
+      0 var(--flapkit-spare-leaf-highlight-inset, -0.03cqw) 0
         rgb(var(--flapkit-spare-leaf-highlight-rgb, 190 182 143) /
-          var(--flapkit-spare-leaf-highlight-alpha, 0.18)) inset;
+          var(--flapkit-spare-leaf-highlight-alpha, 0.1)) inset;
     clip-path: polygon(
       0.03cqw 0,
       calc(100% - 0.02cqw) 0,

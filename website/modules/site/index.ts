@@ -1,5 +1,6 @@
 export {
   Exhibit,
+  ExhibitTabList,
   InstrumentField,
   SiteFrame,
   SpecStrip,

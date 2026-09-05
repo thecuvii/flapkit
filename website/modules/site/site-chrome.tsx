@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode, SVGProps } from 'react'
+import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode, type SVGProps } from 'react'
 import { cn } from 'cn'
 import { ExhibitStripes } from './exhibit-stripes'
 
@@ -44,6 +44,84 @@ function StripCorners() {
         className="absolute -top-1 -right-1 box-border size-[7px] border border-ink bg-ink"
       />
     </>
+  )
+}
+
+export function ExhibitTabList<T extends string>({
+  label,
+  onChange,
+  options,
+  panelId,
+  value,
+}: {
+  label: string
+  onChange: (value: T) => void
+  options: readonly { id: T; label: string }[]
+  panelId: string
+  value: T
+}) {
+  const tabs = useRef<(HTMLButtonElement | null)[]>([])
+
+  const move = (next: number) => {
+    const option = options[next]
+    if (!option) return
+    onChange(option.id)
+    tabs.current[next]?.focus()
+  }
+
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const last = options.length - 1
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      event.preventDefault()
+      move(index === last ? 0 : index + 1)
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      move(index === 0 ? last : index - 1)
+    } else if (event.key === 'Home') {
+      event.preventDefault()
+      move(0)
+    } else if (event.key === 'End') {
+      event.preventDefault()
+      move(last)
+    }
+  }
+
+  return (
+    <div
+      className="relative m-0 flex w-[var(--exhibit-span)] items-center gap-1 px-u4 py-[calc((var(--u)-44px)/2)]"
+      role="tablist"
+      aria-label={label}
+    >
+      <StripCorners />
+      {options.map((option, index) => {
+        const selected = value === option.id
+        return (
+          <button
+            key={option.id}
+            ref={(node) => {
+              tabs.current[index] = node
+            }}
+            type="button"
+            role="tab"
+            id={`${panelId}-tab-${option.id}`}
+            aria-controls={panelId}
+            aria-selected={selected}
+            tabIndex={selected ? 0 : -1}
+            className={cn(
+              instrumentType,
+              'relative min-h-11 cursor-pointer border-0 bg-transparent px-3',
+              'after:absolute after:right-3 after:bottom-1.5 after:left-3 after:h-px after:bg-ink',
+              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+              selected ? 'text-ink after:opacity-100' : 'text-muted after:opacity-0',
+            )}
+            onClick={() => onChange(option.id)}
+            onKeyDown={(event) => onKeyDown(event, index)}
+          >
+            {option.label}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -165,6 +243,7 @@ export function Exhibit<L extends string = string, M extends string = string>({
   extras,
   footer,
   stage = 'default',
+  tabs,
 }: {
   children: ReactNode
   className?: string
@@ -178,8 +257,10 @@ export function Exhibit<L extends string = string, M extends string = string>({
   extras?: ReactNode[]
   footer?: ReactNode
   stage?: 'default' | 'board' | 'quick-start'
+  tabs?: ReactNode
 }) {
   const controlled =
+    Boolean(tabs) ||
     Boolean(look && lookOptions && onLookChange) ||
     Boolean(motion && motionOptions && onMotionChange) ||
     Boolean(extras?.length)
@@ -223,13 +304,15 @@ export function Exhibit<L extends string = string, M extends string = string>({
       </div>
       <div className="exhibit-meta">
         {controlled ? (
-          <dl
-            className="relative m-0 grid w-[var(--exhibit-span)] grid-cols-[repeat(var(--instrument-cols,3),minmax(0,1fr))] gap-x-u4 gap-y-3 px-u4 py-[calc((var(--u)-54px)/2)] max-[960px]:grid-cols-[repeat(min(2,var(--instrument-cols,3)),minmax(0,1fr))] max-[680px]:grid-cols-1 max-[680px]:gap-4 max-[680px]:py-4"
-            style={{ '--instrument-cols': columns.length } as CSSProperties}
-          >
-            <StripCorners />
-            {columns}
-          </dl>
+          tabs ?? (
+            <dl
+              className="relative m-0 grid w-[var(--exhibit-span)] grid-cols-[repeat(var(--instrument-cols,3),minmax(0,1fr))] gap-x-u4 gap-y-3 px-u4 py-[calc((var(--u)-54px)/2)] max-[960px]:grid-cols-[repeat(min(2,var(--instrument-cols,3)),minmax(0,1fr))] max-[680px]:grid-cols-1 max-[680px]:gap-4 max-[680px]:py-4"
+              style={{ '--instrument-cols': columns.length } as CSSProperties}
+            >
+              <StripCorners />
+              {columns}
+            </dl>
+          )
         ) : (
           <SpecStrip look={look} motion={motion} deck={deck} />
         )}

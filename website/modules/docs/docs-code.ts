@@ -105,6 +105,64 @@ export function quickStartLiveValue(
   }
 }
 
+export const looksTabs = [
+  { id: 'airport', label: 'airport' },
+  { id: 'industrial', label: 'industrial' },
+  { id: 'custom', label: 'custom' },
+] as const
+
+export type LooksTab = (typeof looksTabs)[number]['id']
+
+export function looksCode(tab: LooksTab) {
+  const look = tab === 'airport' ? 'airport' : 'industrial'
+  const boardClass = tab === 'custom' ? `flapkit-${look} operations-board` : `flapkit-${look}`
+  const rowClass = tab === 'custom' ? ' className="font-mono"' : ''
+  const cellClass = tab === 'custom' ? ' className="text-xl font-bold"' : ''
+
+  return `import * as Flapkit from '@thecuvii/flapkit'
+import '@thecuvii/flapkit/flapkit.css'
+import '@thecuvii/flapkit/${look}.css'
+
+<Flapkit.Root motion={Flapkit.cascade()}>
+  <Flapkit.Board className="${boardClass}">
+    <Flapkit.Row${rowClass} label="STATUS">
+      <Flapkit.Cell${cellClass}>A</Flapkit.Cell>
+    </Flapkit.Row>
+  </Flapkit.Board>
+</Flapkit.Root>`
+}
+
+export const looksStaticCode = looksCode('custom')
+export const looksCssCode = `.operations-board [data-part='face'] {
+  filter: saturate(0.9);
+}`
+
+export type LooksRangeId = 'look-import' | 'board-class' | 'row-class' | 'cell-class'
+
+export const looksRanges: readonly { end: number; id: LooksRangeId; start: number }[] = [
+  { id: 'look-import', ...rangeInside(looksStaticCode, "import '@thecuvii/flapkit/industrial.css'", 'industrial') },
+  {
+    id: 'board-class',
+    ...rangeInside(looksStaticCode, 'className="flapkit-industrial operations-board"', 'flapkit-industrial operations-board'),
+  },
+  { id: 'row-class', ...rangeInside(looksStaticCode, ' className="font-mono"', ' className="font-mono"') },
+  { id: 'cell-class', ...rangeInside(looksStaticCode, ' className="text-xl font-bold"', ' className="text-xl font-bold"') },
+]
+
+export function looksLiveValue(id: LooksRangeId, tab: LooksTab) {
+  const look = tab === 'airport' ? 'airport' : 'industrial'
+  switch (id) {
+    case 'look-import':
+      return look
+    case 'board-class':
+      return tab === 'custom' ? `flapkit-${look} operations-board` : `flapkit-${look}`
+    case 'row-class':
+      return tab === 'custom' ? ' className="font-mono"' : ''
+    case 'cell-class':
+      return tab === 'custom' ? ' className="text-xl font-bold"' : ''
+  }
+}
+
 export const docsCode = {
   quickStart: {
     code: quickStartCode(defaultQuickStartOptions),
@@ -180,23 +238,11 @@ const numberDeck = Flapkit.createDeck(['  ', '14', '05', '55', '30'])
     language: 'tsx',
   },
   looks: {
-    code: `import * as Flapkit from '@thecuvii/flapkit'
-import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/industrial.css'
-
-<Flapkit.Root motion={Flapkit.cascade()}>
-  <Flapkit.Board className="flapkit-industrial operations-board">
-    <Flapkit.Row className="font-mono" label="STATUS">
-      <Flapkit.Cell className="text-xl font-bold">A</Flapkit.Cell>
-    </Flapkit.Row>
-  </Flapkit.Board>
-</Flapkit.Root>`,
+    code: looksStaticCode,
     language: 'tsx',
   },
   looksCss: {
-    code: `.operations-board [data-part='face'] {
-  filter: saturate(0.9);
-}`,
+    code: looksCssCode,
     language: 'css',
   },
   sound: {
@@ -206,8 +252,8 @@ import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 
 const soundBank = {
-  clicks: ['/audio/flap-1.mp3'],
-  settles: ['/audio/flap-settle.mp3'],
+  clicks: ['/audio/click.wav'],
+  settles: ['/audio/settle.wav'],
 }
 
 <Flapkit.Root

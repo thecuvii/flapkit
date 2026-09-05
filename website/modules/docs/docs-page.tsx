@@ -1,6 +1,7 @@
 'use client'
 
 import * as Flapkit from '@thecuvii/flapkit'
+import { mechanicalSound } from '@thecuvii/flapkit/sound'
 import { useClipboard } from 'foxact/use-clipboard'
 import {
   useCallback,
@@ -9,6 +10,7 @@ import {
   useState,
   useSyncExternalStore,
   type CSSProperties,
+  type ReactElement,
   type ReactNode,
   type SVGProps,
 } from 'react'
@@ -16,16 +18,24 @@ import { TextMorph } from 'torph/react'
 import { CassettePreview } from '../../../src/render/cassette-preview'
 import {
   docsCode,
+  looksCode,
+  looksCssCode,
+  looksLiveValue,
+  looksRanges,
+  looksTabs,
   quickStartCode,
   quickStartLiveValue,
   quickStartRanges,
   type HighlightedDocsCode,
+  type LooksRangeId,
+  type LooksTab,
   type QuickStartRangeId,
   type QuickStartSnippetOptions,
   type QuickStartToken,
 } from './docs-code'
 import { cn } from 'cn'
-import { Exhibit, InstrumentField, SiteFrame, StreamlineBlockArrowheadsLeft } from '../site'
+import { Exhibit, ExhibitTabList, InstrumentField, SiteFrame, StreamlineBlockArrowheadsLeft } from '../site'
+import { LooksPlayground, type LooksPlaygroundStyles } from './looks-playground'
 
 const navigation = [
   {
@@ -155,9 +165,9 @@ function PreviewScale({
   )
 }
 
-function cells(text: string, count: number, deck?: Flapkit.Deck) {
+function cells(text: string, count: number, deck?: Flapkit.Deck, className?: string) {
   return Array.from({ length: count }, (_, index) => (
-    <Flapkit.Cell key={index} deck={deck}>
+    <Flapkit.Cell key={index} deck={deck} className={className}>
       {Array.from(text)[index] ?? ' '}
     </Flapkit.Cell>
   ))
@@ -168,7 +178,7 @@ const codeBlockClass =
 const codeBlockBodyClass =
   'overflow-x-auto [overscroll-behavior-x:contain] [tab-size:2] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-ink [&_code]:block [&_code]:p-0 [&_code]:font-mono [&_code]:text-xs [&_code]:leading-[1.7]'
 const codeBlockLiveClass =
-  '[&_[torph-root]]:inline [&_[torph-root]]:align-baseline [&_[torph-root]:has([torph-id=empty]:only-child)]:hidden'
+  '[&_code]:min-h-[calc(var(--qs-code-lines)*1.7em)] [&_[torph-root]]:inline [&_[torph-root]]:align-baseline [&_[torph-root]:has([torph-id=empty]:only-child)]:hidden'
 const apiCellClass =
   'border-b border-dashed border-rule py-[9px] pr-3 pl-0 text-left align-top [overflow-wrap:break-word]'
 const optionRowClass =
@@ -346,7 +356,11 @@ function TorphCodeBlock({
   return (
     <div className={codeBlockClass} role="region" aria-label="Code example">
       <CodeCopyButton source={source} />
-      <div className={cn(codeBlockBodyClass, codeBlockLiveClass)} tabIndex={0}>
+      <div
+        className={cn(codeBlockBodyClass, codeBlockLiveClass)}
+        style={{ '--qs-code-lines': lines.length } as CSSProperties}
+        tabIndex={0}
+      >
         <QuickStartSnippet lines={lines} options={options} />
       </div>
     </div>
@@ -549,6 +563,7 @@ function DepartureBoard({
         <Flapkit.Root
           key={motion}
           motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}
+          sound={mechanicalSound({ bank: docsSoundBank })}
         >
           <Frame aria-label="Airport departures" className={cn(`flapkit-${look}`, 'w-max')}>
             {header ? <Flapkit.Header>Departures</Flapkit.Header> : null}
@@ -685,23 +700,90 @@ function CompositionAnatomy() {
   )
 }
 
+const docsSoundBank = {
+  clicks: ['/audio/click.wav'],
+  settles: ['/audio/settle.wav'],
+} as const
+
+const soundPhrases = [
+  ['FLAPKIT', 'READY'],
+  ['BOARDING', 'ON TIME'],
+] as const
+
 function StatusBoard({
   look = 'airport',
   motion = 'riffle',
+  custom = false,
+  rows,
+  sound,
 }: {
   look?: LookName
   motion?: 'cascade' | 'riffle'
+  custom?: boolean
+  rows?: readonly [string, string]
+  sound?: ReactElement
 }) {
+  const glyphClass = custom ? 'text-xl font-bold' : undefined
+  const [top, bottom] = rows ?? ['FLAPKIT', 'READY']
+
   return (
-    <Flapkit.Root key={motion} motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}>
+    <Flapkit.Root
+      key={motion}
+      motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}
+      sound={sound}
+    >
       <Flapkit.Board
         aria-label="Package status"
-        className={cn(`flapkit-${look}`, 'w-max')}
+        className={cn(`flapkit-${look}`, 'w-max', custom && 'operations-board')}
       >
-        <Flapkit.Row label="STATUS">{cells('FLAPKIT', 8)}</Flapkit.Row>
-        <Flapkit.Row label="STATUS">{cells('READY', 8)}</Flapkit.Row>
+        <Flapkit.Row className={custom ? 'font-mono' : undefined} label="STATUS">
+          {cells(top, 8, undefined, glyphClass)}
+        </Flapkit.Row>
+        <Flapkit.Row className={custom ? 'font-mono' : undefined} label="STATUS">
+          {cells(bottom, 8, undefined, glyphClass)}
+        </Flapkit.Row>
       </Flapkit.Board>
     </Flapkit.Root>
+  )
+}
+
+function SoundPreview() {
+  const [motion, setMotion] = useState<'cascade' | 'riffle'>('riffle')
+  const [phrase, setPhrase] = useState(0)
+  const [played, setPlayed] = useState(false)
+  const prepareSound = useRef<(() => Promise<boolean>) | null>(null)
+
+  const playFlaps = () => {
+    setPlayed(true)
+    void prepareSound.current?.().then((ready) => {
+      if (!ready) return
+      setPhrase((current) => (current === 0 ? 1 : 0))
+    })
+  }
+
+  return (
+    <Exhibit
+      motion={motion}
+      motionOptions={['riffle', 'cascade'] as const}
+      onMotionChange={setMotion}
+      extras={[<InstrumentField key="sound" label="SOUND" value="mechanical" />]}
+      stage="board"
+    >
+      <div className="grid w-full place-items-center gap-6">
+        <StatusBoard
+          motion={motion}
+          rows={soundPhrases[phrase]}
+          sound={mechanicalSound({ bank: docsSoundBank, prepareRef: prepareSound })}
+        />
+        <button
+          type="button"
+          className="relative z-1 min-h-11 cursor-pointer touch-manipulation border border-rule-strong bg-transparent px-3 font-mono text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          onClick={playFlaps}
+        >
+          {played ? 'Replay flap sounds' : 'Play flap sounds'}
+        </button>
+      </div>
+    </Exhibit>
   )
 }
 
@@ -941,34 +1023,175 @@ function MotionPreview() {
 
   return (
     <Exhibit
-      look="airport"
       motion={motion}
-      deck="A–Z"
       motionOptions={['riffle', 'cascade'] as const}
       onMotionChange={setMotion}
       stage="board"
     >
       <div className="grid w-full place-items-center">
-        <StatusBoard motion={motion} />
+        <div className="motion-preview-scale">
+          <StatusBoard motion={motion} />
+        </div>
       </div>
     </Exhibit>
   )
 }
 
-function LooksPreview() {
-  const [look, setLook] = useState<LookName>('airport')
+function LooksAnimatedWord({
+  color,
+  id,
+  tab,
+}: {
+  color?: string
+  id: LooksRangeId
+  tab: LooksTab
+}) {
+  return (
+    <span style={{ color }}>
+      <TextMorph as="span" duration={400} scale={false} style={{ verticalAlign: 'baseline' }}>
+        {looksLiveValue(id, tab)}
+      </TextMorph>
+    </span>
+  )
+}
+
+function LooksSnippet({
+  lines,
+  tab,
+}: {
+  lines: readonly QuickStartToken[][]
+  tab: LooksTab
+}) {
+  return (
+    <pre className="shiki">
+      <code>
+        {lines.map((line, lineIndex) => (
+          <span key={line[0]?.offset ?? `blank-${lineIndex}`}>
+            {line.map((token) => {
+              const animated = looksRanges.find((range) =>
+                tokenOverlapsRange(token, range.start, range.end),
+              )
+              if (!animated) {
+                return (
+                  <span key={token.offset} style={{ color: token.color }}>
+                    {token.content}
+                  </span>
+                )
+              }
+              if (
+                token.offset > animated.start ||
+                token.offset + token.content.length <= animated.start
+              ) {
+                return null
+              }
+
+              const before = token.content.slice(0, animated.start - token.offset)
+              const after = token.content.slice(animated.end - token.offset)
+              const valueToken = line.find(
+                ({ offset }) => offset >= animated.start && offset < animated.end,
+              )
+              return (
+                <span key={token.offset} style={{ color: token.color }}>
+                  {before}
+                  <LooksAnimatedWord
+                    color={valueToken?.color ?? token.color}
+                    id={animated.id}
+                    tab={tab}
+                  />
+                  {after}
+                </span>
+              )
+            })}
+            {'\n'}
+          </span>
+        ))}
+      </code>
+    </pre>
+  )
+}
+
+function LooksCodeBlock({
+  lines,
+  tab,
+}: {
+  lines: readonly QuickStartToken[][]
+  tab: LooksTab
+}) {
+  return (
+    <div className={codeBlockClass} role="region" aria-label="Code example">
+      <CodeCopyButton source={looksCode(tab)} />
+      <div
+        className={cn(codeBlockBodyClass, codeBlockLiveClass)}
+        style={{ '--qs-code-lines': lines.length } as CSSProperties}
+        tabIndex={0}
+      >
+        <LooksSnippet lines={lines} tab={tab} />
+      </div>
+    </div>
+  )
+}
+
+function LooksPreview({
+  onTabChange,
+  styles,
+  tab,
+}: {
+  onTabChange: (tab: LooksTab) => void
+  styles: LooksPlaygroundStyles
+  tab: LooksTab
+}) {
+  const panelId = 'looks-preview'
 
   return (
-    <Exhibit look={look} lookOptions={lookNames} onLookChange={setLook} stage="board">
+    <Exhibit
+      stage="board"
+      tabs={
+        <ExhibitTabList
+          label="Look"
+          options={looksTabs}
+          panelId={panelId}
+          value={tab}
+          onChange={onTabChange}
+        />
+      }
+    >
       <div
+        id={panelId}
+        role="tabpanel"
+        aria-labelledby={`${panelId}-tab-${tab}`}
         className={cn(
           'flapkit-industrial',
-          'grid min-h-[calc(var(--flapkit-frame-top)+var(--flapkit-frame-bottom)+(2*var(--flapkit-cell-height))+(0.4*var(--flapkit-board-unit)))] w-full place-items-center',
+          'grid h-[calc(var(--flapkit-frame-top)+var(--flapkit-frame-bottom)+(2*var(--flapkit-cell-height))+(0.4*var(--flapkit-board-unit)))] w-full',
         )}
       >
-        <StatusBoard look={look} motion="cascade" />
+        <LooksPlayground styles={styles} tab={tab} />
       </div>
     </Exhibit>
+  )
+}
+
+function LooksSection({
+  cssHtml,
+  lines,
+  styles,
+}: {
+  cssHtml: string
+  lines: readonly QuickStartToken[][]
+  styles: LooksPlaygroundStyles
+}) {
+  const [tab, setTab] = useState<LooksTab>('custom')
+
+  return (
+    <>
+      <LooksPreview styles={styles} tab={tab} onTabChange={setTab} />
+      <LooksCodeBlock lines={lines} tab={tab} />
+      <div
+        className={tab === 'custom' ? undefined : 'invisible'}
+        inert={tab !== 'custom' || undefined}
+      >
+        <CodeBlock html={cssHtml} source={looksCssCode} />
+      </div>
+    </>
   )
 }
 
@@ -1201,9 +1424,13 @@ function DocSection({
 
 export function DocsPage({
   highlighted: highlightedCode,
+  looksLines,
+  looksStyles,
   quickStartLines,
 }: {
   highlighted: HighlightedDocsCode
+  looksLines: QuickStartToken[][]
+  looksStyles: LooksPlaygroundStyles
   quickStartLines: QuickStartToken[][]
 }) {
   return (
@@ -1362,9 +1589,7 @@ export function DocsPage({
             <code>data-slot</code> and <code>data-part="face"</code> only for surfaces that
             cannot inherit, such as leaf faces.
           </p>
-          <LooksPreview />
-          <CodeBlock html={highlightedCode.looks} source={docsCode.looks.code} />
-          <CodeBlock html={highlightedCode.looksCss} source={docsCode.looksCss.code} />
+          <LooksSection cssHtml={highlightedCode.looksCss} lines={looksLines} styles={looksStyles} />
         </DocSection>
 
         <DocSection id="motion" index="06" title="Motion">
@@ -1396,10 +1621,11 @@ export function DocsPage({
         <DocSection id="sound" index="07" title="Sound">
           <p>
             Sound is optional and ships without audio assets. Supply click and settle URLs you own,
-            then pass <code>{'mechanicalSound({ bank })'}</code> to Root. The React adapter unlocks
-            audio on the first pointer or keyboard gesture. <code>SoundEngine</code> is exported
-            from the same subpath for non-React wiring.
+            then pass <code>{'mechanicalSound({ bank })'}</code> to Root. Flip the preview to hear
+            the same bank. The React adapter unlocks audio on the first pointer or keyboard gesture.{' '}
+            <code>SoundEngine</code> is exported from the same subpath for non-React wiring.
           </p>
+          <SoundPreview />
           <CodeBlock html={highlightedCode.sound} source={docsCode.sound.code} />
         </DocSection>
 

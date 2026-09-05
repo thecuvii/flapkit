@@ -393,6 +393,12 @@ h2 {
   padding-block: max(calc(var(--u) / 2), 76px);
 }
 
+/* Enlarge the Motion exhibit board without growing the reserved board stage. */
+.motion-preview-scale {
+  transform: scale(1.85);
+  transform-origin: center;
+}
+
 @property --qs-fill {
   syntax: '<number>';
   inherits: true;
@@ -421,11 +427,24 @@ h2 {
       var(--flapkit-cell-height) + (var(--qs-rows) - 1) * var(--qs-row-gap) *
       var(--flapkit-board-unit) + var(--qs-frame-bottom)
   );
-  --qs-fill: min(1.2, calc(100cqi / var(--qs-native-width)));
+  /* Always reserve the framed + header board so BOARD/HEADER toggles do not reflow the stage. */
+  --qs-reserve-width: calc(
+    var(--flapkit-frame-left) + var(--qs-tracks) * var(--flapkit-cell-track) +
+      (var(--qs-groups) - 1) * var(--qs-group-gap) * var(--flapkit-board-unit) +
+      var(--flapkit-frame-right)
+  );
+  --qs-reserve-height: calc(
+    var(--flapkit-frame-top) + var(--flapkit-header-height) + var(--qs-rows) *
+      var(--flapkit-cell-height) + (var(--qs-rows) - 1) * var(--qs-row-gap) *
+      var(--flapkit-board-unit) + var(--flapkit-frame-bottom)
+  );
+  /* Fixed reservation at the 1.2 cap. Do not use 100cqi here: this element is
+     the container, so cqi is 0 on the first frame and the stage collapses to
+     padding only (152px). Board is absolutely positioned and cannot hold the box. */
+  --qs-fill: 1.2;
   position: relative;
   width: 100%;
-  /* Slot matches the scaled board; stage bottom padding holds the drop shadow. */
-  height: calc(var(--qs-native-height) * var(--qs-fill));
+  height: calc(var(--qs-reserve-height) * 1.2);
   overflow: visible;
   container-type: inline-size;
 }
@@ -443,11 +462,17 @@ h2 {
 
 .quick-start-board-scale {
   position: absolute;
-  top: 0;
+  top: 50%;
   left: 50%;
   width: max-content;
-  transform: translateX(-50%) scale(var(--qs-fill));
-  transform-origin: top center;
+  transform: translate(-50%, -50%) scale(var(--qs-fill));
+  transform-origin: center center;
+}
+
+@container (min-width: 1px) {
+  .quick-start-board-scale {
+    --qs-fill: min(1.2, calc(100cqi / var(--qs-native-width)));
+  }
 }
 
 .principle-cassette {
@@ -558,6 +583,14 @@ h2 {
   .flapkit-departure-group:first-child
   [data-slot='cassette']:first-child {
   transform: translate3d(-8px, -10px, 64px);
+}
+
+.operations-board {
+  max-width: 100%;
+}
+
+.operations-board [data-part='face'] {
+  filter: saturate(0.9);
 }
 
 .lab-cassette {

@@ -233,6 +233,65 @@ describe('Flapkit motion controller', () => {
     expect(listener).toHaveBeenCalledTimes(1)
   })
 
+  it('applies scheduled targets two frames after readiness', async () => {
+    const controller = new SplitFlapMotionController(cells(' ').cells, cascadeMotion)
+
+    controller.scheduleTargets(cells('A').targetIndices)
+    expect(frames).toHaveLength(0)
+    await Promise.resolve()
+    expect(frames).toHaveLength(1)
+
+    frame(0)
+    expect(controller.readPerformanceCounters().runningCassettes).toBe(0)
+    frame(16)
+    expect(controller.readPerformanceCounters().runningCassettes).toBe(1)
+  })
+
+  it('lets a newer schedule supersede a pending one', async () => {
+    const controller = new SplitFlapMotionController(cells(' ').cells, cascadeMotion)
+    let runtime: SplitFlapRuntime | undefined
+    controller.registerCanvasRenderer((runtimes) => {
+      runtime = runtimes[0]
+    })
+
+    controller.scheduleTargets(cells('A').targetIndices)
+    await Promise.resolve()
+    frame(0)
+    controller.scheduleTargets(cells('B').targetIndices)
+    await Promise.resolve()
+    frame(16)
+    frame(32)
+
+    expect(runtime?.targetIndex).toBe(cells('B').targetIndices[0])
+    expect(controller.readPerformanceCounters().runningCassettes).toBe(1)
+  })
+
+  it('drops a pending schedule on destroy', async () => {
+    const controller = new SplitFlapMotionController(cells(' ').cells, cascadeMotion)
+
+    controller.scheduleTargets(cells('A').targetIndices)
+    controller.destroy()
+    await Promise.resolve()
+    frame(0)
+    frame(16)
+
+    expect(frames).toHaveLength(0)
+    expect(controller.readPerformanceCounters().runningCassettes).toBe(0)
+  })
+
+  it('schedules again after destroy (StrictMode remounts the same controller)', async () => {
+    const controller = new SplitFlapMotionController(cells(' ').cells, cascadeMotion)
+
+    controller.scheduleTargets(cells('A').targetIndices)
+    controller.destroy()
+    controller.scheduleTargets(cells('A').targetIndices)
+    await Promise.resolve()
+    frame(0)
+    frame(16)
+
+    expect(controller.readPerformanceCounters().runningCassettes).toBe(1)
+  })
+
   it('cancels frames and clears subscriptions on destroy', () => {
     const controller = new SplitFlapMotionController(cells(' ').cells)
     controller.setMotion(cascadeMotion)

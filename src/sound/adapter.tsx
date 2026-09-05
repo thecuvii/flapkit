@@ -1,11 +1,12 @@
 // React bridge between Root and the framework-independent sound engine.
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 import { useSplitFlapController } from '../motion/provider'
 import { SplitFlapSoundEngine, type SplitFlapSoundBank, type SplitFlapSoundTuning } from './engine'
 
 export type SplitFlapSoundProps = Partial<SplitFlapSoundTuning> & {
   bank: SplitFlapSoundBank
   enabled?: boolean
+  prepareRef?: RefObject<(() => Promise<boolean>) | null>
 }
 
 export function SplitFlapSound({
@@ -13,6 +14,7 @@ export function SplitFlapSound({
   clickLevel,
   enabled = true,
   pitchVariation,
+  prepareRef,
   settleLevel,
   stereoWidth,
   volume,
@@ -24,6 +26,7 @@ export function SplitFlapSound({
     if (!enabled) return
     const engine = new SplitFlapSoundEngine({ bank })
     engineRef.current = engine
+    if (prepareRef) prepareRef.current = () => engine.prepare()
     engine.preload()
     const unlock = () => void engine.prepare()
     document.addEventListener('pointerdown', unlock, true)
@@ -34,8 +37,9 @@ export function SplitFlapSound({
       document.removeEventListener('keydown', unlock, true)
       engine.destroy()
       engineRef.current = null
+      if (prepareRef) prepareRef.current = null
     }
-  }, [bank, controller, enabled])
+  }, [bank, controller, enabled, prepareRef])
 
   useEffect(
     () =>

@@ -6,6 +6,7 @@ node_modules/
 website/.next/
 website/out/
 website/node_modules/
+website/public/vendor/
 *.tgz
 .env
 .env.local

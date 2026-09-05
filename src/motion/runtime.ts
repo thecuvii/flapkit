@@ -210,8 +210,15 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   }
   private runtimes: SplitFlapRuntime[]
   private updateId = 0
+  // Glyph metrics depend on the web font; wait for it once per controller before the first pitch.
+  private ready: Promise<unknown> =
+    typeof document === 'undefined' || !document.fonts
+      ? Promise.resolve()
+      : document.fonts.ready.catch(() => undefined)
+  private scheduledStart: { frameId: number | null } | null = null
 
-  constructor(cells: readonly ResolvedSplitFlapCell[]) {
+  constructor(cells: readonly ResolvedSplitFlapCell[], motion?: MotionTuning) {
+    if (motion) this.motion = motion
     const rowCellCount = cells.reduce(
       (count, cell) => Math.max(count, cell.trackIndex + cell.span),
       0,
@@ -347,6 +354,31 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     this.renderCanvases(now)
   }
 
+  /**
+   * Applies targets once fonts are ready and the current commit has painted (two frames), so the
+   * first pitch never lands on unstyled glyphs. A newer schedule or `destroy()` supersedes any
+   * schedule that has not fired yet. `destroy()` must stay re-entrant: StrictMode runs the
+   * unmount cleanup and then mounts the same controller again, so no permanent flag here.
+   */
+  scheduleTargets(targetIndices: readonly number[]) {
+    this.cancelScheduledStart()
+    const scheduled = { frameId: null as number | null }
+    this.scheduledStart = scheduled
+    const isCurrent = () => this.scheduledStart === scheduled
+
+    void this.ready.then(() => {
+      if (!isCurrent()) return
+      scheduled.frameId = requestAnimationFrame(() => {
+        if (!isCurrent()) return
+        scheduled.frameId = requestAnimationFrame(() => {
+          if (!isCurrent()) return
+          this.scheduledStart = null
+          this.setTargets(targetIndices)
+        })
+      })
+    })
+  }
+
   seekPitch(cellIndex: number, fromIndex: number, progress: number, settle = true, final = settle) {
     const runtime = this.runtimes[cellIndex]
     if (!runtime || runtime.positions.length === 0) return
@@ -478,6 +510,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   }
 
   destroy() {
+    this.cancelScheduledStart()
     if (this.frameId !== null) cancelAnimationFrame(this.frameId)
     this.frameId = null
     this.runtimes.forEach((runtime) => {
@@ -487,6 +520,13 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     this.canvasRenderers.clear()
     this.mechanicalEventListeners.clear()
     this.scrubbedPitches.clear()
+  }
+
+  private cancelScheduledStart() {
+    const scheduled = this.scheduledStart
+    if (!scheduled) return
+    if (scheduled.frameId !== null) cancelAnimationFrame(scheduled.frameId)
+    this.scheduledStart = null
   }
 
   private clearActiveCssCassettes() {

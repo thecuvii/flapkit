@@ -127,7 +127,11 @@ function SplitFlapRuntimeProvider({
   presentation: CompiledBoardPresentation
   scrubPitch?: ScrubPitch
 }) {
-  const [controller] = useState(() => new SplitFlapMotionController(layout.cells))
+  const tuning = useMemo<MotionTuning>(
+    () => ({ ...motion, specularStrength: splitFlapSpecularStrength }),
+    [motion],
+  )
+  const [controller] = useState(() => new SplitFlapMotionController(layout.cells, tuning))
   // Renderers only read topology and highlighting. Targets travel to the controller through the
   // effect below, so the layout handed to React stays referentially stable across value updates
   // and memoized rows/cassettes bail out instead of re-rendering the whole board.
@@ -137,8 +141,11 @@ function SplitFlapRuntimeProvider({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const viewLayout = useMemo(() => layout, [viewLayoutKey])
 
+  // The controller is the only external system here; each effect below is a plain prop write.
+  // Scheduling (font readiness, paint frames, superseding stale starts) lives in the controller.
+  useEffect(() => controller.setMotion(tuning), [controller, tuning])
+
   useEffect(() => {
-    controller.setMotion({ ...motion, specularStrength: splitFlapSpecularStrength })
     if (scrubPitch) {
       controller.seekPitch(
         scrubPitch.cellIndex,
@@ -147,39 +154,16 @@ function SplitFlapRuntimeProvider({
         scrubPitch.settle,
         scrubPitch.final ?? scrubPitch.settle,
       )
-      return
+    } else {
+      controller.scheduleTargets(layout.targetIndices)
     }
-
-    let startFrame = 0
-    let prepareFrame = 0
-    let cancelled = false
-    const start = () => {
-      if (cancelled) return
-      prepareFrame = requestAnimationFrame(() => {
-        startFrame = requestAnimationFrame(() => {
-          controller.setTargets(layout.targetIndices)
-        })
-      })
-    }
-    void document.fonts.ready.then(start, start)
-
-    return () => {
-      cancelled = true
-      cancelAnimationFrame(prepareFrame)
-      cancelAnimationFrame(startFrame)
-    }
-  }, [controller, layout.targetIndices, motion, scrubPitch])
+  }, [controller, layout.targetIndices, scrubPitch])
 
   useEffect(() => () => controller.destroy(), [controller])
 
   const value = useMemo(
-    () => ({
-      controller,
-      layout: viewLayout,
-      motion: { ...motion, specularStrength: splitFlapSpecularStrength },
-      presentation,
-    }),
-    [controller, viewLayout, motion, presentation],
+    () => ({ controller, layout: viewLayout, motion: tuning, presentation }),
+    [controller, viewLayout, tuning, presentation],
   )
 
   return <SplitFlapContext value={value}>{children}</SplitFlapContext>

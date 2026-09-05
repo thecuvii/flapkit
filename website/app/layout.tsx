@@ -8,6 +8,7 @@ import './styles.css'
 import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 import '@thecuvii/flapkit/industrial.css'
+import { SiteGrain } from '../modules/site/site-grain'
 
 export const metadata: Metadata = {
   title: 'Flapkit — Split-flap displays for React',
@@ -31,10 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
-        <div
-          className="pointer-events-none fixed inset-0 z-[999] bg-[image:var(--grain-image)] opacity-20 mix-blend-overlay"
-          aria-hidden="true"
-        />
+        <SiteGrain />
         {children}
       </body>
     </html>

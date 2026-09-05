@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode, SVGProps } from 'react'
 import { cn } from 'cn'
+import { ExhibitStripes } from './exhibit-stripes'
 
 export function StreamlineBlockArrowheadsLeft(props: SVGProps<SVGSVGElement>) {
   return (
@@ -211,11 +212,15 @@ export function Exhibit<L extends string = string, M extends string = string>({
 
   return (
     <figure className={cn('exhibit', className)}>
-      <div className="exhibit-aside" data-aside="left" aria-hidden="true" />
+      <div className="exhibit-aside" data-aside="left" aria-hidden="true">
+        <ExhibitStripes />
+      </div>
       <div className="exhibit-stage" data-stage={stage}>
         {children}
       </div>
-      <div className="exhibit-aside" data-aside="right" aria-hidden="true" />
+      <div className="exhibit-aside" data-aside="right" aria-hidden="true">
+        <ExhibitStripes />
+      </div>
       <div className="exhibit-meta">
         {controlled ? (
           <dl

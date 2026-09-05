@@ -74,9 +74,6 @@
   --accent: var(--color-accent);
   --link: var(--color-link);
 
-  --stripes: url('/bg-stripes.svg');
-  --grain-image: url('/grain.svg');
-
   --u: var(--spacing-u);
   --u4: var(--spacing-u4);
   --sidebar-width: calc(3 * var(--u));
@@ -243,8 +240,6 @@ h2 {
 .exhibit-aside {
   position: relative;
   grid-row: 1;
-  background-image: var(--stripes);
-  background-repeat: repeat;
   clip-path: inset(2px);
 }
 

@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode, SVGProps } from 'react'
+import { cn } from 'cn'
 
 export function StreamlineBlockArrowheadsLeft(props: SVGProps<SVGSVGElement>) {
   return (
@@ -13,9 +14,20 @@ export function StreamlineBlockArrowheadsLeft(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-function InstrumentMark() {
-  return <StreamlineBlockArrowheadsLeft className="choice-switch-mark" aria-hidden="true" />
+function InstrumentMark({ visible }: { visible: boolean }) {
+  return (
+    <StreamlineBlockArrowheadsLeft
+      className={cn(
+        'absolute top-1/2 left-[calc(100%+4px)] block size-[7px] shrink-0 -translate-y-1/2 text-flare',
+        visible ? 'visible' : 'invisible',
+      )}
+      aria-hidden="true"
+    />
+  )
 }
+
+const instrumentType =
+  'm-0 font-mono text-[10px] font-semibold tracking-[0.06em] leading-none uppercase'
 
 export function InstrumentField<T extends string>({
   label,
@@ -31,26 +43,35 @@ export function InstrumentField<T extends string>({
   const interactive = Boolean(options && onChange)
 
   return (
-    <div className="instrument-field">
-      <dt>{label}</dt>
+    <div className="grid min-w-0 content-start gap-2">
+      <dt className={cn(instrumentType, 'font-[620] text-ink opacity-40')}>{label}</dt>
       {interactive ? (
-        <div role="group" aria-label={label}>
-          {options!.map((option) => (
-            <button
-              key={option}
-              type="button"
-              aria-pressed={value === option}
-              onClick={() => onChange!(option)}
-            >
-              {option}
-              <InstrumentMark />
-            </button>
-          ))}
+        <div className="grid justify-items-start gap-2" role="group" aria-label={label}>
+          {options!.map((option) => {
+            const pressed = value === option
+            return (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={pressed}
+                className={cn(
+                  instrumentType,
+                  'relative inline-flex min-h-0 min-w-0 cursor-pointer items-center overflow-visible border-0 bg-transparent p-0',
+                  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+                  pressed ? 'text-ink' : 'text-muted',
+                )}
+                onClick={() => onChange!(option)}
+              >
+                {option}
+                <InstrumentMark visible={pressed} />
+              </button>
+            )
+          })}
         </div>
       ) : (
-        <dd>
+        <dd className={cn(instrumentType, 'relative inline-flex min-h-0 min-w-0 items-center text-ink')}>
           {value}
-          <InstrumentMark />
+          <InstrumentMark visible />
         </dd>
       )}
     </div>
@@ -89,7 +110,7 @@ export function SpecStrip({
   if (items.length === 0) return null
 
   return (
-    <dl className={['spec-strip', className].filter(Boolean).join(' ')}>
+    <dl className={cn('spec-strip', className)}>
       {items.map(([label, value]) => (
         <div key={label}>
           <dt>{label}</dt>
@@ -157,7 +178,7 @@ export function Exhibit<L extends string = string, M extends string = string>({
   ].filter(Boolean)
 
   return (
-    <figure className={['exhibit', className].filter(Boolean).join(' ')}>
+    <figure className={cn('exhibit', className)}>
       <div className="exhibit-aside" aria-hidden="true" />
       <div className="exhibit-stage">{children}</div>
       <div className="exhibit-aside" aria-hidden="true" />

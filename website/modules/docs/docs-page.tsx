@@ -24,6 +24,7 @@ import {
   type QuickStartSnippetOptions,
   type QuickStartToken,
 } from './docs-code'
+import { cn } from 'cn'
 import { Exhibit, InstrumentField, SiteFrame, StreamlineBlockArrowheadsLeft } from '../site'
 
 const navigation = [
@@ -382,14 +383,23 @@ function ChoiceSwitch<T extends string>({
   onChange: (value: T) => void
 }) {
   return (
-    <div className="choice-switch">
-      <span>{label}</span>
-      <div role="group" aria-label={label}>
+    <div className="choice-switch grid">
+      <span className="mb-[7px] block text-[10px] font-[650] tracking-[0.08em] text-muted uppercase">
+        {label}
+      </span>
+      <div className="grid grid-cols-2 gap-0.5" role="group" aria-label={label}>
         {options.map((option) => (
           <button
             key={option}
             type="button"
             aria-pressed={value === option}
+            className={cn(
+              'min-h-10 min-w-0 cursor-pointer overflow-hidden rounded-[3px] border-0 bg-transparent font-mono text-[11px] font-[620] text-ellipsis capitalize',
+              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+              value === option
+                ? 'text-ink underline decoration-accent underline-offset-4'
+                : 'text-muted',
+            )}
             onClick={() => onChange(option)}
           >
             {option}

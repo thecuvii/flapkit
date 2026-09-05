@@ -92,63 +92,77 @@ function BenchmarkSummary({
   )
   const latestSample = samples.at(-1)
 
+  const metric = (
+    label: string,
+    value: string,
+    note: string,
+  ) => (
+    <div className="min-w-0 bg-panel p-3.5">
+      <span className="block min-h-7 text-[10px] leading-[1.4] text-muted uppercase">{label}</span>
+      <strong className="mt-1.5 block text-[18px] tabular-nums">{value}</strong>
+      <small className="mt-1 block min-h-4 overflow-hidden text-[9px] leading-[1.4] text-ellipsis whitespace-nowrap text-muted">
+        {note}
+      </small>
+    </div>
+  )
+
   return (
-    <section className="performance-summary" aria-label="Benchmark summary" aria-live="polite">
-      <header>
+    <section
+      className="mx-auto mt-[18px] w-[min(100%,1120px)] overflow-hidden rounded-lg border border-rule bg-panel max-[560px]:[&>header]:flex-col max-[560px]:[&>header]:items-start"
+      aria-label="Benchmark summary"
+      aria-live="polite"
+    >
+      <header className="flex items-end justify-between gap-6 px-[18px] py-4">
         <div>
-          <span>Run status</span>
-          <strong>{statusLabel}</strong>
+          <span className="block text-[10px] font-[680] tracking-[0.05em] text-muted uppercase">
+            Run status
+          </span>
+          <strong className="mt-1 block text-sm">{statusLabel}</strong>
         </div>
-        <p>Median across measured runs. p95 is shown where it helps expose tail latency.</p>
+        <p className="m-0 text-[11px] text-muted">
+          Median across measured runs. p95 is shown where it helps expose tail latency.
+        </p>
       </header>
-      <div className="performance-results">
-        <div>
-          <span>React render</span>
-          <strong>
-            {summaries.actualDuration ? `${summaries.actualDuration.median.toFixed(1)} ms` : '—'}
-          </strong>
-          <small>
-            {summaries.actualDuration
-              ? `p95 ${summaries.actualDuration.p95.toFixed(1)} ms`
-              : 'Profiler unavailable'}
-          </small>
-        </div>
-        <div>
-          <span>Input → commit</span>
-          <strong>
-            {summaries.commitLatency ? `${summaries.commitLatency.median.toFixed(1)} ms` : '—'}
-          </strong>
-          <small>
-            {summaries.commitLatency
-              ? `p95 ${summaries.commitLatency.p95.toFixed(1)} ms`
-              : 'No samples'}
-          </small>
-        </div>
-        <div>
-          <span>Animation FPS</span>
-          <strong>{summaries.fps ? summaries.fps.median.toFixed(1) : '—'}</strong>
-          <small>Median</small>
-        </div>
-        <div>
-          <span>P95 frame</span>
-          <strong>{summaries.p95Frame ? `${summaries.p95Frame.median.toFixed(1)} ms` : '—'}</strong>
-          <small>Median run</small>
-        </div>
-        <div>
-          <span>Frames &gt; 20 ms</span>
-          <strong>{summaries.droppedFrames?.median.toFixed(0) ?? '—'}</strong>
-          <small>Median run</small>
-        </div>
-        <div>
-          <span>Geometry reads</span>
-          <strong>{summaries.geometryReads?.median.toFixed(0) ?? '—'}</strong>
-          <small>getBoundingClientRect</small>
-        </div>
-        <div>
-          <span>Rendered cassettes</span>
-          <strong>{latestSample?.cassettes ?? size.rows * size.columns}</strong>
-          <small>{size.rows} rows</small>
-        </div>
+      <div className="grid grid-cols-7 gap-px border-t border-rule bg-rule max-[860px]:grid-cols-4 max-[560px]:grid-cols-2">
+        {metric(
+          'React render',
+          summaries.actualDuration ? `${summaries.actualDuration.median.toFixed(1)} ms` : '—',
+          summaries.actualDuration
+            ? `p95 ${summaries.actualDuration.p95.toFixed(1)} ms`
+            : 'Profiler unavailable',
+        )}
+        {metric(
+          'Input → commit',
+          summaries.commitLatency ? `${summaries.commitLatency.median.toFixed(1)} ms` : '—',
+          summaries.commitLatency
+            ? `p95 ${summaries.commitLatency.p95.toFixed(1)} ms`
+            : 'No samples',
+        )}
+        {metric(
+          'Animation FPS',
+          summaries.fps ? summaries.fps.median.toFixed(1) : '—',
+          'Median',
+        )}
+        {metric(
+          'P95 frame',
+          summaries.p95Frame ? `${summaries.p95Frame.median.toFixed(1)} ms` : '—',
+          'Median run',
+        )}
+        {metric(
+          'Frames > 20 ms',
+          summaries.droppedFrames?.median.toFixed(0) ?? '—',
+          'Median run',
+        )}
+        {metric(
+          'Geometry reads',
+          summaries.geometryReads?.median.toFixed(0) ?? '—',
+          'getBoundingClientRect',
+        )}
+        {metric(
+          'Rendered cassettes',
+          String(latestSample?.cassettes ?? size.rows * size.columns),
+          `${size.rows} rows`,
+        )}
       </div>
     </section>
   )
@@ -158,38 +172,61 @@ function MeasuredRuns({ samples }: { samples: readonly Sample[] }) {
   if (samples.length === 0) return null
 
   return (
-    <section className="performance-samples" aria-label="Individual benchmark runs">
-      <header>
-        <h2>Measured runs</h2>
-        <span>{samples.length} samples</span>
+    <section
+      className="mx-auto mt-[18px] w-[min(100%,1120px)] overflow-hidden rounded-lg border border-rule bg-panel"
+      aria-label="Individual benchmark runs"
+    >
+      <header className="flex items-baseline justify-between gap-6 px-[18px] py-3.5">
+        <h2 className="m-0 text-sm">Measured runs</h2>
+        <span className="text-[10px] font-[680] tracking-[0.05em] text-muted uppercase">
+          {samples.length} samples
+        </span>
       </header>
-      <div>
-        <table>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-xs tabular-nums whitespace-nowrap">
           <thead>
             <tr>
-              <th>Run</th>
-              <th>React</th>
-              <th>Commit</th>
-              <th>FPS</th>
-              <th>P95 frame</th>
-              <th>&gt;20 ms</th>
-              <th>Geometry</th>
+              <th className="border-t border-rule px-[18px] py-2.5 text-left text-[9px] tracking-[0.04em] text-muted uppercase">
+                Run
+              </th>
+              <th className="border-t border-rule px-[18px] py-2.5 text-right text-[9px] tracking-[0.04em] text-muted uppercase">
+                React
+              </th>
+              <th className="border-t border-rule px-[18px] py-2.5 text-right text-[9px] tracking-[0.04em] text-muted uppercase">
+                Commit
+              </th>
+              <th className="border-t border-rule px-[18px] py-2.5 text-right text-[9px] tracking-[0.04em] text-muted uppercase">
+                FPS
+              </th>
+              <th className="border-t border-rule px-[18px] py-2.5 text-right text-[9px] tracking-[0.04em] text-muted uppercase">
+                P95 frame
+              </th>
+              <th className="border-t border-rule px-[18px] py-2.5 text-right text-[9px] tracking-[0.04em] text-muted uppercase">
+                &gt;20 ms
+              </th>
+              <th className="border-t border-rule px-[18px] py-2.5 text-right text-[9px] tracking-[0.04em] text-muted uppercase">
+                Geometry
+              </th>
             </tr>
           </thead>
           <tbody>
             {samples.map((sample, index) => (
               <tr key={sample.id}>
-                <td>{index + 1}</td>
-                <td>
+                <td className="border-t border-rule px-[18px] py-2.5 text-left">{index + 1}</td>
+                <td className="border-t border-rule px-[18px] py-2.5 text-right">
                   {sample.actualDuration === undefined
                     ? '—'
                     : `${sample.actualDuration.toFixed(1)} ms`}
                 </td>
-                <td>{sample.commitLatency.toFixed(1)} ms</td>
-                <td>{sample.fps.toFixed(1)}</td>
-                <td>{sample.p95Frame.toFixed(1)} ms</td>
-                <td>{sample.droppedFrames}</td>
-                <td>{sample.geometryReads}</td>
+                <td className="border-t border-rule px-[18px] py-2.5 text-right">
+                  {sample.commitLatency.toFixed(1)} ms
+                </td>
+                <td className="border-t border-rule px-[18px] py-2.5 text-right">{sample.fps.toFixed(1)}</td>
+                <td className="border-t border-rule px-[18px] py-2.5 text-right">
+                  {sample.p95Frame.toFixed(1)} ms
+                </td>
+                <td className="border-t border-rule px-[18px] py-2.5 text-right">{sample.droppedFrames}</td>
+                <td className="border-t border-rule px-[18px] py-2.5 text-right">{sample.geometryReads}</td>
               </tr>
             ))}
           </tbody>
@@ -371,23 +408,29 @@ export function PerformancePage() {
 
   return (
     <SiteFrame>
-    <main className="performance-page">
-      <header className="performance-header">
-        <div>
-          <a href="/">← Docs</a>
+    <main className="min-h-dvh px-[clamp(24px,5vw,72px)] pt-7 pb-24 max-[560px]:px-5 max-[560px]:pt-[22px] max-[560px]:pb-[72px]">
+      <header className="mx-auto w-[min(100%,1120px)]">
+        <div className="flex justify-between gap-6 text-xs font-[680] tracking-[0.04em] text-muted uppercase max-[560px]:flex-col max-[560px]:items-start">
+          <a className="text-ink no-underline" href="/">
+            ← Docs
+          </a>
           <span>Browser benchmark · local results</span>
         </div>
-        <h1>Bench</h1>
-        <p>
+        <h1 className="mt-[72px] mb-[18px] max-[560px]:mt-14">Bench</h1>
+        <p className="m-0 max-w-[720px] leading-[1.65] text-muted">
           Warm up the selected renderer, repeat identical target updates, and compare median and p95
           results in the same browser. The board stays mounted between measured runs.
         </p>
       </header>
 
-      <section className="performance-controls" aria-label="Benchmark controls">
-        <label>
+      <section
+        className="mx-auto mt-12 grid w-[min(100%,1120px)] grid-cols-[repeat(3,minmax(0,1fr))_auto] items-end gap-3 max-[860px]:grid-cols-2 max-[560px]:grid-cols-1"
+        aria-label="Benchmark controls"
+      >
+        <label className="grid gap-2 text-[11px] font-[680] tracking-[0.05em] text-muted uppercase">
           Motion
           <select
+            className="min-h-11 rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[inherit] text-ink disabled:cursor-wait disabled:opacity-50"
             value={motionKind}
             disabled={running}
             onChange={(event) => {
@@ -399,9 +442,10 @@ export function PerformancePage() {
             <option value="cascade">Cascade · canvas</option>
           </select>
         </label>
-        <label>
+        <label className="grid gap-2 text-[11px] font-[680] tracking-[0.05em] text-muted uppercase">
           Scale
           <select
+            className="min-h-11 rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[inherit] text-ink disabled:cursor-wait disabled:opacity-50"
             value={sizeIndex}
             disabled={running}
             onChange={(event) => {
@@ -416,9 +460,10 @@ export function PerformancePage() {
             ))}
           </select>
         </label>
-        <label>
+        <label className="grid gap-2 text-[11px] font-[680] tracking-[0.05em] text-muted uppercase">
           Measured runs
           <select
+            className="min-h-11 rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[inherit] text-ink disabled:cursor-wait disabled:opacity-50"
             value={runCount}
             disabled={running}
             onChange={(event) => {
@@ -433,11 +478,21 @@ export function PerformancePage() {
             ))}
           </select>
         </label>
-        <div className="performance-actions">
-          <button type="button" disabled={running} onClick={runOnce}>
+        <div className="flex gap-2 max-[860px]:col-span-full max-[560px]:grid max-[560px]:grid-cols-2">
+          <button
+            type="button"
+            className="min-h-11 cursor-pointer rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[680] whitespace-nowrap text-ink disabled:cursor-wait disabled:opacity-50"
+            disabled={running}
+            onClick={runOnce}
+          >
             Run once
           </button>
-          <button type="button" disabled={running} onClick={runBenchmark}>
+          <button
+            type="button"
+            className="min-h-11 cursor-pointer rounded-[7px] border border-ink bg-ink px-[13px] font-[680] whitespace-nowrap text-on-ink disabled:cursor-wait disabled:opacity-50"
+            disabled={running}
+            onClick={runBenchmark}
+          >
             {running ? statusLabel : 'Run benchmark'}
           </button>
         </div>
@@ -446,7 +501,11 @@ export function PerformancePage() {
       <BenchmarkSummary samples={samples} size={size} statusLabel={statusLabel} />
       <MeasuredRuns samples={samples} />
 
-      <section ref={stageRef} className="performance-stage" aria-label="Benchmark board">
+      <section
+        ref={stageRef}
+        className="mx-auto mt-7 max-h-[680px] w-[min(100%,1120px)] overflow-auto rounded-[10px] bg-surface p-12 max-[560px]:p-7 [&>div]:mx-auto [&>div]:w-max"
+        aria-label="Benchmark board"
+      >
         <Profiler id="flapkit-bench" onRender={handleRender}>
           <Flapkit.Root motion={motion}>
             <Flapkit.Board aria-label={`${size.label} benchmark board`} className="flapkit-airport">
@@ -468,7 +527,7 @@ export function PerformancePage() {
         </Profiler>
       </section>
 
-      <p className="performance-note">
+      <p className="mx-auto mt-3.5 w-[min(100%,1120px)] text-xs leading-[1.5] text-muted">
         One warm-up run is excluded. Each measured update samples 1.5 seconds of animation frames.
         Keep the tab visible and compare configurations in the same browser; these results are
         diagnostic, not cross-device scores.

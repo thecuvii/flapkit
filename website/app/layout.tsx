@@ -32,7 +32,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
-        <div className="page-grain" aria-hidden="true" />
+        <div
+          className="pointer-events-none fixed inset-0 z-[999] bg-[image:var(--grain-image)] opacity-20 mix-blend-overlay"
+          aria-hidden="true"
+        />
         {children}
       </body>
     </html>

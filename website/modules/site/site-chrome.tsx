@@ -1,6 +1,7 @@
 import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode, type SVGProps } from 'react'
 import { cn } from 'cn'
 import { ExhibitStripes } from './exhibit-stripes'
+import { SiteGrain } from './site-grain'
 
 export function StreamlineBlockArrowheadsLeft(props: SVGProps<SVGSVGElement>) {
   return (
@@ -177,6 +178,7 @@ export function InstrumentField<T extends string>({
 export function SiteFrame({ children }: { children: ReactNode }) {
   return (
     <div className="relative grid min-h-dvh grid-cols-[minmax(0,1fr)] [overflow-x:clip]">
+      <SiteGrain />
       <div className="docs-grid" aria-hidden="true" />
       <div className="relative col-start-1 row-start-1 min-w-0">
         <div className="relative h-[6px]" aria-hidden="true">

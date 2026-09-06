@@ -99,9 +99,7 @@ export function LooksPlayground({
 
   if (error) {
     return (
-      <p className="m-0 px-u4 text-center font-mono text-[11px] text-muted">
-        Playground failed to load.
-      </p>
+      <p className="m-0 text-center text-base text-black">Playground failed to load.</p>
     )
   }
 

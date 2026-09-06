@@ -8,7 +8,6 @@ import './styles.css'
 import '@thecuvii/flapkit/flapkit.css'
 import '@thecuvii/flapkit/airport.css'
 import '@thecuvii/flapkit/industrial.css'
-import { SiteGrain } from '../modules/site/site-grain'
 
 export const metadata: Metadata = {
   title: 'Flapkit — Split-flap displays for React',
@@ -17,7 +16,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#323232',
+  themeColor: '#fdfdfc',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -28,13 +27,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400..700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Serif:wght@400;500;600&family=Inter:wght@100..900&display=swap"
         />
       </head>
-      <body>
-        <SiteGrain />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

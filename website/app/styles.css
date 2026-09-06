@@ -130,6 +130,231 @@ a:focus-visible {
   outline-offset: 4px;
 }
 
+html:has(.docs-page),
+body:has(.docs-page) {
+  background: #fdfdfc;
+  color: #111;
+  color-scheme: light;
+}
+
+.docs-page {
+  --font-primary: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: var(--font-primary);
+  --body-bg: #fdfdfc;
+  --body-color: #111;
+  --hyperlink-color: #2480ed;
+  --focus-color: rgba(0, 122, 255, 0.5);
+  background: var(--body-bg);
+  color: var(--body-color);
+  font-family: var(--font-primary);
+  font-size: 15px;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01', 'ss03';
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.docs-page ::selection {
+  color: #111;
+  background: #ededed;
+}
+
+.docs-page :focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+.docs-page h2 {
+  color: rgba(0, 0, 0, 0.78);
+  font-family: var(--font-primary);
+  font-size: 0.8125rem;
+  font-weight: 550;
+  letter-spacing: -0.005rem;
+}
+
+.docs-page h3 {
+  color: rgba(0, 0, 0, 0.7);
+  font-family: var(--font-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.005rem;
+}
+
+.docs-page p,
+.docs-page li,
+.docs-page label,
+.docs-page output {
+  color: rgba(0, 0, 0, 0.8);
+  font-size: 0.875rem;
+  font-weight: 450;
+  letter-spacing: -0.005rem;
+  line-height: 1.45rem;
+}
+
+.docs-page a {
+  color: var(--hyperlink-color);
+}
+
+.docs-page a:hover {
+  color: #74b1fd;
+}
+
+.docs-page :not(pre) > code {
+  font-family: var(--font-primary);
+  font-size: 0.8125rem;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.docs-code {
+  font-family: var(--font-primary);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  min-width: 0;
+  max-width: 100%;
+  background: #f8f8f8;
+  color: #333;
+  padding: 0.875rem 3.5rem 0.875rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.5rem;
+}
+
+.docs-page .docs-code code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+.docs-page .shiki,
+.docs-page .shiki span {
+  color: #333 !important;
+  background: transparent !important;
+  font-family: inherit;
+}
+
+.docs-page pre {
+  margin: 0;
+  font-family: inherit;
+}
+
+.docs-page a.docs-tab {
+  font-family: var(--font-primary);
+  font-size: 0.75rem;
+  font-variation-settings: 'wght' 450;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.docs-page a.docs-tab:hover {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.docs-page a.docs-tab[data-active] {
+  color: rgba(0, 0, 0, 0.8);
+  font-variation-settings: 'wght' 550;
+}
+
+.docs-option {
+  font-size: 0.8125rem;
+  font-variation-settings: 'wght' 450;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.docs-option:hover {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.docs-option[aria-pressed='true'],
+.docs-option[data-active] {
+  color: rgba(0, 0, 0, 0.8);
+  font-variation-settings: 'wght' 550;
+}
+
+.docs-action {
+  font-size: 0.8125rem;
+  font-variation-settings: 'wght' 450;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.docs-action:hover {
+  color: #111;
+}
+
+.docs-page .docs-option[data-variant='yellow']:not([data-active]) {
+  color: #b45309;
+}
+
+.docs-page .docs-option[data-variant='orange']:not([data-active]) {
+  color: #c2410c;
+}
+
+.docs-page :not(pre) > code[data-active] {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.docs-copy {
+  font-size: 0.6875rem;
+  font-variation-settings: 'wght' 450;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.docs-copy:hover {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.docs-page table {
+  font-size: 0.875rem;
+  font-weight: 450;
+  letter-spacing: -0.005rem;
+}
+
+.docs-page th,
+.docs-page td {
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.docs-page input[type='range'] {
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #111;
+  cursor: ew-resize;
+}
+
+.docs-page input[type='range']::-webkit-slider-runnable-track {
+  height: 2px;
+  background: #111;
+}
+
+.docs-page input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border: 0;
+  border-radius: 0;
+  background: #111;
+}
+
+.docs-page input[type='range']::-moz-range-track {
+  height: 2px;
+  background: #111;
+}
+
+.docs-page input[type='range']::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 0;
+  background: #111;
+}
+
 /*
  * Vertical grid lines only. Horizontal structure comes from the content rules
  * (section, meta, band), which sit on a u/4 baseline, so no line ever falls

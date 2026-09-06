@@ -35,6 +35,8 @@ type CanvasCassetteGeometry = {
   cellY: number
   faceWidth: number
   faceX: number
+  /** Layout-space x centers of each settled glyph, 1 for a cell and 2 for a wide leaf. */
+  glyphCenters: readonly number[]
   glyphStyles: Record<SplitFlapGlyphScript, CanvasGlyphStyle>
   seamY: number
   spareLeafEdgeColor: string
@@ -299,9 +301,17 @@ function drawCanvasGlyph(
 ) {
   const graphemes = splitFlapGraphemes(character)
   const centers =
-    span === 2
-      ? [geometry.faceX + geometry.faceWidth * 0.21, geometry.faceX + geometry.faceWidth * 0.79]
-      : [geometry.cellX + geometry.cellWidth / 2]
+    geometry.glyphCenters.length > 0
+      ? geometry.glyphCenters
+      : span === 2
+        ? [
+            geometry.faceX + geometry.faceWidth * 0.21,
+            geometry.faceX + geometry.faceWidth * 0.79,
+          ]
+        : [geometry.cellX + geometry.cellWidth / 2]
+  // Wide CSS parts do not take the single-cell mechanical jitter. Adding it
+  // here put the last animated frame beside the settled DOM glyphs.
+  const mechanicalOffset = centers.length > 1 ? 0 : glyphOffset
 
   return centers.reduce(
     (operations, centerX, index) =>
@@ -309,7 +319,7 @@ function drawCanvasGlyph(
       drawCanvasGlyphSlot(
         context,
         geometry,
-        glyphOffset,
+        mechanicalOffset,
         characters,
         graphemes[index] ?? ' ',
         color,
@@ -605,19 +615,17 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         if (!geometry || !visual) return
 
         const staticGlyphIndices = staticGlyphIndicesRef.current
-        if (!runtime.running) {
-          if (staticGlyphIndices[runtime.index] !== -1) {
-            staticContext.clearRect(
-              geometry.cellX,
-              geometry.cellY,
-              geometry.cellWidth,
-              geometry.cellHeight,
-            )
-            staticGlyphIndices[runtime.index] = -1
-            drawOperations += 1
-          }
-          return
+        if (staticGlyphIndices[runtime.index] !== -1) {
+          staticContext.clearRect(
+            geometry.cellX,
+            geometry.cellY,
+            geometry.cellWidth,
+            geometry.cellHeight,
+          )
+          staticGlyphIndices[runtime.index] = -1
+          drawOperations += 1
         }
+        if (!runtime.running) return
 
         const currentPosition = runtime.positions[runtime.currentIndex]
         const nextPosition =
@@ -627,15 +635,16 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         const angle = canvasVaneAngle(runtime, now)
         const angleRadians = (Math.abs(angle) * Math.PI) / 180
         const stackShift = canvasStackShift(runtime, now)
+        // Keep the last settle hold on the DOM glyphs. Painting them on canvas
+        // here was the snap: the landed raster never quite matched idle.
         const landed = runtime.finalPitch && angle <= -180 + 1e-6
-        const settledStaticIndex = -2
+        if (now < runtime.pitchStart || landed) return
+
         const {
           bottomFaceHeight,
           bottomFaceY,
           bottomSurface,
           cellHeight,
-          cellWidth,
-          cellX,
           cellY,
           faceWidth,
           faceX,
@@ -645,67 +654,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           topSurface,
           unit,
         } = geometry
-
-        if (landed) {
-          if (staticGlyphIndices[runtime.index] !== settledStaticIndex) {
-            staticContext.clearRect(cellX, geometry.cellY, cellWidth, cellHeight)
-            drawOperations += drawCanvasGlyph(
-              staticContext,
-              geometry,
-              visual.glyphOffset,
-              visual.characters,
-              nextPosition.character,
-              nextGlyphColors.top,
-              visual.span,
-              topFaceY,
-              topFaceHeight,
-            )
-            drawOperations += drawCanvasGlyph(
-              staticContext,
-              geometry,
-              visual.glyphOffset,
-              visual.characters,
-              nextPosition.character,
-              nextGlyphColors.bottom,
-              visual.span,
-              bottomFaceY,
-              bottomFaceHeight,
-              true,
-            )
-            staticGlyphIndices[runtime.index] = settledStaticIndex
-            drawOperations += 1
-          }
-          return
-        }
-
-        if (staticGlyphIndices[runtime.index] !== runtime.currentIndex) {
-          staticContext.clearRect(cellX, geometry.cellY, cellWidth, cellHeight)
-          drawOperations += drawCanvasGlyph(
-            staticContext,
-            geometry,
-            visual.glyphOffset,
-            visual.characters,
-            nextPosition.character,
-            nextGlyphColors.top,
-            visual.span,
-            topFaceY,
-            topFaceHeight,
-          )
-          drawOperations += drawCanvasGlyph(
-            staticContext,
-            geometry,
-            visual.glyphOffset,
-            visual.characters,
-            currentPosition.character,
-            currentGlyphColors.bottom,
-            visual.span,
-            bottomFaceY,
-            bottomFaceHeight,
-            true,
-          )
-          staticGlyphIndices[runtime.index] = runtime.currentIndex
-          drawOperations += 1
-        }
 
         if (Math.abs(stackShift) > 0.002) {
           const stackMotion = Math.min(1, Math.abs(stackShift) / 0.18)
@@ -981,11 +929,18 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         const topFaceHeight = upperRectangle.height
         const bottomFaceY = lowerRectangle.y
         const bottomFaceHeight = lowerRectangle.height
-        const wideGlyphPart = upperFace.querySelector<HTMLElement>(
-          '[data-split-flap-glyph-part]',
+        const glyphParts = Array.from(
+          upperFace.querySelectorAll<HTMLElement>('[data-split-flap-glyph-part]'),
         )
-        const glyphMeasureElement = wideGlyphPart ?? upperFace
-        const glyphPseudoElement = wideGlyphPart ? null : '::before'
+        const glyphMeasureElement = glyphParts[0] ?? upperFace
+        const glyphPseudoElement = glyphParts[0] ? null : '::before'
+        const glyphCenters =
+          glyphParts.length > 0
+            ? glyphParts.map((part) => {
+                const partRectangle = toLayout(part.getBoundingClientRect())
+                return partRectangle.x + partRectangle.width / 2
+              })
+            : [cellX + cellWidth / 2]
         const defaultGlyph = measureCanvasGlyph(
           glyphMeasureElement,
           'default',
@@ -1025,6 +980,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           cellY,
           faceWidth,
           faceX,
+          glyphCenters,
           glyphStyles: {
             cjk: cjkGlyph.glyphStyle,
             default: defaultGlyph.glyphStyle,

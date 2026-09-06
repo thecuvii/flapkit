@@ -471,20 +471,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     runtime.animationStarted = true
   }
 
-  private blankCompactStationaryGlyphs(runtimes: readonly SplitFlapRuntime[]) {
-    runtimes.forEach((runtime) => {
-      runtime.views.forEach((view) => {
-        if (!view.compact || view.compactMotion) return
-        setGlyph(view.outgoingLowerGlyph, ' ')
-        setGlyph(view.arrivingUpperGlyph, ' ')
-      })
-    })
-  }
-
   private startRuntimes(runtimes: SplitFlapRuntime[], now: number, noiseSalt: number) {
-    // Compact boards paint pitches on the shared canvas — same raster path as riffle.
-    this.blankCompactStationaryGlyphs(runtimes)
-
     if (this.motion.variant === 'cascade') {
       const affectedRows = Array.from(new Set(runtimes.map((runtime) => runtime.rowIndex))).sort(
         (a, b) => a - b,
@@ -678,7 +665,6 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     runtime.didImpact = true
     const nextPosition = runtime.positions[(runtime.currentIndex + 1) % runtime.positions.length]
     runtime.views.forEach((view) => {
-      if (view.compact) return
       // The vane has landed flat over the lower half, so the swap is invisible.
       setGlyphPosition(view.outgoingLowerGlyph, nextPosition, true)
       view.root.dataset.splitFlapPhase = 'impact'
@@ -794,16 +780,39 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   ) {
     const currentPosition = runtime.positions[runtime.currentIndex]
     const nextPosition = runtime.positions[(runtime.currentIndex + 1) % runtime.positions.length]
-
-    // Compact boards paint on the shared canvas. CSS 3D stays on detailed/scrub cassettes.
-    if (view.compact) return
-    ensureStackShiftProperty()
-    ensureSpecularProperty()
     const paused = scrubProgress !== undefined
     const delay = paused ? 0 : Math.max(0, runtime.pitchStart - now)
     const elapsed = paused
       ? Math.max(0, Math.min(1, scrubProgress)) * runtime.duration
       : Math.max(0, now - runtime.pitchStart)
+    const pitchProgress = Math.max(0, Math.min(1, elapsed / runtime.duration))
+    if (view.compact) {
+      // Do not reveal the arriving glyph while this cassette is still queued.
+      // Canvas only covers the vane after pitchStart; until then idle DOM stays.
+      if (now >= runtime.pitchStart) {
+        setGlyphPosition(
+          view.outgoingLowerGlyph,
+          pitchProgress > 0.5 ? nextPosition : currentPosition,
+          true,
+        )
+        setGlyphPosition(view.arrivingUpperGlyph, nextPosition, false)
+      }
+      view.outgoingLower.style.opacity = '1'
+      view.arrivingUpper.style.opacity = '1'
+      view.root.dataset.displayedCharacter =
+        currentPosition.character.trim() === '' ? 'blank' : currentPosition.character
+      view.root.dataset.splitFlapPhase =
+        delay > 0 ? 'waiting' : runtime.finalPitch ? 'settle' : 'riffle'
+      view.root.dataset.pitchHalf = pitchProgress <= 0.5 ? 'outgoing' : 'incoming'
+      view.root.dataset.variant = currentPosition.variant
+      return
+    }
+
+    setGlyphPosition(view.outgoingLowerGlyph, pitchProgress > 0.5 ? nextPosition : currentPosition, true)
+    setGlyphPosition(view.arrivingUpperGlyph, nextPosition, false)
+
+    ensureStackShiftProperty()
+    ensureSpecularProperty()
     const timing = {
       delay,
       duration: runtime.duration,
@@ -811,15 +820,8 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       fill: 'forwards' as const,
     }
 
-    const pitchProgress = Math.max(0, Math.min(1, elapsed / runtime.duration))
-    // This runs once per pitch (or per seek while scrubbing), so it only knows
-    // the progress at call time. Past the half-way point the vane already hides
-    // the lower half, so the stationary lower can show the arriving character.
-    // For a running pitch that starts at 0, emitImpact does the swap later.
-    setGlyphPosition(view.outgoingLowerGlyph, pitchProgress > 0.5 ? nextPosition : currentPosition, true)
     setGlyphPosition(view.movingFrontGlyph, currentPosition, false)
     setGlyphPosition(view.movingBackGlyph, nextPosition, true)
-    setGlyphPosition(view.arrivingUpperGlyph, nextPosition, false)
     view.outgoingLower.style.opacity = '1'
     view.outgoingLower.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
     view.arrivingUpper.style.opacity = '1'

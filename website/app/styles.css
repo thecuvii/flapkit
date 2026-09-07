@@ -656,35 +656,41 @@ h2 {
   );
 }
 
-/* Group: pull the five regions apart along depth, left to right. */
+/* Group: each region becomes its own level. Groups open up horizontally so
+   adjacent plates stop touching, and step forward in depth left to right. */
 .composition-preview[data-explode='group'] .flapkit-departure-group {
   --lift-shadow: 0 12px 26px rgba(0, 0, 0, 0.6);
   --part-index: var(--group-index);
-  transform: translateZ(calc(70px + var(--group-index) * 56px));
+  transform: translate3d(
+    calc((var(--group-index) - 2) * 26px),
+    0,
+    calc(60px + var(--group-index) * 64px)
+  );
 }
 
-/* Cell: show the hierarchy. Its row lifts a little, its group more, the
-   cassette furthest; everything else recedes. */
+/* Cell: show the hierarchy. Its row pulls off the frame, its group pulls off
+   the row and clear of its neighbours, the cassette pulls furthest and up out
+   of its group; everything else recedes. */
 .composition-preview[data-explode='cell'] .flapkit-departure-row:first-child {
-  --lift-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
-  transform: translateZ(48px);
+  --lift-shadow: 0 10px 22px rgba(0, 0, 0, 0.5);
+  transform: translate3d(0, -28px, 70px);
 }
 
 .composition-preview[data-explode='cell']
   .flapkit-departure-row:first-child
   .flapkit-departure-group:first-child {
-  --lift-shadow: 0 10px 22px rgba(0, 0, 0, 0.55);
+  --lift-shadow: 0 12px 26px rgba(0, 0, 0, 0.58);
   --part-index: 1;
-  transform: translateZ(72px);
+  transform: translate3d(-32px, 0, 90px);
 }
 
 .composition-preview[data-explode='cell']
   .flapkit-departure-row:first-child
   .flapkit-departure-group:first-child
   [data-slot='cassette']:first-child {
-  --lift-shadow: 0 16px 34px rgba(0, 0, 0, 0.65);
+  --lift-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
   --part-index: 2;
-  transform: translateZ(150px);
+  transform: translate3d(-24px, -36px, 220px);
 }
 
 .composition-preview[data-explode='cell'] .flapkit-departure-row:not(:first-child),

@@ -33,6 +33,14 @@ type ScrubPitch = {
 }
 
 const SplitFlapContext = createContext<SplitFlapContextValue | null>(null)
+const SplitFlapContentContext = createContext<ResolvedSplitFlapSource | null>(null)
+
+/** Latest labels and accessible content, separate from the stable cassette topology. */
+export function useSplitFlapContent() {
+  const layout = useContext(SplitFlapContentContext)
+  if (!layout) throw new Error('Split-flap parts must be rendered inside a split-flap effect')
+  return layout
+}
 
 /** @internal Shared renderer context; not exported from package entry points. */
 export function useSplitFlap() {
@@ -73,15 +81,17 @@ function SplitFlapEffectProvider({
   const resolvedPresentation = presentation ?? emptyPresentation
 
   return (
-    <SplitFlapRuntimeProvider
-      key={layout.layoutKey}
-      layout={layout}
-      motion={motion}
-      presentation={resolvedPresentation}
-      scrubPitch={scrubPitch}
-    >
-      {children}
-    </SplitFlapRuntimeProvider>
+    <SplitFlapContentContext value={layout}>
+      <SplitFlapRuntimeProvider
+        key={layout.layoutKey}
+        layout={layout}
+        motion={motion}
+        presentation={resolvedPresentation}
+        scrubPitch={scrubPitch}
+      >
+        {children}
+      </SplitFlapRuntimeProvider>
+    </SplitFlapContentContext>
   )
 }
 
@@ -103,7 +113,7 @@ function SplitFlapRuntimeProvider({
     [motion],
   )
   const [controller] = useState(() => new SplitFlapMotionController(layout.cells, tuning))
-  // Renderers only read topology and highlighting. Targets travel to the controller through the
+  // Cassette renderers only read topology and highlighting. Targets travel through the
   // effect below, so the layout handed to React stays referentially stable across value updates
   // and memoized rows/cassettes bail out instead of re-rendering the whole board.
   const viewLayoutKey = `${layout.layoutKey}:${layout.rows

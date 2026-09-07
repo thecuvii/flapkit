@@ -5,7 +5,7 @@
 import { memo, useId, type CSSProperties, type ReactNode } from 'react'
 import { presentationSignature } from '../compiler'
 import type { ResolvedSplitFlapSource } from '../layout'
-import { useSplitFlap } from '../motion/provider'
+import { useSplitFlap, useSplitFlapContent } from '../motion/provider'
 import { MotionCanvas } from './canvas'
 import { BoardRow } from './cassette'
 import { classProps, styles } from './classes'
@@ -159,7 +159,7 @@ export function GridView({
   style,
   ...dataAttributes
 }: GridViewProps) {
-  const { layout } = useSplitFlap()
+  const layout = useSplitFlapContent()
   const gridProps = classProps(styles.standaloneGrid)
 
   return (
@@ -196,7 +196,7 @@ export function BoardView({
   style,
   ...dataAttributes
 }: BoardViewProps) {
-  const { layout } = useSplitFlap()
+  const layout = useSplitFlapContent()
   const hasHeader = children !== undefined && children !== null
   const headerHeight = hasHeader
     ? showColumnLabels

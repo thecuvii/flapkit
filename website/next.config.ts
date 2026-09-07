@@ -56,6 +56,8 @@ async function bundleLooksPlayground() {
 // export condition in `next dev`, and to `dist/` in `next build`.
 const nextConfig: NextConfig = {
   agentRules: false,
+  // Trust only the configured preview host, not every origin on a shared portal domain.
+  allowedDevOrigins: process.env.FLAPKIT_DEV_ORIGIN ? [process.env.FLAPKIT_DEV_ORIGIN] : [],
   images: {
     unoptimized: true,
   },

@@ -53,7 +53,18 @@ export function SplitFlapSound({
         stereoWidth,
         volume,
       }),
-    [clickLevel, pitchVariation, settleLevel, stereoWidth, volume],
+    // Every new engine needs the current tuning, even when those props have not changed.
+    [
+      bankKey,
+      controller,
+      enabled,
+      prepareRef,
+      clickLevel,
+      pitchVariation,
+      settleLevel,
+      stereoWidth,
+      volume,
+    ],
   )
   return null
 }

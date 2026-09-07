@@ -59,13 +59,18 @@
     "lint": "oxlint .",
     "prepack": "pnpm build",
     "test": "vp test run",
+    "test:browser": "vp test run --config vitest.browser.config.ts",
     "prepare": "vp config --no-agent"
   },
   "devDependencies": {
     "@types/react": "catalog:dev",
+    "@types/react-dom": "catalog:dev",
+    "@vitest/browser-playwright": "4.1.11",
     "oxfmt": "catalog:dev",
     "oxlint": "catalog:dev",
+    "playwright": "^1.63.0",
     "react": "catalog:frontend",
+    "react-dom": "catalog:frontend",
     "tsdown": "catalog:dev",
     "typescript": "catalog:dev",
     "vite": "catalog:dev",

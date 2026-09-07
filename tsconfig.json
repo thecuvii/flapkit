@@ -16,5 +16,12 @@
     "strict": true,
     "target": "ES2022"
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "tsdown.config.ts", "vite.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tests/**/*.tsx",
+    "tsdown.config.ts",
+    "vite.config.ts",
+    "vitest.browser.config.ts"
+  ]
 }

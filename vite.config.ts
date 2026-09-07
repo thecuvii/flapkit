@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite-plus'
 
 export default defineConfig({
+  test: {
+    include: ['src/**/*.test.{ts,tsx}'],
+  },
   fmt: {
     semi: false,
     singleQuote: true,

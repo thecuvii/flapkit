@@ -77,9 +77,9 @@ export function Root({ children, motion, sound }: RootProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const presentation = useMemo(() => compiled.presentation, [compiled.presentationSignature])
   const motionSignature = adapterSignature(motion)
-  // Stabilize by id + options only. An inline schedule function must not remount the adapter.
+  // A new schedule may close over new props. Updating tuning does not remount the controller.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const stableMotion = useMemo(() => motion, [motionSignature])
+  const stableMotion = useMemo(() => motion, [motionSignature, motion.schedule])
   const display = compiled.frame ? (
     <BoardView {...compiled.boardProps}>{compiled.header}</BoardView>
   ) : (

@@ -1,5 +1,7 @@
 .DS_Store
 .amp/
+.vitest-attachments/
+tests/__screenshots__/**/*-[0-9].png
 .vite-hooks/_/
 dist/
 node_modules/
@@ -12,4 +14,3 @@ website/public/vendor/
 .env.local
 .env.*.local
 !.env.example
-

@@ -110,7 +110,10 @@ function canvasFontSignature(glyphStyle: CanvasGlyphStyle) {
   ].join('|')
 }
 
-function applyCanvasFont(context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, glyphStyle: CanvasGlyphStyle) {
+function applyCanvasFont(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  glyphStyle: CanvasGlyphStyle,
+) {
   context.font = `${glyphStyle.style} ${glyphStyle.weight} ${glyphStyle.size}px ${glyphStyle.family}`
   context.fontStretch = glyphStyle.stretch
   context.fontVariantCaps = glyphStyle.variantCaps
@@ -125,7 +128,10 @@ function canvasFontMetrics(glyphStyle: CanvasGlyphStyle) {
   if (cached) return cached
 
   const fallback = { ascent: glyphStyle.size * 0.8, descent: glyphStyle.size * 0.2 }
-  const canvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(1, 1) : document.createElement('canvas')
+  const canvas =
+    typeof OffscreenCanvas !== 'undefined'
+      ? new OffscreenCanvas(1, 1)
+      : document.createElement('canvas')
   const context = canvas.getContext('2d')
   if (!context) {
     canvasFontMetricsCache.set(key, fallback)
@@ -307,10 +313,7 @@ function drawCanvasGlyph(
     geometry.glyphCenters.length > 0
       ? geometry.glyphCenters
       : span === 2
-        ? [
-            geometry.faceX + geometry.faceWidth * 0.21,
-            geometry.faceX + geometry.faceWidth * 0.79,
-          ]
+        ? [geometry.faceX + geometry.faceWidth * 0.21, geometry.faceX + geometry.faceWidth * 0.79]
         : [geometry.cellX + geometry.cellWidth / 2]
   // Wide CSS parts do not take the single-cell mechanical jitter. Adding it
   // here put the last animated frame beside the settled DOM glyphs.
@@ -386,7 +389,10 @@ function canvasVaneAngle(runtime: SplitFlapRuntime, now: number) {
 }
 
 function canvasStackShift(runtime: SplitFlapRuntime, now: number) {
-  return curveStackShift(pitchProgress(runtime.pitchStart, runtime.duration, now), runtime.finalPitch)
+  return curveStackShift(
+    pitchProgress(runtime.pitchStart, runtime.duration, now),
+    runtime.finalPitch,
+  )
 }
 
 function parseCssNumber(value: string) {
@@ -394,11 +400,7 @@ function parseCssNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : Number.NaN
 }
 
-function canvasGlyphScale(
-  transform: string,
-  hostStyle: CSSStyleDeclaration,
-  axis: 'x' | 'y',
-) {
+function canvasGlyphScale(transform: string, hostStyle: CSSStyleDeclaration, axis: 'x' | 'y') {
   if (transform && transform !== 'none') {
     try {
       const matrix = new DOMMatrixReadOnly(transform)
@@ -421,18 +423,7 @@ function canvasGlyphScale(
 }
 
 /** Font metrics of one glyph element; the baseline is relative to the top face's top edge. */
-function measureCanvasGlyph(
-  element: HTMLElement,
-  script: SplitFlapGlyphScript,
-  pseudoElement: '::before' | null,
-) {
-  const previousScript = element.dataset.splitFlapScript
-  if (script === 'cjk') {
-    element.dataset.splitFlapScript = 'cjk'
-  } else {
-    delete element.dataset.splitFlapScript
-  }
-
+function measureCanvasGlyph(element: HTMLElement, pseudoElement: '::before' | null) {
   const computedStyle = getComputedStyle(element, pseudoElement)
   const hostStyle = getComputedStyle(element)
   // Layout px — same space as the canvas backing store. Ancestor scales then
@@ -446,13 +437,13 @@ function measureCanvasGlyph(
   }
   if (!Number.isFinite(lineHeight)) lineHeight = size * 1.2
   if (!Number.isFinite(top)) top = 0
+  const opacity = parseCssNumber(computedStyle.opacity)
   const glyphStyle: CanvasGlyphStyle = {
     family: computedStyle.fontFamily,
     height: canvasGlyphScale(computedStyle.transform, hostStyle, 'y'),
-    letterSpacing:
-      computedStyle.letterSpacing === 'normal' ? '0px' : computedStyle.letterSpacing,
+    letterSpacing: computedStyle.letterSpacing === 'normal' ? '0px' : computedStyle.letterSpacing,
     lineHeight,
-    opacity: Number.parseFloat(computedStyle.opacity) || 1,
+    opacity: Number.isFinite(opacity) ? opacity : 1,
     size,
     stretch: computedStyle.fontStretch as CanvasFontStretch,
     style: computedStyle.fontStyle,
@@ -461,12 +452,6 @@ function measureCanvasGlyph(
     width: canvasGlyphScale(computedStyle.transform, hostStyle, 'x'),
   }
   const baseline = canvasLineBoxBaseline(top, lineHeight, canvasFontMetrics(glyphStyle))
-
-  if (previousScript) {
-    element.dataset.splitFlapScript = previousScript
-  } else {
-    delete element.dataset.splitFlapScript
-  }
 
   return { baseline, glyphStyle }
 }
@@ -525,9 +510,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
     [cellVisualsKey],
   )
   const renderConfigRef = useRef({ cellVisuals })
-  useEffect(() => {
-    renderConfigRef.current = { cellVisuals }
-  }, [cellVisuals])
 
   const rendererRef = useRef<SplitFlapCanvasRenderer>(() => undefined)
   useEffect(() => {
@@ -784,171 +766,184 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
       const cassettes = Array.from(
         parent.querySelectorAll<HTMLElement>('[data-split-flap-cassette]'),
       )
-      const resolvedVisuals = [...renderConfigRef.current.cellVisuals]
-      const computedVisuals = new Map<
-        string,
-        Pick<CanvasCellVisual, 'bottomFaceColor' | 'glyphColors' | 'topFaceColor'>
-      >()
-      // Font metrics and look tokens only depend on the styling context, not on the cassette.
-      // Measuring them once per context avoids a forced style recalc pair for every cassette.
-      const glyphMetrics = new Map<
-        string,
-        {
-          cjk: ReturnType<typeof measureCanvasGlyph>
-          default: ReturnType<typeof measureCanvasGlyph>
-          spareLeafEdgeColor: string
-        }
-      >()
-
-      cassettes.forEach((cassette) => {
+      const resolvedVisuals = [...cellVisuals]
+      const measurements = cassettes.flatMap((cassette) => {
         const index = Number(cassette.dataset.splitFlapIndex)
-        if (Number.isNaN(index)) return
         const cell = activeLayout.cells[index]
-        if (!cell) return
         const upperFace = cassette.querySelector<HTMLElement>('[data-slot="stationary-upper"]')
         const lowerFace = cassette.querySelector<HTMLElement>('[data-slot="stationary-lower"]')
-        const visual = resolvedVisuals[index]
-        const row = cassette.closest<HTMLElement>('[data-split-flap-row]')
-        const group = cassette.closest<HTMLElement>('[data-split-flap-group]')
-        const visualKey = [
-          row?.className,
-          group?.className,
-          cassette.className,
-          Number(Boolean(activeLayout.rows[cell.rowIndex]?.highlighted)),
-          visual?.variants.join(',') ?? '',
-        ].join('|')
-        if (upperFace && lowerFace && visual) {
-          let computedVisual = computedVisuals.get(visualKey)
-          if (!computedVisual) {
-            const upperStyle = getComputedStyle(upperFace)
-            const lowerStyle = getComputedStyle(lowerFace)
-            const previousUpperColor = upperFace.style.getPropertyValue(activeGlyphColorProperty)
-            const previousLowerColor = lowerFace.style.getPropertyValue(activeGlyphColorProperty)
-            const glyphColors = Object.fromEntries(
-              visual.variants.map((variant) => {
-                upperFace.style.setProperty(
-                  activeGlyphColorProperty,
-                  splitFlapVariantVariable(variant, false),
-                )
-                lowerFace.style.setProperty(
-                  activeGlyphColorProperty,
-                  splitFlapVariantVariable(variant, true),
-                )
-                return [
-                  variant,
-                  {
-                    bottom: getComputedStyle(lowerFace, '::before').color,
-                    top: getComputedStyle(upperFace, '::before').color,
-                  },
-                ]
-              }),
-            ) as CanvasCellVisual['glyphColors']
-            if (previousUpperColor) {
-              upperFace.style.setProperty(activeGlyphColorProperty, previousUpperColor)
-            } else {
-              upperFace.style.removeProperty(activeGlyphColorProperty)
-            }
-            if (previousLowerColor) {
-              lowerFace.style.setProperty(activeGlyphColorProperty, previousLowerColor)
-            } else {
-              lowerFace.style.removeProperty(activeGlyphColorProperty)
-            }
-            computedVisual = {
-              bottomFaceColor: lowerStyle.backgroundColor,
-              glyphColors,
-              topFaceColor: upperStyle.backgroundColor,
-            }
-            computedVisuals.set(visualKey, computedVisual)
-          }
-          resolvedVisuals[index] = {
-            ...visual,
-            ...computedVisual,
-          }
-        }
         const cassetteBase = cassette.querySelector<HTMLElement>('[data-slot="cassette-base"]')
         const scaleContext = cassette.closest<HTMLElement>('[data-split-flap-scale-context]')
-        if (!cassetteBase || !scaleContext || !upperFace || !lowerFace || !visual) return
-
-        const rectangle = toLayout(cassetteBase.getBoundingClientRect())
-        const upperRectangle = toLayout(upperFace.getBoundingClientRect())
-        const lowerRectangle = toLayout(lowerFace.getBoundingClientRect())
-        const unit = scaleContext.offsetWidth / 100
-        const cellX = rectangle.x
-        const cellY = rectangle.y
-        const cellWidth = rectangle.width
-        const cellHeight = rectangle.height
-        const seamY = cellY + cellHeight / 2
-        const faceX = upperRectangle.x
-        const faceWidth = upperRectangle.width
-        const topFaceY = upperRectangle.y
-        const topFaceHeight = upperRectangle.height
-        const bottomFaceY = lowerRectangle.y
-        const bottomFaceHeight = lowerRectangle.height
+        const visual = resolvedVisuals[index]
+        if (!cell || !cassetteBase || !scaleContext || !upperFace || !lowerFace || !visual)
+          return []
         const glyphParts = Array.from(
           upperFace.querySelectorAll<HTMLElement>('[data-split-flap-glyph-part]'),
         )
-        const glyphMeasureElement = glyphParts[0] ?? upperFace
-        const glyphPseudoElement = glyphParts[0] ? null : '::before'
-        const glyphCenters =
-          glyphParts.length > 0
-            ? glyphParts.map((part) => {
-                const partRectangle = toLayout(part.getBoundingClientRect())
-                return partRectangle.x + partRectangle.width / 2
-              })
-            : [cellX + cellWidth / 2]
-        const metricsKey = `${visualKey}:${cell.span}`
-        let metrics = glyphMetrics.get(metricsKey)
-        if (!metrics) {
-          metrics = {
-            cjk: measureCanvasGlyph(glyphMeasureElement, 'cjk', glyphPseudoElement),
-            default: measureCanvasGlyph(glyphMeasureElement, 'default', glyphPseudoElement),
-            spareLeafEdgeColor:
-              getComputedStyle(cassette).getPropertyValue('--flapkit-spare-leaf-edge-color').trim() ||
-              '#585644',
+        const glyphElement = glyphParts[0] ?? upperFace
+        return [
+          {
+            cassette,
+            index,
+            upperFace,
+            lowerFace,
+            cassetteBase,
+            scaleContext,
+            visual,
+            glyphParts,
+            glyphElement,
+            pseudoElement: glyphParts[0] ? null : ('::before' as const),
+            previousScript: glyphElement.getAttribute('data-split-flap-script'),
+            previousColors: [upperFace, lowerFace].map((face) => ({
+              value: face.style.getPropertyValue(activeGlyphColorProperty),
+              priority: face.style.getPropertyPriority(activeGlyphColorProperty),
+            })),
+            glyphColors: {} as CanvasCellVisual['glyphColors'],
+          },
+        ]
+      })
+
+      // Equal classes do not imply equal styles (nth-child, IDs, inherited tokens).
+      // Read each cassette, but batch all writes before reads so probing variants/scripts
+      // does not force a style/layout flush for every individual cassette.
+      const variants = new Set(measurements.flatMap(({ visual }) => visual.variants))
+      for (const variant of variants) {
+        const matching = measurements.filter(({ visual }) => visual.variants.includes(variant))
+        matching.forEach(({ upperFace, lowerFace }) => {
+          upperFace.style.setProperty(
+            activeGlyphColorProperty,
+            splitFlapVariantVariable(variant, false),
+          )
+          lowerFace.style.setProperty(
+            activeGlyphColorProperty,
+            splitFlapVariantVariable(variant, true),
+          )
+        })
+        matching.forEach(({ upperFace, lowerFace, glyphColors }) => {
+          glyphColors[variant] = {
+            bottom: getComputedStyle(lowerFace, '::before').color,
+            top: getComputedStyle(upperFace, '::before').color,
           }
-          glyphMetrics.set(metricsKey, metrics)
-        }
-        const { cjk: cjkGlyph, default: defaultGlyph } = metrics
-        const topSurface = context.createLinearGradient(0, topFaceY, 0, topFaceY + topFaceHeight)
-        topSurface.addColorStop(0, 'rgba(224, 216, 177, 0.032)')
-        topSurface.addColorStop(0.38, 'rgba(0, 0, 0, 0)')
-        topSurface.addColorStop(1, 'rgba(0, 0, 0, 0.12)')
-        const bottomSurface = context.createLinearGradient(
-          0,
-          bottomFaceY,
-          0,
-          bottomFaceY + bottomFaceHeight,
+        })
+      }
+      measurements.forEach(({ upperFace, lowerFace, previousColors }) => {
+        ;[upperFace, lowerFace].forEach((face, index) => {
+          const previous = previousColors[index]
+          if (previous.value) {
+            face.style.setProperty(activeGlyphColorProperty, previous.value, previous.priority)
+          } else {
+            face.style.removeProperty(activeGlyphColorProperty)
+          }
+        })
+      })
+      const measureGlyphs = (script: SplitFlapGlyphScript) => {
+        measurements.forEach(({ glyphElement }) => {
+          if (script === 'cjk') glyphElement.dataset.splitFlapScript = 'cjk'
+          else delete glyphElement.dataset.splitFlapScript
+        })
+        return measurements.map(({ glyphElement, pseudoElement }) =>
+          measureCanvasGlyph(glyphElement, pseudoElement),
         )
-        bottomSurface.addColorStop(0, 'rgba(0, 0, 0, 0.18)')
-        bottomSurface.addColorStop(0.38, 'rgba(0, 0, 0, 0.035)')
-        bottomSurface.addColorStop(1, 'rgba(214, 207, 170, 0.025)')
-        geometryRef.current[index] = {
-          baselines: {
-            cjk: topFaceY + cjkGlyph.baseline,
-            default: topFaceY + defaultGlyph.baseline,
-          },
-          bottomFaceHeight,
-          bottomFaceY,
-          bottomSurface,
-          cellHeight,
-          cellWidth,
-          cellX,
-          cellY,
-          faceWidth,
-          faceX,
-          glyphCenters,
-          glyphStyles: {
-            cjk: cjkGlyph.glyphStyle,
-            default: defaultGlyph.glyphStyle,
-          },
-          seamY,
-          spareLeafEdgeColor: metrics.spareLeafEdgeColor,
-          topFaceHeight,
-          topFaceY,
-          topSurface,
-          unit,
+      }
+      const cjkGlyphs = measureGlyphs('cjk')
+      const defaultGlyphs = measureGlyphs('default')
+      measurements.forEach(({ glyphElement, previousScript }) => {
+        if (previousScript !== null) {
+          glyphElement.setAttribute('data-split-flap-script', previousScript)
+        } else {
+          glyphElement.removeAttribute('data-split-flap-script')
         }
       })
+
+      measurements.forEach(
+        (
+          {
+            cassette,
+            index,
+            upperFace,
+            lowerFace,
+            cassetteBase,
+            scaleContext,
+            visual,
+            glyphParts,
+            glyphColors,
+          },
+          measurementIndex,
+        ) => {
+          resolvedVisuals[index] = {
+            ...visual,
+            topFaceColor: getComputedStyle(upperFace).backgroundColor,
+            bottomFaceColor: getComputedStyle(lowerFace).backgroundColor,
+            glyphColors,
+          }
+          const rectangle = toLayout(cassetteBase.getBoundingClientRect())
+          const upperRectangle = toLayout(upperFace.getBoundingClientRect())
+          const lowerRectangle = toLayout(lowerFace.getBoundingClientRect())
+          const unit = scaleContext.offsetWidth / 100
+          const cellX = rectangle.x
+          const cellY = rectangle.y
+          const cellWidth = rectangle.width
+          const cellHeight = rectangle.height
+          const seamY = cellY + cellHeight / 2
+          const faceX = upperRectangle.x
+          const faceWidth = upperRectangle.width
+          const topFaceY = upperRectangle.y
+          const topFaceHeight = upperRectangle.height
+          const bottomFaceY = lowerRectangle.y
+          const bottomFaceHeight = lowerRectangle.height
+          const glyphCenters =
+            glyphParts.length > 0
+              ? glyphParts.map((part) => {
+                  const partRectangle = toLayout(part.getBoundingClientRect())
+                  return partRectangle.x + partRectangle.width / 2
+                })
+              : [cellX + cellWidth / 2]
+          const cjkGlyph = cjkGlyphs[measurementIndex]
+          const defaultGlyph = defaultGlyphs[measurementIndex]
+          const topSurface = context.createLinearGradient(0, topFaceY, 0, topFaceY + topFaceHeight)
+          topSurface.addColorStop(0, 'rgba(224, 216, 177, 0.032)')
+          topSurface.addColorStop(0.38, 'rgba(0, 0, 0, 0)')
+          topSurface.addColorStop(1, 'rgba(0, 0, 0, 0.12)')
+          const bottomSurface = context.createLinearGradient(
+            0,
+            bottomFaceY,
+            0,
+            bottomFaceY + bottomFaceHeight,
+          )
+          bottomSurface.addColorStop(0, 'rgba(0, 0, 0, 0.18)')
+          bottomSurface.addColorStop(0.38, 'rgba(0, 0, 0, 0.035)')
+          bottomSurface.addColorStop(1, 'rgba(214, 207, 170, 0.025)')
+          geometryRef.current[index] = {
+            baselines: {
+              cjk: topFaceY + cjkGlyph.baseline,
+              default: topFaceY + defaultGlyph.baseline,
+            },
+            bottomFaceHeight,
+            bottomFaceY,
+            bottomSurface,
+            cellHeight,
+            cellWidth,
+            cellX,
+            cellY,
+            faceWidth,
+            faceX,
+            glyphCenters,
+            glyphStyles: {
+              cjk: cjkGlyph.glyphStyle,
+              default: defaultGlyph.glyphStyle,
+            },
+            seamY,
+            spareLeafEdgeColor:
+              getComputedStyle(cassette)
+                .getPropertyValue('--flapkit-spare-leaf-edge-color')
+                .trim() || '#585644',
+            topFaceHeight,
+            topFaceY,
+            topSurface,
+            unit,
+          }
+        },
+      )
 
       renderConfigRef.current = {
         ...renderConfigRef.current,
@@ -1026,7 +1021,9 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
     )
     resizeObserver.observe(parent)
     for (let element = board; element; element = element.parentElement) {
-      styleObserver.observe(element, { attributes: true, attributeFilter: ['class', 'style'] })
+      // Consumer data-* attributes can select looks too. Do not observe the cassette
+      // subtree: controller writes and our own measurement probes must not retrigger us.
+      styleObserver.observe(element, { attributes: true })
     }
     const handleFontsLoaded = () => {
       disposeCanvasGlyphAtlases()
@@ -1041,7 +1038,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
       resizeObserver.disconnect()
       styleObserver.disconnect()
     }
-  }, [cellVisualsKey, controller, geometryKey])
+  }, [cellVisuals, controller, geometryKey])
 
   return (
     <>

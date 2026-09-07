@@ -12,7 +12,7 @@ catalogs:
     typescript: 7.0.2
     vite: 8.2.2
     vite-plus: 0.3.0
-    vitest: 4.1.0
+    vitest: 4.1.11
   frontend:
     next: 16.3.4
     react: 19.2.8

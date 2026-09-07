@@ -564,12 +564,54 @@ h2 {
 .composition-preview .flapkit-board {
   overflow: visible;
   transform-style: preserve-3d;
-  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .composition-preview[data-explode] .flapkit-board {
   transform: rotateX(10deg) rotateY(-34deg);
   transition-duration: 520ms;
+}
+
+/* Exploded: drop the frame so only the mechanism floats. The board itself must
+   keep opacity 1 (opacity < 1 flattens its 3D context), so its own surface is
+   removed via background and shadow while the chrome children fade. */
+.composition-preview .flapkit-board {
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.composition-preview :is(
+    .flapkit-outer-rim,
+    .flapkit-inner-rim,
+    .flapkit-board-sheen,
+    .flapkit-board-grain,
+    .flapkit-board-header
+  ) {
+  transition: opacity 300ms ease;
+}
+
+.composition-preview[data-explode] .flapkit-board {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  transition-duration: 520ms;
+}
+
+.composition-preview[data-explode] :is(
+    .flapkit-outer-rim,
+    .flapkit-inner-rim,
+    .flapkit-board-sheen,
+    .flapkit-board-grain,
+    .flapkit-board-header
+  ) {
+  opacity: 0;
+  transition-duration: 520ms;
+}
+
+/* BoardGrain sets its opacity inline from the grainOpacity prop. */
+.composition-preview[data-explode] .flapkit-board-grain {
+  opacity: 0 !important;
 }
 
 .composition-preview :is(

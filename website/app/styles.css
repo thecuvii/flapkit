@@ -643,11 +643,17 @@ h2 {
   --group-index: 4;
 }
 
-/* Row: pull the four records off the frame as evenly spaced plates. */
+/* Row: each record becomes its own level. Rows step forward in depth and open
+   up vertically so no plate overlaps the one behind it; the gap is about one
+   row height. */
 .composition-preview[data-explode='row'] .flapkit-departure-row {
   --lift-shadow: 0 14px 30px rgba(0, 0, 0, 0.55);
   --part-index: var(--row-index);
-  transform: translateZ(calc(70px + var(--row-index) * 64px));
+  transform: translate3d(
+    0,
+    calc((var(--row-index) - 1.5) * 38px),
+    calc(60px + var(--row-index) * 56px)
+  );
 }
 
 /* Group: pull the five regions apart along depth, left to right. */

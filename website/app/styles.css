@@ -550,30 +550,44 @@ h2 {
   outline-offset: 4px;
 }
 
-/* Exploded anatomy, teardown style. Only the mechanism moves: the frame,
-   header and grain stay flat and in place, and the grid (the cassette bed)
-   tilts and pulls its parts forward like a tray drawn out of the housing. The
-   yaw is positive so the bed's normal points forward-right: pulled parts
-   travel toward the anatomy list beside the preview, not off to the far side. The
-   camera sits on the board content, so the board itself never becomes a 3D
-   context and its blend modes (grain overlay) keep compositing normally. From
-   the grid down everything is preserve-3d so translateZ pulls parts off the
-   bed instead of scaling them in place. The board goes overflow: visible so
-   lifted parts can leave the housing; all of this is keyed on [data-scene],
-   which the component keeps on for the settle duration after hover ends. */
-.composition-preview[data-scene] .flapkit-board {
-  overflow: visible;
+/* Two-layer composition preview. Housing is a still Board: chrome, grain and
+   header never enter a 3D context, so switching anatomy cannot flatten blend
+   modes or reflow the frame. Mechanism is a size-matched ghost Board (chrome
+   off). Its grid must not paint a bed — a 3D-promoted plate or the motion
+   canvas composites as a flat gray card the moment the grid tilts. Idle well
+   comes from the housing Board; explode hides that too. [data-scene] outlives
+   explode by the settle duration. */
+.composition-layers {
+  display: grid;
 }
 
-/* Exploded: the housing is cut instantly (no fade, no transform) so the parts
-   float over the page. The frame never moves; it is just not drawn. */
-.composition-preview[data-explode] .flapkit-board {
+.composition-housing,
+.composition-mechanism {
+  grid-area: 1 / 1;
+}
+
+.composition-housing {
+  pointer-events: none;
+}
+
+.composition-housing .flapkit-grid {
+  visibility: hidden;
+}
+
+/* Cut the frame without display:none — tearing the housing out of the tree on
+   the same frame as the first 3D lift forces a style + layer rebuild. */
+.composition-preview[data-scene] .composition-housing {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.composition-mechanism .flapkit-board {
   background-color: transparent;
   background-image: none;
   box-shadow: none;
 }
 
-.composition-preview[data-explode] :is(
+.composition-mechanism :is(
     .flapkit-outer-rim,
     .flapkit-inner-rim,
     .flapkit-board-sheen,
@@ -582,33 +596,58 @@ h2 {
   visibility: hidden;
 }
 
-/* BoardGrain is an <svg> with inline opacity and a blend mode; visibility on
-   the svg root is not reliable across engines, so take it out of layout. */
-.composition-preview[data-explode] .flapkit-board-grain {
+.composition-mechanism .flapkit-board-grain {
   display: none;
 }
 
-.composition-preview[data-scene] .flapkit-board-content {
+/* 3D context stays warm. Creating perspective / preserve-3d on first hover
+   is the hitch; housing is a sibling so idle blend modes stay intact. */
+.composition-mechanism .flapkit-board,
+.composition-mechanism .flapkit-board-content {
+  overflow: visible;
+}
+
+.composition-mechanism .flapkit-board-content {
   perspective: 2200px;
   perspective-origin: 50% 50%;
   transform-style: preserve-3d;
 }
 
-/* The bed's own surface is cut the moment the tilt starts (no fade), so only
-   the parts float; nothing dark is left tilted behind them. */
-.composition-preview .flapkit-grid {
+/* Never paint a mechanism bed. translateZ(0) keeps the 3D layer warm; a
+   leftover background or box-shadow becomes the gray slab on first tilt. */
+.composition-mechanism .flapkit-grid {
+  background: none;
+  box-shadow: none;
+  transform: translateZ(0);
   transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.composition-preview[data-explode] .flapkit-grid {
-  transform: rotateX(10deg) rotateY(34deg);
-  background-color: transparent;
-  background-image: none;
-  box-shadow: none;
+.composition-preview[data-explode] .composition-mechanism .flapkit-grid {
+  /* Hide the grid box itself (the 3D plane) without hiding the rows. */
+  visibility: hidden;
   transition-duration: 520ms;
 }
 
-.composition-preview[data-scene] :is(
+.composition-preview[data-explode] .composition-mechanism .flapkit-grid > * {
+  visibility: visible;
+}
+
+.composition-preview[data-explode] .composition-mechanism .flapkit-grid > canvas {
+  visibility: hidden;
+}
+
+/* Row mode keeps the bed face-on. Yaw shears one record into a staircase, so
+   the groups no longer read as a single horizontal line. */
+.composition-preview[data-explode='row'] .composition-mechanism .flapkit-grid {
+  transform: rotateX(12deg);
+}
+
+.composition-preview[data-explode='group'] .composition-mechanism .flapkit-grid,
+.composition-preview[data-explode='cell'] .composition-mechanism .flapkit-grid {
+  transform: rotateX(10deg) rotateY(34deg);
+}
+
+.composition-mechanism :is(
     .flapkit-grid,
     .flapkit-departure-row,
     .flapkit-departure-group,
@@ -619,14 +658,14 @@ h2 {
 }
 
 /* Settle faster than lift, and settle all at once; lift is staggered per part. */
-.composition-preview :is(.flapkit-departure-row, .flapkit-departure-group, [data-slot='cassette']) {
+.composition-mechanism :is(.flapkit-departure-row, .flapkit-departure-group, [data-slot='cassette']) {
   --part-index: 0;
   transition:
     transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 300ms ease;
+    opacity 300ms ease;
 }
 
-.composition-preview[data-explode] :is(
+.composition-preview[data-explode] .composition-mechanism :is(
     .flapkit-departure-row,
     .flapkit-departure-group,
     [data-slot='cassette']
@@ -638,39 +677,39 @@ h2 {
 /* No drop shadows on lifted parts: drawn in the part's own tilted plane they
    read as black slabs, not shadows. Separation comes from geometry. */
 
-.composition-preview .flapkit-departure-row:nth-child(1) {
+.composition-mechanism .flapkit-departure-row:nth-child(1) {
   --row-index: 0;
 }
-.composition-preview .flapkit-departure-row:nth-child(2) {
+.composition-mechanism .flapkit-departure-row:nth-child(2) {
   --row-index: 1;
 }
-.composition-preview .flapkit-departure-row:nth-child(3) {
+.composition-mechanism .flapkit-departure-row:nth-child(3) {
   --row-index: 2;
 }
-.composition-preview .flapkit-departure-row:nth-child(4) {
+.composition-mechanism .flapkit-departure-row:nth-child(4) {
   --row-index: 3;
 }
 
-.composition-preview .flapkit-departure-group:nth-child(1) {
+.composition-mechanism .flapkit-departure-group:nth-child(1) {
   --group-index: 0;
 }
-.composition-preview .flapkit-departure-group:nth-child(2) {
+.composition-mechanism .flapkit-departure-group:nth-child(2) {
   --group-index: 1;
 }
-.composition-preview .flapkit-departure-group:nth-child(3) {
+.composition-mechanism .flapkit-departure-group:nth-child(3) {
   --group-index: 2;
 }
-.composition-preview .flapkit-departure-group:nth-child(4) {
+.composition-mechanism .flapkit-departure-group:nth-child(4) {
   --group-index: 3;
 }
-.composition-preview .flapkit-departure-group:nth-child(5) {
+.composition-mechanism .flapkit-departure-group:nth-child(5) {
   --group-index: 4;
 }
 
 /* Row: each record becomes its own level. Rows step forward in depth and open
    up vertically so no plate overlaps the one behind it; the gap is about one
    row height. */
-.composition-preview[data-explode='row'] .flapkit-departure-row {
+.composition-preview[data-explode='row'] .composition-mechanism .flapkit-departure-row {
   --part-index: var(--row-index);
   transform: translate3d(
     0,
@@ -680,49 +719,66 @@ h2 {
 }
 
 /* Group and cell modes lift a sample of parts, not every one: three is enough
-   to read "these are separate", and the rest of the board stays put as the
+   to read "these are separate", and the rest of the bed stays put as the
    reference plane, dimmed a little. */
 
 /* Group: every group of the first row steps forward and apart, left to right;
    the other rows stay as the reference plane. The emptied row drops its own
    plate so it does not read as a dark slab behind the lifted groups. */
-.composition-preview[data-explode='group'] .flapkit-departure-row:first-child {
+.composition-preview[data-explode='group']
+  .composition-mechanism
+  .flapkit-departure-row:first-child {
   background-color: transparent;
   background-image: none;
   box-shadow: none;
 }
 
-.composition-preview[data-explode='group'] .flapkit-departure-row:first-child .flapkit-departure-group {
+.composition-preview[data-explode='group']
+  .composition-mechanism
+  .flapkit-departure-row:first-child
+  .flapkit-departure-group {
   --part-index: var(--group-index);
   transform: translate3d(
-    calc((var(--group-index) - 2) * 26px),
+    calc((var(--group-index) - 2) * 20px),
     -18px,
-    calc(70px + var(--group-index) * 50px)
+    calc(56px + var(--group-index) * 38px)
   );
 }
 
-.composition-preview[data-explode='group'] .flapkit-departure-row:not(:first-child) {
-  filter: brightness(0.6);
+.composition-preview[data-explode='group']
+  .composition-mechanism
+  .flapkit-departure-row:not(:first-child) {
+  opacity: 0.55;
 }
 
-/* Cell: the first three cassettes of the first row's TIME group climb a
-   staircase in depth and height. With the yaw, depth also reads as a
-   horizontal step, so they separate on all three axes. */
-.composition-preview [data-slot='cassette']:nth-child(1) {
+/* Cell: the first-row FLIGHT WideCell plus two TIME cassettes climb a
+   staircase. WideCell sits one step left/back so the 2-col cassette does
+   not collide with the singles. Yaw still sends depth toward the list. */
+.composition-mechanism [data-slot='cassette']:nth-child(1) {
   --cell-index: 0;
 }
-.composition-preview [data-slot='cassette']:nth-child(2) {
+.composition-mechanism [data-slot='cassette']:nth-child(2) {
   --cell-index: 1;
 }
-.composition-preview [data-slot='cassette']:nth-child(3) {
+.composition-mechanism [data-slot='cassette']:nth-child(3) {
   --cell-index: 2;
 }
 
 .composition-preview[data-explode='cell']
+  .composition-mechanism
+  .flapkit-departure-row:first-child
+  .flapkit-departure-group:nth-child(1)
+  [data-slot='cassette'] {
+  --part-index: 0;
+  transform: translate3d(-12px, -12px, 46px);
+}
+
+.composition-preview[data-explode='cell']
+  .composition-mechanism
   .flapkit-departure-row:first-child
   .flapkit-departure-group:nth-child(2)
-  [data-slot='cassette']:is(:nth-child(1), :nth-child(2), :nth-child(3)) {
-  --part-index: var(--cell-index);
+  [data-slot='cassette']:is(:nth-child(1), :nth-child(2)) {
+  --part-index: calc(var(--cell-index) + 1);
   transform: translate3d(
     calc(var(--cell-index) * 6px),
     calc(-18px - var(--cell-index) * 10px),
@@ -730,50 +786,38 @@ h2 {
   );
 }
 
-.composition-preview[data-explode='cell'] .flapkit-departure-row:not(:first-child),
 .composition-preview[data-explode='cell']
+  .composition-mechanism
+  .flapkit-departure-row:not(:first-child),
+.composition-preview[data-explode='cell']
+  .composition-mechanism
   .flapkit-departure-row:first-child
-  .flapkit-departure-group:not(:nth-child(2)),
+  .flapkit-departure-group:not(:nth-child(1), :nth-child(2)),
 .composition-preview[data-explode='cell']
+  .composition-mechanism
   .flapkit-departure-row:first-child
   .flapkit-departure-group:nth-child(2)
-  [data-slot='cassette']:not(:nth-child(1), :nth-child(2), :nth-child(3)) {
-  filter: brightness(0.6);
+  [data-slot='cassette']:not(:nth-child(1), :nth-child(2)) {
+  opacity: 0.55;
 }
 
-/* Hand-drawn callouts for the anatomy list, after neat-annotations
-   (github.com/syabro/neat-annotations, MIT). Each target gets one pseudo-element
-   that carries both the sketched arrow (as a background) and the handwritten
-   note, so nothing collides with flapkit's own pseudo-elements. Only the
-   exploded parts (Row, Group, Cell) get one. The arrow SVGs
-   hardcode the flare colour (#ffba6c) since data URLs cannot read CSS vars.
-
-   Performance: the callouts always exist and only toggle opacity/visibility.
-   Creating them on hover would force style + layout + a first font raster of
-   Shantell Sans in the middle of the lift transition; keeping them mounted
-   also pulls the font down at page load. Callouts on lifted parts sit in the
-   part's 3D plane, billboarded with the inverse board rotation, and wait for
-   the lift to finish before they fade in so nothing else is animating. */
+/* Screen-space callouts. They must live outside the 3D scene: a billboard
+   inside perspective still gets vanishing-point squash from the parent's
+   translateZ. Pin to the target's getBoundingClientRect instead. */
 .composition-preview {
   --ann-arrow-e: url("data:image/svg+xml,%3Csvg width='46' height='38' viewBox='0 0 46 38' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 19 C15 18 31 18 43 19' fill='none' stroke='%23ffba6c' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M36 13 L43 19 L36 25' fill='none' stroke='%23ffba6c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --ann-arrow-s: url("data:image/svg+xml,%3Csvg width='46' height='38' viewBox='0 0 46 38' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M23 4 C22 13 22 24 23 35' fill='none' stroke='%23ffba6c' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M17 29 L23 36 L29 29' fill='none' stroke='%23ffba6c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  /* Inverse of the exploded grid rotation (rotateX(10deg) rotateY(34deg)). */
-  --ann-billboard: rotateY(-34deg) rotateX(-10deg);
-  /* Callouts wait for the 520ms lift so nothing else is animating. */
-  --ann-delay: 560ms;
 }
 
-.composition-preview .flapkit-departure-row:first-child::after,
-.composition-preview .flapkit-departure-row:first-child .flapkit-departure-group:nth-child(4)::after,
-.composition-preview
-  .flapkit-departure-row:first-child
-  .flapkit-departure-group:nth-child(2)
-  [data-slot='cassette']:first-child::before {
-  content: '';
+.composition-ann {
   position: absolute;
-  z-index: 20;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.composition-ann-label {
+  position: absolute;
   width: max-content;
-  max-width: 150px;
   font-family: 'Shantell Sans', 'Segoe Print', 'Bradley Hand', cursive;
   font-size: 13px;
   font-weight: 400;
@@ -786,65 +830,29 @@ h2 {
   color: var(--flare);
   background-repeat: no-repeat;
   background-size: 46px 38px;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 160ms ease,
-    visibility 0s linear 160ms;
+  rotate: -3deg;
 }
 
-.composition-preview[data-annotate='row'] .flapkit-departure-row:first-child::after,
-.composition-preview[data-annotate='group']
-  .flapkit-departure-row:first-child
-  .flapkit-departure-group:nth-child(4)::after,
-.composition-preview[data-annotate='cell']
-  .flapkit-departure-row:first-child
-  .flapkit-departure-group:nth-child(2)
-  [data-slot='cassette']:first-child::before {
-  opacity: 1;
-  visibility: visible;
-  transition:
-    opacity 240ms ease var(--ann-delay),
-    visibility 0s linear var(--ann-delay);
+.composition-ann[data-place='top'] .composition-ann-label {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  width: 150px;
+  padding-bottom: 42px;
+  text-align: center;
+  background-image: var(--ann-arrow-s);
+  background-position: center bottom;
+  translate: -50% 0;
 }
 
-.composition-preview .flapkit-departure-row:first-child::after {
-  content: 'Row: one horizontal record';
+.composition-ann[data-place='left'] .composition-ann-label {
   top: 50%;
   right: calc(100% + 12px);
+  width: 130px;
   padding-right: 50px;
-  max-width: 130px;
   text-align: right;
   background-image: var(--ann-arrow-e);
   background-position: right center;
-  transform: translateY(-50%) var(--ann-billboard) rotate(-3deg);
-}
-
-.composition-preview .flapkit-departure-row:first-child .flapkit-departure-group:nth-child(4)::after {
-  content: 'Group: shared label, deck & variant';
-  bottom: calc(100% + 6px);
-  left: 50%;
-  padding-bottom: 42px;
-  text-align: center;
-  background-image: var(--ann-arrow-s);
-  background-position: center bottom;
-  transform: translateX(-50%) var(--ann-billboard) rotate(-3deg);
-}
-
-.composition-preview
-  .flapkit-departure-row:first-child
-  .flapkit-departure-group:nth-child(2)
-  [data-slot='cassette']:first-child::before {
-  content: 'Cell: one cassette, driven on its own';
-  bottom: calc(100% + 6px);
-  left: 50%;
-  padding-bottom: 42px;
-  max-width: 130px;
-  text-align: center;
-  background-image: var(--ann-arrow-s);
-  background-position: center bottom;
-  transform: translateX(-50%) var(--ann-billboard) rotate(-3deg);
+  translate: 0 -50%;
 }
 
 .operations-board {
@@ -932,7 +940,7 @@ h2 {
     transition-duration: 0.01ms !important;
   }
 
-  .composition-preview[data-explode] :is(
+  .composition-preview[data-explode] .composition-mechanism :is(
     .flapkit-grid,
     .flapkit-departure-row,
     .flapkit-departure-group,
@@ -940,16 +948,17 @@ h2 {
   ) {
     transform: none !important;
     transition: none !important;
-    filter: none !important;
+    opacity: 1 !important;
   }
 
-  /* No lift means no board rotation to counter; callouts just appear. */
-  .composition-preview {
-    --ann-billboard: rotate(0deg);
-  }
+}
 
-  .composition-preview {
-    --ann-delay: 0ms;
+/* Beat @layer flapkit's `display: block` on the motion canvas. A replaced
+   canvas the size of the grid becomes the gray slab under preserve-3d. */
+@layer utilities {
+  .composition-mechanism :is(.flapkit-motion-canvas, canvas) {
+    display: none;
+    visibility: hidden;
   }
 }
 

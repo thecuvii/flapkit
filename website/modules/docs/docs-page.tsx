@@ -628,16 +628,18 @@ function ChoiceSwitch<T extends string>({
   )
 }
 
-function DepartureBoard({
+function DepartureBoardTree({
   look,
   motion,
   frame,
   header,
+  sound = true,
 }: {
   look: LookName
   motion: 'cascade' | 'riffle'
   frame: boolean
   header: boolean
+  sound?: boolean
 }) {
   const Frame = frame ? Flapkit.Board : Flapkit.Grid
   const rows = departureRows.map((row) => (
@@ -666,22 +668,38 @@ function DepartureBoard({
   ))
 
   return (
+    <Flapkit.Root
+      key={motion}
+      motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}
+      sound={sound ? mechanicalSound({ bank: docsSoundBank }) : undefined}
+    >
+      <Frame aria-label="Airport departures" className={cn(`flapkit-${look}`, 'w-max')}>
+        {header ? <Flapkit.Header>Departures</Flapkit.Header> : null}
+        {rows}
+      </Frame>
+    </Flapkit.Root>
+  )
+}
+
+function DepartureBoard({
+  look,
+  motion,
+  frame,
+  header,
+}: {
+  look: LookName
+  motion: 'cascade' | 'riffle'
+  frame: boolean
+  header: boolean
+}) {
+  return (
     <div
       className={`quick-start-board-slot flapkit-${look}`}
       data-frame={frame ? 'on' : 'off'}
       data-header={header ? 'on' : 'off'}
     >
       <div className="quick-start-board-scale">
-        <Flapkit.Root
-          key={motion}
-          motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}
-          sound={mechanicalSound({ bank: docsSoundBank })}
-        >
-          <Frame aria-label="Airport departures" className={cn(`flapkit-${look}`, 'w-max')}>
-            {header ? <Flapkit.Header>Departures</Flapkit.Header> : null}
-            {rows}
-          </Frame>
-        </Flapkit.Root>
+        <DepartureBoardTree look={look} motion={motion} frame={frame} header={header} />
       </div>
     </div>
   )
@@ -791,22 +809,135 @@ const anatomyParts = [
 type AnatomyPartId = (typeof anatomyParts)[number]['id']
 
 const compositionSettleMs = 320
+const compositionAnnDelayMs = 560
 
-function CompositionSection({ html }: { html: string }) {
-  const [hover, setHover] = useState<AnatomyPartId | null>(null)
-  const explode = hover === 'row' || hover === 'group' || hover === 'cell' ? hover : undefined
-  // The 3D scene (preserve-3d, overflow visible) must outlive the explode by the
-  // settle duration, or parts snap flat mid-transition. Idle boards stay flat so
-  // blend modes on the frame keep working.
-  const [scene, setScene] = useState(false)
-  useEffect(() => {
-    if (explode) {
-      setScene(true)
+const compositionAnnotations = {
+  row: {
+    selector:
+      '.composition-mechanism .flapkit-departure-row:first-child .flapkit-departure-group:first-child',
+    text: 'Row: one horizontal record',
+    place: 'left',
+  },
+  group: {
+    selector:
+      '.composition-mechanism .flapkit-departure-row:first-child .flapkit-departure-group:nth-child(4)',
+    text: 'Group: shared label, deck & variant',
+    place: 'top',
+  },
+  cell: {
+    selector:
+      '.composition-mechanism .flapkit-departure-row:first-child .flapkit-departure-group:nth-child(1) [data-slot="cassette"]',
+    text: 'Cell: one cassette, driven on its own',
+    place: 'top',
+  },
+} as const
+
+type CompositionExplode = keyof typeof compositionAnnotations
+
+function CompositionAnnotation({
+  host,
+  explode,
+}: {
+  host: HTMLElement | null
+  explode: CompositionExplode | undefined
+}) {
+  const [anchor, setAnchor] = useState<{
+    height: number
+    left: number
+    top: number
+    width: number
+  } | null>(null)
+
+  useLayoutEffect(() => {
+    if (!host || !explode) {
+      setAnchor(null)
       return
     }
-    const timer = window.setTimeout(() => setScene(false), compositionSettleMs)
+
+    let cancelled = false
+    const spec = compositionAnnotations[explode]
+    const pin = () => {
+      const target = host.querySelector(spec.selector)
+      if (cancelled || !target) return
+      const hostBox = host.getBoundingClientRect()
+      const box = target.getBoundingClientRect()
+      setAnchor({
+        height: box.height,
+        left: box.left - hostBox.left,
+        top: box.top - hostBox.top,
+        width: box.width,
+      })
+    }
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const timer = window.setTimeout(pin, reduceMotion ? 0 : compositionAnnDelayMs)
+    window.addEventListener('resize', pin)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+      window.removeEventListener('resize', pin)
+      setAnchor(null)
+    }
+  }, [explode, host])
+
+  if (!explode || !anchor) return null
+  const spec = compositionAnnotations[explode]
+
+  return (
+    <div
+      className="composition-ann"
+      data-place={spec.place}
+      style={{
+        height: anchor.height,
+        left: anchor.left,
+        top: anchor.top,
+        width: anchor.width,
+      }}
+      aria-hidden="true"
+    >
+      <span className="composition-ann-label">{spec.text}</span>
+    </div>
+  )
+}
+
+function CompositionSection({ html }: { html: string }) {
+  const [preview, setPreview] = useState<HTMLDivElement | null>(null)
+  const [hover, setHover] = useState<AnatomyPartId | null>(null)
+  const wanted = hover === 'row' || hover === 'group' || hover === 'cell' ? hover : undefined
+  const [explode, setExplode] = useState<CompositionExplode | undefined>(undefined)
+  // Housing hide outlives explode by the settle duration so parts can return
+  // without the frame popping back mid-transition.
+  const [scene, setScene] = useState(false)
+  const sceneReadyRef = useRef(false)
+  useEffect(() => {
+    if (wanted) {
+      if (sceneReadyRef.current) {
+        setScene(true)
+        setExplode(wanted)
+        return
+      }
+      // First lift waits two frames so the warm 3D layer can paint before
+      // housing hide and part transforms hit the same commit.
+      let inner = 0
+      const outer = window.requestAnimationFrame(() => {
+        inner = window.requestAnimationFrame(() => {
+          sceneReadyRef.current = true
+          setScene(true)
+          setExplode(wanted)
+        })
+      })
+      return () => {
+        window.cancelAnimationFrame(outer)
+        window.cancelAnimationFrame(inner)
+      }
+    }
+    setExplode(undefined)
+    const timer = window.setTimeout(() => {
+      sceneReadyRef.current = false
+      setScene(false)
+    }, compositionSettleMs)
     return () => window.clearTimeout(timer)
-  }, [explode])
+  }, [wanted])
 
   return (
     <DocsSection
@@ -815,12 +946,30 @@ function CompositionSection({ html }: { html: string }) {
       fillPreview
       preview={
         <div
+          ref={setPreview}
           className={cn('composition-preview', 'relative grid w-full')}
           data-explode={explode}
           data-scene={scene ? '' : undefined}
-          data-annotate={hover ?? undefined}
         >
-          <DepartureBoard look="airport" motion="riffle" frame header />
+          <div className="quick-start-board-slot flapkit-industrial" data-frame="on" data-header="on">
+            <div className="quick-start-board-scale">
+              <div className="composition-layers">
+                <div className="composition-housing" aria-hidden="true">
+                  <DepartureBoardTree
+                    look="industrial"
+                    motion="cascade"
+                    frame
+                    header
+                    sound={false}
+                  />
+                </div>
+                <div className="composition-mechanism">
+                  <DepartureBoardTree look="industrial" motion="cascade" frame header />
+                </div>
+              </div>
+            </div>
+          </div>
+          <CompositionAnnotation host={preview} explode={explode} />
         </div>
       }
     >

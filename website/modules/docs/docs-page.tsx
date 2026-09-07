@@ -818,6 +818,7 @@ function CompositionSection({ html }: { html: string }) {
           className={cn('composition-preview', 'relative grid w-full')}
           data-explode={explode}
           data-scene={scene ? '' : undefined}
+          data-annotate={hover ?? undefined}
         >
           <DepartureBoard look="airport" motion="riffle" frame header />
         </div>

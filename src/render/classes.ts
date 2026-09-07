@@ -7,6 +7,7 @@ export const styles = {
   innerRim: 'flapkit-inner-rim',
   boardSheen: 'flapkit-board-sheen',
   boardGrain: 'flapkit-board-grain',
+  srOnly: 'flapkit-sr-only',
   boardHeader: 'flapkit-board-header',
   boardColumnLabels: 'flapkit-board-column-labels',
   boardColumnLabel: 'flapkit-board-column-label',

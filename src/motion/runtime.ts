@@ -1,6 +1,8 @@
 import { splitFlapGraphemes, type Position, type Variant } from '../deck'
 import { type ResolvedSplitFlapCell } from '../layout'
-// Motion controller shared by the Riffle and Cascade adapters.
+import { riffleStackShifts, riffleVaneAngles, settleStackShifts, settleVaneAngles, type CurveKeyframe } from './curves'
+import { signedLeafNoise } from './noise'
+import { idleSchedule, type MotionSchedule } from './schedules'
 import type { SplitFlapMechanicalEvent, SplitFlapMechanicalEventSource } from '../sound/engine'
 
 export type SplitFlapMotionVariant = 'riffle' | 'cascade' | 'scrub'
@@ -13,22 +15,30 @@ export const activeGlyphColorProperty = '--flapkit-active-glyph-color'
 let specularPropertyRegistered = false
 let stackShiftPropertyRegistered = false
 
-const riffleStackKeyframes: Keyframe[] = [
-  { offset: 0, [stackShiftProperty]: '0cqw' },
-  { offset: 0.45, [stackShiftProperty]: '0cqw' },
-  { offset: 0.72, [stackShiftProperty]: '0.08cqw' },
-  { offset: 0.82, [stackShiftProperty]: '0.18cqw' },
-  { offset: 0.9, [stackShiftProperty]: '-0.03cqw' },
-  { offset: 1, [stackShiftProperty]: '0cqw' },
-]
+function stackShiftKeyframes(curve: readonly CurveKeyframe[]): Keyframe[] {
+  return curve.map(([offset, shift]) => ({ offset, [stackShiftProperty]: `${shift}cqw` }))
+}
 
-const settleStackKeyframes: Keyframe[] = [
-  { offset: 0, [stackShiftProperty]: '0cqw' },
-  { offset: 0.42, [stackShiftProperty]: '0cqw' },
-  { offset: 0.65, [stackShiftProperty]: '0.08cqw' },
-  { offset: 0.78, [stackShiftProperty]: '0.2cqw' },
-  { offset: 1, [stackShiftProperty]: '0cqw' },
-]
+const riffleStackKeyframes = stackShiftKeyframes(riffleStackShifts)
+const settleStackKeyframes = stackShiftKeyframes(settleStackShifts)
+
+function createVaneKeyframes(curve: readonly CurveKeyframe[], specularPeak: number): Keyframe[] {
+  return curve.map(([offset, angle]) => ({
+    offset,
+    transform: `translate3d(0, 0, 0) rotateX(${angle}deg)`,
+    [specularProperty]: specularAt(offset, curve, specularPeak),
+  }))
+}
+
+function specularAt(offset: number, curve: readonly CurveKeyframe[], peak: number) {
+  if (offset === 0 || offset === 0.5 || offset >= 0.78) return 0
+  const incoming = curve.some(([point]) => point === 0.34)
+  if (offset === 0.28) return peak * 0.62
+  if (offset === 0.34) return peak
+  if (offset === 0.62) return peak * 0.72
+  if (offset === 0.68) return peak * 0.4
+  return incoming ? 0 : 0
+}
 
 function ensureSpecularProperty() {
   if (specularPropertyRegistered || typeof CSS === 'undefined' || !CSS.registerProperty) return
@@ -62,19 +72,16 @@ function ensureStackShiftProperty() {
   }
 }
 
-export function signedLeafNoise(index: number, salt: number) {
-  let hash = Math.imul(index + 1 + salt * 101, 0x45d9f3b)
-  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b)
-  hash ^= hash >>> 16
-  return ((hash >>> 0) / 0xffffffff) * 2 - 1
-}
+export { signedLeafNoise } from './noise'
 
 export type MotionTuning = {
   cadenceVariationPct: number
   finalSettleMs: number
   pitchMs: number
   reboundDeg: number
+  reduceMotion: boolean
   rowDelayMs: number
+  schedule: MotionSchedule
   specularStrength: number
   startSpreadMs: number
   variant: SplitFlapMotionVariant
@@ -245,7 +252,9 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     finalSettleMs: 260,
     pitchMs: 52,
     reboundDeg: 2,
+    reduceMotion: false,
     rowDelayMs: 150,
+    schedule: idleSchedule,
     specularStrength: 0.82,
     startSpreadMs: 120,
     variant: 'cascade',
@@ -368,12 +377,28 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
   setMotion(motion: MotionTuning) {
     if (motion.variant !== 'cascade') this.clearActiveCssCassettes()
     this.motion = motion
+    if (motion.reduceMotion) this.snapRunningRuntimes()
     this.renderCanvases(performance.now())
   }
 
   setTargets(targetIndices: readonly number[]) {
     this.updateId += 1
     const now = performance.now()
+
+    if (this.motion.reduceMotion) {
+      this.runtimes.forEach((runtime) => {
+        const targetIndex = targetIndices[runtime.index] ?? runtime.targetIndex
+        runtime.targetIndex = targetIndex
+        runtime.currentIndex = targetIndex
+        runtime.running = false
+        runtime.animationStarted = false
+        this.renderIdle(runtime)
+        this.deactivateCssCassette(runtime)
+      })
+      this.renderCanvases(now)
+      return
+    }
+
     const runtimesToStart: SplitFlapRuntime[] = []
 
     this.runtimes.forEach((runtime) => {
@@ -514,29 +539,37 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     runtime.animationStarted = true
   }
 
-  private startRuntimes(runtimes: SplitFlapRuntime[], now: number, noiseSalt: number) {
-    if (this.motion.variant === 'cascade') {
-      const affectedRows = Array.from(new Set(runtimes.map((runtime) => runtime.rowIndex))).sort(
-        (a, b) => a - b,
-      )
-      const rowRanks = new Map(affectedRows.map((row, rank) => [row, rank]))
-
-      runtimes.forEach((runtime) => {
-        const rowRank = rowRanks.get(runtime.rowIndex) ?? 0
-        const jitter =
-          ((signedLeafNoise(runtime.index, noiseSalt) + 1) / 2) * this.motion.withinRowJitterMs
-
-        this.startPitch(runtime, now + rowRank * this.motion.rowDelayMs + jitter)
-      })
-      return
+  private snapRunningRuntimes() {
+    if (this.frameId !== null) {
+      cancelAnimationFrame(this.frameId)
+      this.frameId = null
     }
-
-    runtimes.forEach((runtime) => {
-      const spreadPosition = (signedLeafNoise(runtime.index, noiseSalt) + 1) / 2
-      // Keep the opening burst dense while a few late starters create a gradual board-level tail.
-      const spread = spreadPosition * spreadPosition * this.motion.startSpreadMs
-      this.startPitch(runtime, now + spread)
+    this.runtimes.forEach((runtime) => {
+      if (!runtime.running && runtime.currentIndex === runtime.targetIndex) return
+      runtime.currentIndex = runtime.targetIndex
+      runtime.running = false
+      runtime.animationStarted = false
+      this.renderIdle(runtime)
+      this.deactivateCssCassette(runtime)
     })
+  }
+
+  private startRuntimes(runtimes: SplitFlapRuntime[], now: number, noiseSalt: number) {
+    const byIndex = new Map(runtimes.map((runtime) => [runtime.index, runtime]))
+    this.motion.schedule(
+      runtimes.map((runtime) => ({ index: runtime.index, rowIndex: runtime.rowIndex })),
+      {
+        now,
+        rowDelayMs: this.motion.rowDelayMs,
+        salt: noiseSalt,
+        start: (index, at) => {
+          const runtime = byIndex.get(index)
+          if (runtime) this.startPitch(runtime, at)
+        },
+        startSpreadMs: this.motion.startSpreadMs,
+        withinRowJitterMs: this.motion.withinRowJitterMs,
+      },
+    )
   }
 
   destroy() {
@@ -868,74 +901,20 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     view.root.dataset.pitchHalf = pitchProgress <= 0.5 ? 'outgoing' : 'incoming'
 
     const specularPeak = Math.min(1, this.motion.specularStrength * 0.72)
-    const vaneKeyframes: Keyframe[] = runtime.finalPitch
-      ? [
-          {
-            offset: 0,
-            transform: 'translate3d(0, 0, 0) rotateX(0deg)',
-            [specularProperty]: 0,
-          },
-          {
-            offset: 0.34,
-            transform: 'translate3d(0, 0, 0) rotateX(-55deg)',
-            [specularProperty]: specularPeak,
-          },
-          {
-            offset: 0.5,
-            transform: 'translate3d(0, 0, 0) rotateX(-90deg)',
-            [specularProperty]: 0,
-          },
-          {
-            offset: 0.62,
-            transform: 'translate3d(0, 0, 0) rotateX(-125deg)',
-            [specularProperty]: specularPeak * 0.72,
-          },
-          {
-            offset: 0.78,
-            transform: 'translate3d(0, 0, 0) rotateX(-180deg)',
-            [specularProperty]: 0,
-          },
-          {
-            offset: 1,
-            transform: 'translate3d(0, 0, 0) rotateX(-180deg)',
-            [specularProperty]: 0,
-          },
-        ]
-      : [
-          {
-            offset: 0,
-            transform: 'translate3d(0, 0, 0) rotateX(0deg)',
-            [specularProperty]: 0,
-          },
-          {
-            offset: 0.28,
-            transform: 'translate3d(0, 0, 0) rotateX(-55deg)',
-            [specularProperty]: specularPeak * 0.62,
-          },
-          {
-            offset: 0.5,
-            transform: 'translate3d(0, 0, 0) rotateX(-90deg)',
-            [specularProperty]: 0,
-          },
-          {
-            offset: 0.68,
-            transform: 'translate3d(0, 0, 0) rotateX(-125deg)',
-            [specularProperty]: specularPeak * 0.4,
-          },
-          {
-            offset: 0.82,
-            transform: 'translate3d(0, 0, 0) rotateX(-180deg)',
-            [specularProperty]: 0,
-          },
-          {
-            offset: 1,
-            transform: 'translate3d(0, 0, 0) rotateX(-180deg)',
-            [specularProperty]: 0,
-          },
-        ]
     writeStyle(view.movingVane, specularProperty, '0')
 
-    this.playViewAnimation(view, 0, view.movingVane, vaneKeyframes, timing, elapsed, paused)
+    this.playViewAnimation(
+      view,
+      0,
+      view.movingVane,
+      createVaneKeyframes(
+        runtime.finalPitch ? settleVaneAngles : riffleVaneAngles,
+        specularPeak,
+      ),
+      timing,
+      elapsed,
+      paused,
+    )
     this.playViewAnimation(
       view,
       1,

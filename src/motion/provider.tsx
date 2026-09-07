@@ -10,41 +10,12 @@ import {
   type SplitFlapSource,
 } from '../layout'
 import { splitFlapSpecularStrength } from './constants'
+import type { MotionAdapter } from './schedules'
+import { idleSchedule } from './schedules'
 import { SplitFlapMotionController, type MotionTuning } from './runtime'
 
-export type CascadeMotion = {
-  cadenceVariationPct: number
-  finalReboundDeg: number
-  finalSettleMs: number
-  pitchMs: number
-  rowDelayMs: number
-  withinRowJitterMs: number
-}
-
-export type RiffleMotion = {
-  cadenceVariationPct: number
-  finalReboundDeg: number
-  finalSettleMs: number
-  riffleMs: number
-  startSpreadMs: number
-}
-
-export const defaultCascadeMotion: CascadeMotion = {
-  cadenceVariationPct: 6,
-  finalReboundDeg: 2,
-  finalSettleMs: 260,
-  pitchMs: 52,
-  rowDelayMs: 150,
-  withinRowJitterMs: 16,
-}
-
-export const defaultRiffleMotion: RiffleMotion = {
-  cadenceVariationPct: 4,
-  finalReboundDeg: 2,
-  finalSettleMs: 260,
-  riffleMs: 36,
-  startSpreadMs: 480,
-}
+export type { CascadeMotion, RiffleMotion } from './options'
+export { defaultCascadeMotion, defaultRiffleMotion } from './options'
 
 type SplitFlapContextValue = {
   controller: SplitFlapMotionController
@@ -178,26 +149,32 @@ type SplitFlapPresentationProps = {
   presentation?: CompiledBoardPresentation
 }
 
-function CascadeEffect({
+export function MotionProvider({
+  adapter,
   children,
   presentation,
-  motion: motionOverrides,
+  reduceMotion = false,
   source,
-}: SplitFlapEffectProps & SplitFlapPresentationProps & { motion?: Partial<CascadeMotion> }) {
-  const motion = useMemo(() => ({ ...defaultCascadeMotion, ...motionOverrides }), [motionOverrides])
+}: SplitFlapEffectProps &
+  SplitFlapPresentationProps & {
+    adapter: MotionAdapter
+    reduceMotion?: boolean
+  }) {
   const tuning = useMemo<MotionTuning>(
     () => ({
-      cadenceVariationPct: motion.cadenceVariationPct,
-      finalSettleMs: motion.finalSettleMs,
-      pitchMs: motion.pitchMs,
-      reboundDeg: motion.finalReboundDeg,
-      rowDelayMs: motion.rowDelayMs,
+      cadenceVariationPct: adapter.options.cadenceVariationPct,
+      finalSettleMs: adapter.options.finalSettleMs,
+      pitchMs: adapter.options.pitchMs,
+      reboundDeg: adapter.options.finalReboundDeg,
+      reduceMotion,
+      rowDelayMs: adapter.options.rowDelayMs,
+      schedule: adapter.schedule,
       specularStrength: splitFlapSpecularStrength,
-      startSpreadMs: 0,
-      variant: 'cascade',
-      withinRowJitterMs: motion.withinRowJitterMs,
+      startSpreadMs: adapter.options.startSpreadMs,
+      variant: adapter.id === 'cascade' ? 'cascade' : 'riffle',
+      withinRowJitterMs: adapter.options.withinRowJitterMs,
     }),
-    [motion],
+    [adapter, reduceMotion],
   )
 
   return (
@@ -205,47 +182,6 @@ function CascadeEffect({
       {children}
     </SplitFlapEffectProvider>
   )
-}
-
-function RiffleEffect({
-  children,
-  presentation,
-  motion: motionOverrides,
-  source,
-}: SplitFlapEffectProps & SplitFlapPresentationProps & { motion?: Partial<RiffleMotion> }) {
-  const motion = useMemo(() => ({ ...defaultRiffleMotion, ...motionOverrides }), [motionOverrides])
-  const tuning = useMemo<MotionTuning>(
-    () => ({
-      cadenceVariationPct: motion.cadenceVariationPct,
-      finalSettleMs: motion.finalSettleMs,
-      pitchMs: motion.riffleMs,
-      reboundDeg: motion.finalReboundDeg,
-      rowDelayMs: 0,
-      specularStrength: splitFlapSpecularStrength,
-      startSpreadMs: motion.startSpreadMs,
-      variant: 'riffle',
-      withinRowJitterMs: 0,
-    }),
-    [motion],
-  )
-
-  return (
-    <SplitFlapEffectProvider presentation={presentation} motion={tuning} source={source}>
-      {children}
-    </SplitFlapEffectProvider>
-  )
-}
-
-export function CascadeProvider(
-  props: SplitFlapEffectProps & SplitFlapPresentationProps & { motion?: Partial<CascadeMotion> },
-) {
-  return <CascadeEffect {...props} />
-}
-
-export function RiffleProvider(
-  props: SplitFlapEffectProps & SplitFlapPresentationProps & { motion?: Partial<RiffleMotion> },
-) {
-  return <RiffleEffect {...props} />
 }
 
 /** @internal Controlled renderer used by the documentation mechanism preview. */
@@ -270,7 +206,9 @@ export function ScrubProvider({
       finalSettleMs: 1_000,
       pitchMs: 1_000,
       reboundDeg: 2,
+      reduceMotion: false,
       rowDelayMs: 0,
+      schedule: idleSchedule,
       specularStrength: splitFlapSpecularStrength,
       startSpreadMs: 0,
       variant: 'scrub',

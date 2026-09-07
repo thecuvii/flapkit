@@ -3,6 +3,8 @@
 // Canvas renderer used by the Riffle adapter.
 
 import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { presentationSignature } from '../compiler'
+import { splitFlapGraphemes, type Variant } from '../deck'
 import { useSplitFlap } from '../motion/provider'
 import {
   glyphOffsetValues,
@@ -12,6 +14,7 @@ import {
   splitFlapLeafBrightnessVariation,
   splitFlapSpareLeafCount,
 } from '../motion/constants'
+import { pitchProgress, stackShift as curveStackShift, vaneAngle } from '../motion/curves'
 import {
   activeGlyphColorProperty,
   signedLeafNoise,
@@ -21,7 +24,6 @@ import {
   type SplitFlapGlyphScript,
   type SplitFlapRuntime,
 } from '../motion/runtime'
-import { splitFlapGraphemes, splitFlapVariants, type Variant } from '../deck'
 import { classProps, styles } from './classes'
 
 type CanvasCassetteGeometry = {
@@ -65,7 +67,8 @@ type CanvasCellVisual = {
   bottomBrightness: number
   bottomFaceColor: string
   characters: readonly string[]
-  glyphColors: Record<Variant, { bottom: string; top: string }>
+  glyphColors: Record<string, { bottom: string; top: string }>
+  variants: readonly Variant[]
   glyphOffset: number
   span: number
   topBrightness: number
@@ -378,72 +381,12 @@ function drawCanvasFace(
   )
 }
 
-function interpolateCanvasValue(progress: number, keyframes: readonly [number, number][]) {
-  const clampedProgress = Math.max(0, Math.min(1, progress))
-
-  for (let index = 1; index < keyframes.length; index += 1) {
-    const [endOffset, endAngle] = keyframes[index]
-    if (clampedProgress > endOffset) continue
-
-    const [startOffset, startAngle] = keyframes[index - 1]
-    const segmentProgress =
-      endOffset === startOffset ? 1 : (clampedProgress - startOffset) / (endOffset - startOffset)
-    return startAngle + (endAngle - startAngle) * segmentProgress
-  }
-
-  return keyframes[keyframes.length - 1][1]
-}
-
 function canvasVaneAngle(runtime: SplitFlapRuntime, now: number) {
-  if (now <= runtime.pitchStart) return 0
-  const elapsed = Math.min(runtime.duration, now - runtime.pitchStart)
-  const progress = elapsed / runtime.duration
-
-  return interpolateCanvasValue(
-    progress,
-    runtime.finalPitch
-      ? [
-          [0, 0],
-          [0.34, -55],
-          [0.5, -90],
-          [0.62, -125],
-          [0.78, -180],
-          [1, -180],
-        ]
-      : [
-          [0, 0],
-          [0.28, -55],
-          [0.5, -90],
-          [0.68, -125],
-          [0.82, -180],
-          [1, -180],
-        ],
-  )
+  return vaneAngle(pitchProgress(runtime.pitchStart, runtime.duration, now), runtime.finalPitch)
 }
 
 function canvasStackShift(runtime: SplitFlapRuntime, now: number) {
-  if (now <= runtime.pitchStart) return 0
-  const progress = Math.min(runtime.duration, now - runtime.pitchStart) / runtime.duration
-
-  return interpolateCanvasValue(
-    progress,
-    runtime.finalPitch
-      ? [
-          [0, 0],
-          [0.42, 0],
-          [0.65, 0.08],
-          [0.78, 0.2],
-          [1, 0],
-        ]
-      : [
-          [0, 0],
-          [0.45, 0],
-          [0.72, 0.08],
-          [0.82, 0.18],
-          [0.9, -0.03],
-          [1, 0],
-        ],
-  )
+  return curveStackShift(pitchProgress(runtime.pitchStart, runtime.duration, now), runtime.finalPitch)
 }
 
 function parseCssNumber(value: string) {
@@ -540,14 +483,15 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
   }, [layout])
   const cellVisualsKey = `${layout.layoutKey}:${layout.rows
     .map((row) => Number(Boolean(row.highlighted)))
-    .join('')}:${JSON.stringify(presentation)}`
+    .join('')}:${presentationSignature(presentation)}`
   const cellVisuals = useMemo(
     () =>
       layout.cells.map((cell, index) => {
         const topFaceColor = '#282921'
         const bottomFaceColor = '#25261e'
+        const variants = Array.from(new Set(cell.flapDeck.map((position) => position.variant)))
         const glyphColors = Object.fromEntries(
-          splitFlapVariants.map((variant) => {
+          variants.map((variant) => {
             const baseGlyphColor =
               variant === 'orange' ? '#cf9138' : variant === 'yellow' ? '#e4c22f' : '#e8e5d7'
             const top = baseGlyphColor
@@ -559,7 +503,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
               },
             ]
           }),
-        ) as CanvasCellVisual['glyphColors']
+        )
 
         return {
           bottomBrightness: 1 + signedLeafNoise(index, 31) * splitFlapLeafBrightnessVariation,
@@ -572,6 +516,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           span: cell.span,
           topBrightness: 1 + signedLeafNoise(index, 7) * splitFlapLeafBrightnessVariation,
           topFaceColor,
+          variants,
         }
       }),
     // Targets create fresh layout arrays, but do not alter these static visuals.
@@ -865,12 +810,13 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         const visual = resolvedVisuals[index]
         const row = cassette.closest<HTMLElement>('[data-split-flap-row]')
         const group = cassette.closest<HTMLElement>('[data-split-flap-group]')
-        const visualKey = JSON.stringify([
+        const visualKey = [
           row?.className,
           group?.className,
           cassette.className,
           Number(Boolean(activeLayout.rows[cell.rowIndex]?.highlighted)),
-        ])
+          visual?.variants.join(',') ?? '',
+        ].join('|')
         if (upperFace && lowerFace && visual) {
           let computedVisual = computedVisuals.get(visualKey)
           if (!computedVisual) {
@@ -879,7 +825,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
             const previousUpperColor = upperFace.style.getPropertyValue(activeGlyphColorProperty)
             const previousLowerColor = lowerFace.style.getPropertyValue(activeGlyphColorProperty)
             const glyphColors = Object.fromEntries(
-              splitFlapVariants.map((variant) => {
+              visual.variants.map((variant) => {
                 upperFace.style.setProperty(
                   activeGlyphColorProperty,
                   splitFlapVariantVariable(variant, false),

@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { resolveSplitFlapSource } from '../layout'
+import { motion } from './index'
 import {
   activeCssCassetteAttribute,
   signedLeafNoise,
@@ -8,7 +10,7 @@ import {
   type SplitFlapRuntime,
   type SplitFlapView,
 } from './runtime'
-import { resolveSplitFlapSource } from '../layout'
+import { scheduleCascade, scheduleRiffle } from './schedules'
 
 /** Minimal element stand-in covering the DOM surface the controller touches. */
 function fakeElement() {
@@ -58,7 +60,9 @@ const cascadeMotion: MotionTuning = {
   finalSettleMs: 100,
   pitchMs: 20,
   reboundDeg: 2,
+  reduceMotion: false,
   rowDelayMs: 0,
+  schedule: scheduleCascade,
   specularStrength: 0.82,
   startSpreadMs: 0,
   variant: 'cascade',
@@ -170,6 +174,7 @@ describe('Flapkit motion controller', () => {
     })
     controller.setMotion({
       ...cascadeMotion,
+      schedule: scheduleRiffle,
       startSpreadMs: 480,
       variant: 'riffle',
     })
@@ -308,5 +313,42 @@ describe('Flapkit motion controller', () => {
     expect(frames).toHaveLength(0)
     expect(canvasRenderer).toHaveBeenCalledTimes(2)
     expect(eventListener).not.toHaveBeenCalled()
+  })
+
+  it('starts cassettes with a custom motion schedule', () => {
+    const adapter = motion((cassettes, ctx) => {
+      cassettes.forEach((cassette) => ctx.start(cassette.index, ctx.now + cassette.index * 10))
+    })
+    const controller = new SplitFlapMotionController(cells('  ', 2).cells)
+    const starts: number[] = []
+    controller.registerCanvasRenderer((runtimes) => {
+      starts.splice(0, starts.length, ...runtimes.map((runtime) => runtime.pitchStart))
+    })
+    controller.setMotion({
+      ...cascadeMotion,
+      schedule: adapter.schedule,
+      variant: 'riffle',
+    })
+
+    controller.setTargets(cells('AA', 2).targetIndices)
+
+    expect(starts).toEqual([0, 10])
+    expect(controller.readPerformanceCounters().runningCassettes).toBe(2)
+  })
+
+  it('snaps to targets without running when motion is reduced', () => {
+    const layout = cells('A')
+    const controller = new SplitFlapMotionController(layout.cells)
+    let runtime: SplitFlapRuntime | undefined
+    controller.registerCanvasRenderer((runtimes) => {
+      runtime = runtimes[0]
+    })
+    controller.setMotion({ ...cascadeMotion, reduceMotion: true })
+    controller.setTargets(layout.targetIndices)
+
+    expect(controller.readPerformanceCounters().runningCassettes).toBe(0)
+    expect(runtime?.currentIndex).toBe(layout.targetIndices[0])
+    expect(runtime?.targetIndex).toBe(layout.targetIndices[0])
+    expect(frames).toHaveLength(0)
   })
 })

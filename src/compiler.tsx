@@ -2,13 +2,6 @@
 
 import { Children, Fragment, isValidElement, type ReactElement, type ReactNode } from 'react'
 import {
-  Board,
-  Cell,
-  Grid,
-  Group,
-  Header,
-  Row,
-  WideCell,
   type BoardProps,
   type CellProps,
   type GridProps,
@@ -18,6 +11,7 @@ import {
   type Variant,
 } from './components'
 import { splitFlapGraphemes, type Deck, type Sequence } from './deck'
+import { kindOf } from './kind'
 import { type SplitFlapCassetteSpan, type SplitFlapSource } from './layout'
 import type { BoardViewProps } from './render/board'
 
@@ -86,8 +80,9 @@ function cellDescriptor(
   rowIndex: number,
   defaults: Pick<GroupProps, 'deck' | 'sequence'> = {},
 ): CellDescriptor {
-  const wide = element.type === WideCell
-  if (element.type !== Cell && !wide) {
+  const kind = kindOf(element)
+  const wide = kind === 'wide-cell'
+  if (kind !== 'cell' && !wide) {
     throw new Error(
       `Flapkit.Row ${rowIndex + 1} only accepts Flapkit.Cell or Flapkit.WideCell; received ${componentName(element)}`,
     )
@@ -118,8 +113,57 @@ function cellDescriptor(
   }
 }
 
-function deckSignature(deck: Deck | undefined) {
+export function deckSignature(deck: Deck | undefined) {
   return deck?.map(({ character, variant }) => `${variant}:${character}`).join('\u001f') ?? ''
+}
+
+export function presentationSignature(presentation: CompiledBoardPresentation) {
+  return presentation.rows
+    .map((row) =>
+      [
+        row.className ?? '',
+        ...row.groups.map((group) =>
+          [group.className ?? '', ...group.cells.map((cell) => cell.className ?? '')].join(','),
+        ),
+      ].join(';'),
+    )
+    .join('|')
+}
+
+function splitFlapValueSignature(value: SplitFlapSource['rows'][number]['values'][string]) {
+  return typeof value === 'string'
+    ? `white:${value}`
+    : `${value.variant ?? 'white'}:${value.text}`
+}
+
+export function sourceSignature(source: SplitFlapSource) {
+  return [
+    source.columns
+      .map((column) =>
+        [
+          column.id,
+          column.cells,
+          column.cassetteSpan ?? 1,
+          column.label,
+          column.flapSequence ?? '',
+          column.cassetteSequences?.join(',') ?? '',
+          deckSignature(column.flapDeck),
+          column.cassetteFlapDecks?.map((deck) => deckSignature(deck)).join(';') ?? '',
+        ].join(':'),
+      )
+      .join('|'),
+    source.rows
+      .map((row) =>
+        [
+          row.id,
+          Number(Boolean(row.highlighted)),
+          Object.entries(row.values)
+            .map(([id, value]) => `${id}=${splitFlapValueSignature(value)}`)
+            .join(','),
+        ].join(':'),
+      )
+      .join('|'),
+  ].join('::')
 }
 
 function cellTopologySignature(cell: CellDescriptor) {
@@ -155,7 +199,7 @@ function groupDescriptor(
   rowIndex: number,
   groupIndex: number,
 ): GroupDescriptor {
-  if (element.type !== Group) {
+  if (kindOf(element) !== 'group') {
     throw new Error(
       `Flapkit.Row ${rowIndex + 1} only accepts Flapkit.Group or a flat list of cells; received ${componentName(element)}`,
     )
@@ -180,8 +224,8 @@ function groupDescriptor(
 function rowGroups(row: ReactElement<RowProps>, rowIndex: number) {
   const parts = structuralElements(row.props.children, `Flapkit.Row ${rowIndex + 1}`)
   if (parts.length === 0) throw new Error('Flapkit.Row requires at least one Cell or Group')
-  const hasGroups = parts.some((part) => part.type === Group)
-  if (hasGroups && parts.some((part) => part.type !== Group)) {
+  const hasGroups = parts.some((part) => kindOf(part) === 'group')
+  if (hasGroups && parts.some((part) => kindOf(part) !== 'group')) {
     throw new Error(`Flapkit.Row ${rowIndex + 1} cannot mix Group and Cell children`)
   }
   if (hasGroups) {
@@ -219,19 +263,22 @@ export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
   const rootChildren = structuralElements(children, 'Flapkit.Root')
   if (
     rootChildren.length !== 1 ||
-    (rootChildren[0]?.type !== Board && rootChildren[0]?.type !== Grid)
+    (kindOf(rootChildren[0]!) !== 'board' && kindOf(rootChildren[0]!) !== 'grid')
   ) {
     throw new Error('Flapkit.Root requires exactly one Flapkit.Board or Flapkit.Grid child')
   }
 
   const boardElement = rootChildren[0] as ReactElement<BoardProps | GridProps>
-  const frame = boardElement.type === Board
+  const frame = kindOf(boardElement) === 'board'
   const { children: boardChildren, ...boardProps } = boardElement.props
   const owner = frame ? 'Flapkit.Board' : 'Flapkit.Grid'
   const parts = structuralElements(boardChildren, owner)
-  const headers = parts.filter((part) => part.type === Header)
-  const rowElements = parts.filter((part) => part.type === Row) as ReactElement<RowProps>[]
-  const invalidPart = parts.find((part) => part.type !== Header && part.type !== Row)
+  const headers = parts.filter((part) => kindOf(part) === 'header')
+  const rowElements = parts.filter((part) => kindOf(part) === 'row') as ReactElement<RowProps>[]
+  const invalidPart = parts.find((part) => {
+    const kind = kindOf(part)
+    return kind !== 'header' && kind !== 'row'
+  })
   if (invalidPart) {
     throw new Error(
       `${owner} only accepts Flapkit.Header or Flapkit.Row; received ${componentName(invalidPart)}`,
@@ -303,8 +350,8 @@ export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
     frame,
     header: headers[0] ? (headers[0].props as HeaderProps).children : undefined,
     presentation,
-    presentationSignature: JSON.stringify(presentation),
+    presentationSignature: presentationSignature(presentation),
     source,
-    sourceSignature: JSON.stringify(source),
+    sourceSignature: sourceSignature(source),
   }
 }

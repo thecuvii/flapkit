@@ -50,6 +50,7 @@ const maxVoices = 32
 const dataCache = new Map<string, Promise<ArrayBuffer | null>>()
 const bufferCache = new WeakMap<AudioContext, Map<string, Promise<AudioBuffer | null>>>()
 let sharedContext: AudioContext | null = null
+let sharedContextUsers = 0
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
@@ -71,6 +72,21 @@ function browserAudioContext() {
   if (!Constructor) return null
   sharedContext = new Constructor()
   return sharedContext
+}
+
+function acquireSharedAudioContext() {
+  const context = browserAudioContext()
+  if (context) sharedContextUsers += 1
+  return context
+}
+
+function releaseSharedAudioContext() {
+  if (sharedContextUsers === 0) return
+  sharedContextUsers -= 1
+  if (sharedContextUsers > 0 || !sharedContext) return
+  const context = sharedContext
+  sharedContext = null
+  void context.close().catch(() => undefined)
 }
 
 function loadData(url: string, fetcher: typeof fetch) {
@@ -149,6 +165,7 @@ export class SplitFlapSoundEngine {
   private fetcher: typeof fetch
   private master: GainNode | null = null
   private now: () => number
+  private ownsSharedContext = false
   private preparePromise: Promise<boolean> | null = null
   private tuning: SplitFlapSoundTuning
   private unsubscribe: (() => void) | null = null
@@ -171,8 +188,11 @@ export class SplitFlapSoundEngine {
     if (this.destroyed) return Promise.resolve(false)
     if (this.bank) return Promise.resolve(true)
     if (this.preparePromise) return this.preparePromise
-    const context = this.options.context ?? browserAudioContext()
+    const context =
+      this.options.context ??
+      (this.ownsSharedContext ? browserAudioContext() : acquireSharedAudioContext())
     if (!context) return Promise.resolve(false)
+    if (!this.options.context) this.ownsSharedContext = true
 
     const request = (context.state === 'running' ? Promise.resolve() : context.resume())
       .then(async () => {
@@ -294,6 +314,10 @@ export class SplitFlapSoundEngine {
     this.master = null
     this.compressor = null
     this.bank = null
+    if (this.ownsSharedContext) {
+      this.ownsSharedContext = false
+      releaseSharedAudioContext()
+    }
   }
 
   private createOutput(context: AudioContext) {

@@ -18,4 +18,14 @@ export {
   type WideCellProps,
 } from './components'
 export { createDeck, type Deck, type Sequence } from './deck'
-export { cascade, riffle, type MotionAdapter } from './motion'
+export {
+  cascade,
+  motion,
+  riffle,
+  timingNoise,
+  type CassetteStart,
+  type MotionAdapter,
+  type MotionSchedule,
+  type MotionScheduleContext,
+  type SharedMotionOptions,
+} from './motion'

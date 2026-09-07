@@ -1,8 +1,9 @@
+import { createElement, type ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
-import { createDeck } from './deck'
-import { resolveSplitFlapSource } from './layout'
 import { Board, Cell, Grid, Group, Header, Row, WideCell } from './components'
 import { compileFlapkitBoard } from './compiler'
+import { createDeck } from './deck'
+import { resolveSplitFlapSource } from './layout'
 
 const wideDeck = createDeck(['  ', '14', '55'])
 const variantDeck = createDeck(' 45', ['white', 'yellow', 'orange'])
@@ -187,5 +188,59 @@ describe('Flapkit structural compiler', () => {
         </Board>,
       ),
     ).toThrow('same Group, Cell, and WideCell structure')
+  })
+
+  it('rejects an unmarked stand-in that looks like a Cell', () => {
+    function FakeCell({ children }: { children?: ReactNode }) {
+      return createElement('span', null, children)
+    }
+
+    expect(() =>
+      compileFlapkitBoard(
+        <Board>
+          <Row>
+            {createElement(FakeCell, null, 'A')}
+          </Row>
+        </Board>,
+      ),
+    ).toThrow('only accepts Flapkit.Cell or Flapkit.WideCell')
+  })
+
+  it('keeps layout identity when only cell values change', () => {
+    const compile = (character: string) =>
+      compileFlapkitBoard(
+        <Board>
+          <Row id="flight">
+            <Cell>{character}</Cell>
+          </Row>
+        </Board>,
+      )
+    const first = resolveSplitFlapSource(compile('A').source)
+    const second = resolveSplitFlapSource(compile('B').source)
+
+    expect(second.layoutKey).toBe(first.layoutKey)
+    expect(second.cells.map((cell) => cell.id)).toEqual(first.cells.map((cell) => cell.id))
+    expect(second.targetIndices).not.toEqual(first.targetIndices)
+  })
+
+  it('keeps cell ids when stable row ids change order', () => {
+    const compile = (order: readonly string[]) =>
+      compileFlapkitBoard(
+        <Board>
+          {order.map((id) => (
+            <Row id={id} key={id}>
+              <Cell>{id === 'first' ? 'A' : 'B'}</Cell>
+            </Row>
+          ))}
+        </Board>,
+      )
+    const first = resolveSplitFlapSource(compile(['first', 'second']).source)
+    const second = resolveSplitFlapSource(compile(['second', 'first']).source)
+
+    expect(second.cells.map((cell) => cell.id).sort()).toEqual(
+      first.cells.map((cell) => cell.id).sort(),
+    )
+    expect(second.cellIndexById.get('first:group-0:0')).toBeDefined()
+    expect(second.cellIndexById.get('second:group-0:0')).toBeDefined()
   })
 })

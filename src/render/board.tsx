@@ -3,12 +3,27 @@
 // Board and grid renderers for the Flapkit component model.
 
 import { memo, useId, type CSSProperties, type ReactNode } from 'react'
-import { useSplitFlap } from '../motion/provider'
+import { presentationSignature } from '../compiler'
 import type { ResolvedSplitFlapSource } from '../layout'
+import { useSplitFlap } from '../motion/provider'
 import { MotionCanvas } from './canvas'
 import { BoardRow } from './cassette'
 import { classProps, styles } from './classes'
 import { cssValue } from './css-values'
+
+function liveBoardText(layout: ResolvedSplitFlapSource) {
+  return layout.rows
+    .map((row) =>
+      layout.columns
+        .map((column) => {
+          const value = row.values[column.id]
+          const text = typeof value === 'string' ? value : (value?.text ?? '')
+          return column.label ? `${column.label} ${text}` : text
+        })
+        .join(' '),
+    )
+    .join('. ')
+}
 
 function splitFlapColumnTracks(layout: ResolvedSplitFlapSource) {
   return layout.columns
@@ -107,7 +122,7 @@ function GridContent({
   rowGap: number
 }) {
   const { controller, layout, motion, presentation } = useSplitFlap()
-  const canvasGeometryKey = `${layout.layoutKey}:${columnGap}:${groupGap}:${rowGap}:${JSON.stringify(presentation)}`
+  const canvasGeometryKey = `${layout.layoutKey}:${columnGap}:${groupGap}:${rowGap}:${presentationSignature(presentation)}`
 
   return (
     <div
@@ -161,6 +176,9 @@ export function GridView({
         } as CSSProperties
       }
     >
+      <span {...classProps(styles.srOnly)} aria-live="polite">
+        {liveBoardText(layout)}
+      </span>
       <GridContent columnGap={columnGap} groupGap={groupGap} rowGap={rowGap} />
     </figure>
   )
@@ -199,6 +217,9 @@ export function BoardView({
       data-slot="split-flap-board"
       style={style}
     >
+      <span {...classProps(styles.srOnly)} aria-live="polite">
+        {liveBoardText(layout)}
+      </span>
       <div
         {...classProps(styles.boardContent)}
         style={

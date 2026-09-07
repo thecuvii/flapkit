@@ -61,11 +61,16 @@ reorder.
 
 `Flapkit.riffle()` provides lightweight, randomized rapid flipping for dense
 boards. Use `Flapkit.cascade()` for the same canvas paint path with starts
-staggered across rows.
+staggered across rows. Both are factories over `Flapkit.motion()`; pass your
+own start schedule when you need a third timing pattern. The paint path stays
+the same. Root keeps an adapter by `id` and options, so an inline schedule
+function does not remount motion on every render.
 
 Changing cell values updates only cassettes whose resolved deck positions
-changed. Stable optional row and group IDs preserve mechanical identity when
-their order changes.
+changed. Every row must share the first row's Group, Cell, and WideCell
+structure — that is the physical board. Use another `Root` or `Grid` for a
+different layout. Stable optional row and group IDs keep cassette identity
+when those aligned rows reorder.
 
 ## Unicode decks
 
@@ -92,6 +97,12 @@ const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭�
 
 Each grapheme resolves to one independently driven character cell. Every cell
 has its own upper and lower split-flap leaves.
+
+Built-in variants are `white`, `yellow`, and `orange`. `createDeck` accepts
+any variant name; define the matching look tokens
+`--flapkit-glyph-{name}`, `--flapkit-glyph-{name}-top`, and
+`--flapkit-glyph-{name}-bottom` (the structural stylesheet already derives
+top/bottom from `--flapkit-glyph-{name}` for the built-ins).
 
 ## Double-width cassettes
 
@@ -276,18 +287,31 @@ injection.
 | `characters` | `string` or `string[]` | — | Stops. Strings split by grapheme |
 | `variants` | `Variant[]` | `['white']` | Repeats the stops per variant |
 
-### riffle / cascade
+### riffle / cascade / motion
 
 | Option | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `riffleMs` | `number` | `36` | Riffle pitch duration |
 | `startSpreadMs` | `number` | `480` | Riffle start window across the board |
-| `pitchMs` | `number` | `52` | Cascade pitch duration |
+| `pitchMs` | `number` | `52` | Cascade or custom pitch duration |
 | `rowDelayMs` | `number` | `150` | Cascade delay between rows |
 | `withinRowJitterMs` | `number` | `16` | Cascade start jitter inside a row |
 | `cadenceVariationPct` | `number` | `4` / `6` | Per-cassette timing noise |
 | `finalSettleMs` | `number` | `260` | Settle after the last pitch |
 | `finalReboundDeg` | `number` | `2` | Settle rebound angle |
+
+`motion(schedule, options)` uses the shared option names above. `schedule`
+receives the cassettes that need to start and must call `ctx.start(index, at)`.
+`timingNoise(index, salt)` is the same deterministic noise riffle and cascade
+use.
+
+```tsx
+<Flapkit.Root
+  motion={Flapkit.motion((cassettes, ctx) => {
+    cassettes.forEach((cassette) => ctx.start(cassette.index, ctx.now))
+  }, { pitchMs: 40 })}
+>
+```
 
 ### mechanicalSound
 

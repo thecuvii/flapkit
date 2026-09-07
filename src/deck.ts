@@ -1,6 +1,6 @@
 export const splitFlapVariants = ['white', 'yellow', 'orange'] as const
 
-export type Variant = (typeof splitFlapVariants)[number]
+export type Variant = (typeof splitFlapVariants)[number] | (string & {})
 export type Sequence = 'alphanumeric' | 'numeric' | 'punctuation'
 export type Position = {
   character: string

@@ -21,6 +21,7 @@ export function SplitFlapSound({
 }: SplitFlapSoundProps) {
   const controller = useSplitFlapController()
   const engineRef = useRef<SplitFlapSoundEngine | null>(null)
+  const bankKey = `${bank.clicks.join('\u0000')}\u0001${bank.settles.join('\u0000')}`
 
   useEffect(() => {
     if (!enabled) return
@@ -39,7 +40,9 @@ export function SplitFlapSound({
       engineRef.current = null
       if (prepareRef) prepareRef.current = null
     }
-  }, [bank, controller, enabled, prepareRef])
+    // bankKey is the stable identity of the URL lists; inline bank objects must not remount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bankKey, controller, enabled, prepareRef])
 
   useEffect(
     () =>

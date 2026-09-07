@@ -183,13 +183,119 @@ The React adapter unlocks audio on the first pointer or keyboard gesture. The
 framework-independent `SoundEngine` is exported from the same subpath
 for custom integrations.
 
-## Package subpaths
+## API
+
+Updates animate only cassettes whose resolved deck position changed. Motion
+engines and looks tree-shake independently, and there is no runtime style
+injection.
+
+### Package subpaths
 
 - `@thecuvii/flapkit`
 - `@thecuvii/flapkit/sound`
 - `@thecuvii/flapkit/flapkit.css`
 - `@thecuvii/flapkit/airport.css`
 - `@thecuvii/flapkit/industrial.css`
+
+### Root
+
+| Prop | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `children` | `ReactNode` | — | Board or Grid |
+| `motion` | `MotionAdapter` | — | `riffle()` or `cascade()` |
+| `sound` | `ReactElement` | — | `mechanicalSound({ bank })` |
+
+### Board
+
+| Prop | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `data-look` | `'airport' \| 'industrial'` | — | Selects an imported look |
+| `data-*` | `string` | — | Forwarded to the styling host |
+| `className` | `string` | — | Ordinary CSS and utilities |
+| `aria-label` | `string` | Split-flap display board | Accessible name |
+| `columnGap` | `number` | `0.28` | Gap inside a group, in board units |
+| `groupGap` | `number` | `0.8` | Gap between groups |
+| `rowGap` | `number` | `0.4` | Gap between rows |
+| `grainOpacity` | `number` | `0.32` | Frame grain overlay |
+| `showColumnLabels` | `boolean` | `true` | Column labels under the header |
+
+### Grid
+
+| Prop | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `data-look` | `'airport' \| 'industrial'` | — | Selects an imported look |
+| `data-*` | `string` | — | Forwarded to the styling host |
+| `className` | `string` | — | Ordinary CSS and utilities |
+| `aria-label` | `string` | Split-flap display grid | Accessible name |
+| `columnGap` | `number` | `0.28` | Gap inside a group, in board units |
+| `groupGap` | `number` | `0.8` | Gap between groups |
+| `rowGap` | `number` | `0.4` | Gap between rows |
+
+### Header
+
+| Prop | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `children` | `ReactNode` | — | Board title. Board only |
+
+### Row
+
+| Prop | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `id` | `string` | generated | Stable identity when rows reorder |
+| `label` | `string` | — | Column label when the row is one region |
+| `deck` | `Deck` | — | Stops for every cassette in the row |
+| `sequence` | `Sequence` | `alphanumeric` | Built-in deck if no custom deck |
+| `variant` | `Variant` | `white` | `white`, `yellow`, or `orange` |
+| `highlighted` | `boolean` | `false` | Lifted, brighter row |
+| `className` | `string` | — | Inherits into glyphs |
+
+### Group
+
+| Prop | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `id` | `string` | generated | Stable identity when groups reorder |
+| `label` | `string` | — | Column label for this region |
+| `deck` | `Deck` | inherited | Overrides the row deck |
+| `sequence` | `Sequence` | inherited | Overrides the row sequence |
+| `variant` | `Variant` | inherited | Overrides the row variant |
+| `className` | `string` | — | Inherits into glyphs |
+
+### Cell / WideCell
+
+| Prop | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `children` | `string` or `number` | — | Displayed graphemes. WideCell uses two |
+| `deck` | `Deck` | inherited | Overrides the group or row deck |
+| `sequence` | `Sequence` | inherited | Overrides the group or row sequence |
+| `className` | `string` | — | Size and other cell-level styles |
+
+### createDeck
+
+| Argument | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `characters` | `string` or `string[]` | — | Stops. Strings split by grapheme |
+| `variants` | `Variant[]` | `['white']` | Repeats the stops per variant |
+
+### riffle / cascade
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `riffleMs` | `number` | `36` | Riffle pitch duration |
+| `startSpreadMs` | `number` | `480` | Riffle start window across the board |
+| `pitchMs` | `number` | `52` | Cascade pitch duration |
+| `rowDelayMs` | `number` | `150` | Cascade delay between rows |
+| `withinRowJitterMs` | `number` | `16` | Cascade start jitter inside a row |
+| `cadenceVariationPct` | `number` | `4` / `6` | Per-cassette timing noise |
+| `finalSettleMs` | `number` | `260` | Settle after the last pitch |
+| `finalReboundDeg` | `number` | `2` | Settle rebound angle |
+
+### mechanicalSound
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `bank` | `SoundBank` | — | clicks and settles URL lists |
+| `enabled` | `boolean` | `true` | Connect or disconnect the engine |
+| `volume` | `number` | `0.58` | Master level |
 
 ## Development
 

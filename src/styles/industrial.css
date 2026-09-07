@@ -88,8 +88,9 @@
     --flapkit-cavity-wall-left-image: linear-gradient(90deg, #1a1c1c 0%, #070808 100%);
     --flapkit-cavity-wall-right-image: linear-gradient(90deg, #040505 0%, #121414 100%);
     --flapkit-cavity-wall-top-image: none;
-    --flapkit-cell-height: 60px;
-    --flapkit-cell-track: 30px;
+    /* Same track as Airport so both looks share one board scale; 2:1 cassette kept. */
+    --flapkit-cell-height: 41.16px;
+    --flapkit-cell-track: 20.58px;
     --flapkit-column-label-color: #8b8d8b;
     --flapkit-compact-cover-detail:
       linear-gradient(

@@ -550,39 +550,107 @@ h2 {
   outline-offset: 4px;
 }
 
-.composition-preview[data-explode] .flapkit-grid {
-  perspective: 900px;
-  perspective-origin: 50% 45%;
+/* Exploded anatomy. The perspective lives on the grid; every layer between the
+   grid and a cassette must preserve 3D or translateZ flattens to nothing. */
+.composition-preview .flapkit-grid {
+  perspective: 1100px;
+  perspective-origin: 50% 40%;
   transform-style: preserve-3d;
 }
 
-.composition-preview[data-explode] .flapkit-departure-row,
-.composition-preview[data-explode] .flapkit-departure-group {
+.composition-preview :is(
+    .flapkit-departure-row,
+    .flapkit-departure-group,
+    .flapkit-departure-group-scale-context,
+    .flapkit-departure-group-grid
+  ) {
   transform-style: preserve-3d;
 }
 
-.composition-preview[data-explode] .flapkit-departure-row,
-.composition-preview[data-explode] .flapkit-departure-group,
-.composition-preview[data-explode] [data-slot='cassette'] {
-  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+/* Settle faster than lift so the board snaps back under the pointer. */
+.composition-preview :is(.flapkit-departure-row, .flapkit-departure-group, [data-slot='cassette']) {
+  --lift-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms ease,
+    filter 200ms ease;
 }
 
+.composition-preview[data-explode] :is(
+    .flapkit-departure-row,
+    .flapkit-departure-group,
+    [data-slot='cassette']
+  ) {
+  transition-duration: 320ms;
+}
+
+.composition-preview .flapkit-departure-row {
+  box-shadow: var(--flapkit-row-shadow), var(--lift-shadow);
+}
+
+.composition-preview .flapkit-departure-group {
+  box-shadow: var(--lift-shadow);
+}
+
+.composition-preview [data-slot='cassette'] {
+  box-shadow: var(--flapkit-cassette-shadow), var(--lift-shadow);
+}
+
+/* Row: fan the records into separate planes, top row nearest. */
 .composition-preview[data-explode='row'] .flapkit-departure-row {
-  transform: translateZ(70px);
+  --lift-shadow: 0 6px 14px rgba(0, 0, 0, 0.55);
+  transform: translate3d(0, calc((var(--row-index) - 1.5) * 5px), calc(64px - var(--row-index) * 12px));
 }
 
-.composition-preview[data-explode='group'] .flapkit-departure-group:first-child {
-  transform: translate3d(-14px, 0, 52px);
+.composition-preview .flapkit-departure-row:nth-child(1) {
+  --row-index: 0;
+}
+.composition-preview .flapkit-departure-row:nth-child(2) {
+  --row-index: 1;
+}
+.composition-preview .flapkit-departure-row:nth-child(3) {
+  --row-index: 2;
+}
+.composition-preview .flapkit-departure-row:nth-child(4) {
+  --row-index: 3;
 }
 
-.composition-preview[data-explode='group'] .flapkit-departure-group:last-child {
-  transform: translate3d(14px, 0, 52px);
+/* Group: lift every region and spread them from the row center. */
+.composition-preview[data-explode='group'] .flapkit-departure-group {
+  --lift-shadow: 0 5px 12px rgba(0, 0, 0, 0.6);
+  transform: translate3d(calc((var(--group-index) - 2) * 9px), 0, 48px);
 }
 
+.composition-preview .flapkit-departure-group:nth-child(1) {
+  --group-index: 0;
+}
+.composition-preview .flapkit-departure-group:nth-child(2) {
+  --group-index: 1;
+}
+.composition-preview .flapkit-departure-group:nth-child(3) {
+  --group-index: 2;
+}
+.composition-preview .flapkit-departure-group:nth-child(4) {
+  --group-index: 3;
+}
+.composition-preview .flapkit-departure-group:nth-child(5) {
+  --group-index: 4;
+}
+
+/* Cell: lift one cassette, recede everything else. */
 .composition-preview[data-explode='cell']
+  .flapkit-departure-row:first-child
   .flapkit-departure-group:first-child
   [data-slot='cassette']:first-child {
-  transform: translate3d(-8px, -10px, 64px);
+  --lift-shadow: 0 8px 18px rgba(0, 0, 0, 0.65);
+  transform: translate3d(-6px, -8px, 72px);
+}
+
+.composition-preview[data-explode='cell'] .flapkit-departure-row:not(:first-child),
+.composition-preview[data-explode='cell']
+  .flapkit-departure-row:first-child
+  .flapkit-departure-group:not(:first-child) {
+  filter: brightness(0.62);
 }
 
 .operations-board {
@@ -675,8 +743,10 @@ h2 {
     .flapkit-departure-group,
     [data-slot='cassette']
   ) {
+    --lift-shadow: 0 0 0 rgba(0, 0, 0, 0) !important;
     transform: none !important;
     transition: none !important;
+    filter: none !important;
   }
 }
 

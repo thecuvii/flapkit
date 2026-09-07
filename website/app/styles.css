@@ -550,17 +550,29 @@ h2 {
   outline-offset: 4px;
 }
 
-/* Exploded anatomy. The perspective lives on the grid; every layer between the
-   grid and a cassette must preserve 3D or translateZ flattens to nothing. */
-/* Lift is budgeted so lifted layers stay inside the board frame padding (26px);
-   the board clips with overflow: hidden. Growth ≈ z / (perspective − z). */
-.composition-preview .flapkit-grid {
-  perspective: 1400px;
-  perspective-origin: 50% 50%;
+/* Exploded anatomy. The camera sits on the scale wrapper; the board tilts into a
+   3/4 view and stays preserve-3d all the way down to the cassette, so translateZ
+   lifts layers off the board plane instead of scaling them in place. The board
+   must be overflow: visible here, otherwise it flattens its 3D context. */
+.composition-preview .quick-start-board-scale {
+  perspective: 1600px;
+  perspective-origin: 50% 40%;
+}
+
+.composition-preview .flapkit-board {
+  overflow: visible;
   transform-style: preserve-3d;
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.composition-preview[data-explode] .flapkit-board {
+  transform: rotateX(26deg) rotateY(-18deg);
+  transition-duration: 420ms;
 }
 
 .composition-preview :is(
+    .flapkit-board-content,
+    .flapkit-grid,
     .flapkit-departure-row,
     .flapkit-departure-group,
     .flapkit-departure-group-scale-context,
@@ -573,9 +585,9 @@ h2 {
 .composition-preview :is(.flapkit-departure-row, .flapkit-departure-group, [data-slot='cassette']) {
   --lift-shadow: 0 0 0 rgba(0, 0, 0, 0);
   transition:
-    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 200ms ease,
-    filter 200ms ease;
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms ease,
+    filter 260ms ease;
 }
 
 .composition-preview[data-explode] :is(
@@ -583,7 +595,7 @@ h2 {
     .flapkit-departure-group,
     [data-slot='cassette']
   ) {
-  transition-duration: 320ms;
+  transition-duration: 420ms;
 }
 
 .composition-preview .flapkit-departure-row {
@@ -598,10 +610,10 @@ h2 {
   box-shadow: var(--flapkit-cassette-shadow), var(--lift-shadow);
 }
 
-/* Row: fan the records into separate planes, top row nearest. */
+/* Row: stack the records as separate plates, top row highest. */
 .composition-preview[data-explode='row'] .flapkit-departure-row {
-  --lift-shadow: 0 5px 12px rgba(0, 0, 0, 0.55);
-  transform: translate3d(0, calc((var(--row-index) - 1.5) * 4px), calc(56px - var(--row-index) * 10px));
+  --lift-shadow: 0 10px 22px rgba(0, 0, 0, 0.6);
+  transform: translateZ(calc(96px - var(--row-index) * 18px));
 }
 
 .composition-preview .flapkit-departure-row:nth-child(1) {
@@ -617,26 +629,18 @@ h2 {
   --row-index: 3;
 }
 
-/* Group: lift every region and spread them from the row center. */
+/* Group: lift every region as its own plate, alternating heights so
+   neighbours read as separate parts. */
 .composition-preview[data-explode='group'] .flapkit-departure-group {
-  --lift-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
-  transform: translate3d(calc((var(--group-index) - 2) * 4px), 0, 40px);
+  --lift-shadow: 0 8px 18px rgba(0, 0, 0, 0.62);
+  transform: translateZ(var(--group-z));
 }
 
-.composition-preview .flapkit-departure-group:nth-child(1) {
-  --group-index: 0;
+.composition-preview .flapkit-departure-group:nth-child(odd) {
+  --group-z: 64px;
 }
-.composition-preview .flapkit-departure-group:nth-child(2) {
-  --group-index: 1;
-}
-.composition-preview .flapkit-departure-group:nth-child(3) {
-  --group-index: 2;
-}
-.composition-preview .flapkit-departure-group:nth-child(4) {
-  --group-index: 3;
-}
-.composition-preview .flapkit-departure-group:nth-child(5) {
-  --group-index: 4;
+.composition-preview .flapkit-departure-group:nth-child(even) {
+  --group-z: 86px;
 }
 
 /* Cell: lift one cassette, recede everything else. */
@@ -644,8 +648,8 @@ h2 {
   .flapkit-departure-row:first-child
   .flapkit-departure-group:first-child
   [data-slot='cassette']:first-child {
-  --lift-shadow: 0 7px 16px rgba(0, 0, 0, 0.65);
-  transform: translate3d(-4px, -6px, 72px);
+  --lift-shadow: 0 12px 26px rgba(0, 0, 0, 0.66);
+  transform: translateZ(110px);
 }
 
 .composition-preview[data-explode='cell'] .flapkit-departure-row:not(:first-child),
@@ -741,6 +745,7 @@ h2 {
   }
 
   .composition-preview[data-explode] :is(
+    .flapkit-board,
     .flapkit-departure-row,
     .flapkit-departure-group,
     [data-slot='cassette']

@@ -555,13 +555,15 @@ h2 {
    separation. The board stays preserve-3d all the way down to the cassette, so
    translateZ pulls parts off the board plane instead of scaling them in place.
    The board must be overflow: visible here, otherwise it flattens its 3D
-   context. */
-.composition-preview .quick-start-board-scale {
+   context. All of this is keyed on [data-scene], which the component keeps on
+   for the settle duration after hover ends; an idle board is fully flat so the
+   frame's blend modes (grain overlay) keep compositing normally. */
+.composition-preview[data-scene] .quick-start-board-scale {
   perspective: 2200px;
   perspective-origin: 50% 50%;
 }
 
-.composition-preview .flapkit-board {
+.composition-preview[data-scene] .flapkit-board {
   overflow: visible;
   transform-style: preserve-3d;
 }
@@ -614,7 +616,7 @@ h2 {
   opacity: 0 !important;
 }
 
-.composition-preview :is(
+.composition-preview[data-scene] :is(
     .flapkit-board-content,
     .flapkit-grid,
     .flapkit-departure-row,

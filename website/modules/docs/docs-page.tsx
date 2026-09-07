@@ -790,8 +790,23 @@ const anatomyParts = [
 
 type AnatomyPartId = (typeof anatomyParts)[number]['id']
 
+const compositionSettleMs = 320
+
 function CompositionSection({ html }: { html: string }) {
   const [hover, setHover] = useState<AnatomyPartId | null>(null)
+  const explode = hover === 'row' || hover === 'group' || hover === 'cell' ? hover : undefined
+  // The 3D scene (preserve-3d, overflow visible) must outlive the explode by the
+  // settle duration, or parts snap flat mid-transition. Idle boards stay flat so
+  // blend modes on the frame keep working.
+  const [scene, setScene] = useState(false)
+  useEffect(() => {
+    if (explode) {
+      setScene(true)
+      return
+    }
+    const timer = window.setTimeout(() => setScene(false), compositionSettleMs)
+    return () => window.clearTimeout(timer)
+  }, [explode])
 
   return (
     <DocsSection
@@ -801,7 +816,8 @@ function CompositionSection({ html }: { html: string }) {
       preview={
         <div
           className={cn('composition-preview', 'relative grid w-full')}
-          data-explode={hover === 'row' || hover === 'group' || hover === 'cell' ? hover : undefined}
+          data-explode={explode}
+          data-scene={scene ? '' : undefined}
         >
           <DepartureBoard look="airport" motion="riffle" frame header />
         </div>

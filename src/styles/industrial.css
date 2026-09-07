@@ -25,7 +25,8 @@
     --flapkit-board-shadow:
       0 0 0 1px #050606, 0 1px 0 rgba(255, 255, 255, 0.05) inset,
       1px 0 0 rgba(255, 255, 255, 0.022) inset, 0 -2px 4px rgba(0, 0, 0, 0.5) inset,
-      0 5px 13px rgba(0, 0, 0, 0.72), 0 22px 54px rgba(0, 0, 0, 0.4);
+      0 1px 1.5px rgba(0, 0, 0, 0.46), 0 3px 7px rgba(0, 0, 0, 0.28),
+      0 10px 22px rgba(0, 0, 0, 0.16);
     --flapkit-board-sheen:
       radial-gradient(ellipse 48% 19% at 31% 16%, rgba(255, 255, 255, 0.022), transparent 76%),
       radial-gradient(ellipse 24% 62% at 76% 54%, rgba(0, 0, 0, 0.16), transparent 78%),

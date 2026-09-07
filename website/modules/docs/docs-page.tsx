@@ -208,7 +208,7 @@ function Logo() {
 
   return (
     <a
-      className="mb-9 inline-flex items-center gap-[9px] text-[13px] tracking-[0.02em] text-ink max-[860px]:mb-0"
+      className="mb-9 inline-flex items-center gap-[9px] font-display text-[15px] font-semibold tracking-[0.04em] text-ink max-[860px]:mb-0"
       href="#quick-start"
       aria-label="Flapkit documentation home"
       onClick={(event) => onNavClick(event, 'quick-start')}
@@ -544,7 +544,7 @@ function DocsNav() {
     >
       {navigation.map((group) => (
         <div key={group.label} className="grid min-w-0 gap-0.5 max-[860px]:contents">
-          <p className="mb-1 text-[10px] font-[650] tracking-[0.08em] text-[color-mix(in_oklch,var(--faint)_62%,var(--paper))] uppercase max-[860px]:hidden">
+          <p className="mb-1 font-display text-[11px] font-semibold tracking-[0.1em] text-[color-mix(in_oklch,var(--faint)_62%,var(--paper))] uppercase max-[860px]:hidden">
             {group.label}
           </p>
           {group.items.map(([label, id]) => (
@@ -564,7 +564,7 @@ function DocsNavLink({ href, label }: { href: SectionId; label: string }) {
     <a
       href={`#${href}`}
       className={cn(
-        'grid w-fit max-w-full grid-cols-[8px_minmax(0,1fr)] items-center gap-2 py-1 text-xs font-medium tracking-[0.02em] text-faint [overflow-wrap:anywhere] hover:text-ink',
+        'grid w-fit max-w-full grid-cols-[8px_minmax(0,1fr)] items-center gap-2 py-1 font-display text-[15px] font-semibold uppercase tracking-[0.06em] text-faint [overflow-wrap:anywhere] hover:text-ink',
         'max-[860px]:inline-flex max-[860px]:shrink-0 max-[860px]:py-[5px]',
         isActive && 'text-ink',
       )}

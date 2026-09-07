@@ -1,5 +1,5 @@
 @layer flapkit {
-  :where(.flapkit-industrial) {
+  :where([data-look='industrial'], .flapkit-industrial) {
     color: #f1f1ed;
     font-family: var(--flapkit-glyph-font-family);
     font-stretch: normal;
@@ -222,27 +222,27 @@
     );
   }
 
-  :where(.flapkit-industrial) :where(.flapkit-cavity-back-plane) {
+  :where([data-look='industrial'], .flapkit-industrial) :where(.flapkit-cavity-back-plane) {
     background-color: #050606;
     background-image: linear-gradient(180deg, #040505 0%, #070808 100%);
     box-shadow: none;
   }
 
-  :where(.flapkit-industrial) :where(.flapkit-cavity-wall-top) {
+  :where([data-look='industrial'], .flapkit-industrial) :where(.flapkit-cavity-wall-top) {
     background-color: #080909;
     background-image: none;
   }
 
-  :where(.flapkit-industrial) :where(.flapkit-cavity-wall-bottom) {
+  :where([data-look='industrial'], .flapkit-industrial) :where(.flapkit-cavity-wall-bottom) {
     background-color: #080909;
     background-image: none;
   }
 
-  :where(.flapkit-industrial) :where(.flapkit-spare-leaf-plate) {
+  :where([data-look='industrial'], .flapkit-industrial) :where(.flapkit-spare-leaf-plate) {
     filter: none !important;
   }
 
-  :where(.flapkit-industrial) [data-split-flap-script='cjk'] {
+  :where([data-look='industrial'], .flapkit-industrial) [data-split-flap-script='cjk'] {
     --flapkit-active-detailed-glyph-y: var(--flapkit-cjk-detailed-glyph-y);
     --flapkit-active-glyph-scale-y: var(--flapkit-cjk-glyph-scale-y);
     --flapkit-active-glyph-width: var(--flapkit-cjk-glyph-width);

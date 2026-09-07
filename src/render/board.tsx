@@ -60,7 +60,15 @@ const BoardGrain = memo(function BoardGrain({ opacity }: { opacity: number }) {
   )
 })
 
-export type BoardViewProps = {
+/**
+ * Consumer-owned `data-*` attributes forwarded to the styling host.
+ * Looks are selected this way: `data-look="airport"` matches `airport.css`.
+ */
+export type DataAttributes = {
+  [key: `data-${string}`]: string | number | boolean | undefined
+}
+
+export type BoardViewProps = DataAttributes & {
   'aria-label'?: string
   children?: ReactNode
   className?: string
@@ -72,7 +80,7 @@ export type BoardViewProps = {
   style?: CSSProperties
 }
 
-export type GridViewProps = {
+export type GridViewProps = DataAttributes & {
   'aria-label'?: string
   className?: string
   columnGap?: number
@@ -134,12 +142,14 @@ export function GridView({
   groupGap = 0.8,
   rowGap = 0.4,
   style,
+  ...dataAttributes
 }: GridViewProps) {
   const { layout } = useSplitFlap()
   const gridProps = classProps(styles.standaloneGrid)
 
   return (
     <figure
+      {...dataAttributes}
       {...gridProps}
       aria-label={ariaLabel}
       className={[gridProps.className, className].filter(Boolean).join(' ')}
@@ -166,6 +176,7 @@ export function BoardView({
   rowGap = 0.4,
   showColumnLabels = true,
   style,
+  ...dataAttributes
 }: BoardViewProps) {
   const { layout } = useSplitFlap()
   const hasHeader = children !== undefined && children !== null
@@ -181,6 +192,7 @@ export function BoardView({
 
   return (
     <figure
+      {...dataAttributes}
       {...boardProps}
       aria-label={ariaLabel}
       className={[boardProps.className, className].filter(Boolean).join(' ')}

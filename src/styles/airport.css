@@ -1,5 +1,5 @@
 @layer flapkit {
-  :where(.flapkit-airport) {
+  :where([data-look='airport'], .flapkit-airport) {
     color: #e8e5d7;
     font-family: var(--flapkit-glyph-font-family);
     font-stretch: normal;

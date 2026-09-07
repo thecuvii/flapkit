@@ -34,7 +34,7 @@ const statusDeck = Flapkit.createDeck(' BOARDING', ['white', 'yellow'])
 export function Departures() {
   return (
     <Flapkit.Root motion={Flapkit.riffle()}>
-      <Flapkit.Board className="flapkit-airport departures-board">
+      <Flapkit.Board data-look="airport" className="departures-board">
         <Flapkit.Header>Departures</Flapkit.Header>
         <Flapkit.Row highlighted>
           <Flapkit.Group label="TIME">
@@ -113,9 +113,10 @@ cannot mix `Cell` and `WideCell`; place different widths in adjacent Groups.
 
 ## Looks and CSS customization
 
-Looks are separate CSS subpaths. Apply their scoped class directly to the
-`Board` or `Grid` styling host; `className` is preserved alongside
-Flapkit's structural classes.
+Looks are separate CSS subpaths. Select one with `data-look` on the `Board` or
+`Grid` styling host; any `data-*` attribute and `className` are forwarded to
+that host alongside Flapkit's structural classes. The legacy `flapkit-airport`
+and `flapkit-industrial` classes still work.
 
 ```tsx
 import * as Flapkit from '@thecuvii/flapkit'
@@ -125,7 +126,7 @@ import '@thecuvii/flapkit/industrial.css'
 export function Operations() {
   return (
     <Flapkit.Root motion={Flapkit.cascade()}>
-      <Flapkit.Board className="flapkit-industrial operations-board">
+      <Flapkit.Board data-look="industrial" className="operations-board">
         <Flapkit.Row className="font-mono" label="STATUS">
           <Flapkit.Cell className="text-xl font-bold">A</Flapkit.Cell>
         </Flapkit.Row>

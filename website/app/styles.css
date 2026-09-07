@@ -552,9 +552,11 @@ h2 {
 
 /* Exploded anatomy. The perspective lives on the grid; every layer between the
    grid and a cassette must preserve 3D or translateZ flattens to nothing. */
+/* Lift is budgeted so lifted layers stay inside the board frame padding (26px);
+   the board clips with overflow: hidden. Growth ≈ z / (perspective − z). */
 .composition-preview .flapkit-grid {
-  perspective: 1100px;
-  perspective-origin: 50% 40%;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
   transform-style: preserve-3d;
 }
 
@@ -598,8 +600,8 @@ h2 {
 
 /* Row: fan the records into separate planes, top row nearest. */
 .composition-preview[data-explode='row'] .flapkit-departure-row {
-  --lift-shadow: 0 6px 14px rgba(0, 0, 0, 0.55);
-  transform: translate3d(0, calc((var(--row-index) - 1.5) * 5px), calc(64px - var(--row-index) * 12px));
+  --lift-shadow: 0 5px 12px rgba(0, 0, 0, 0.55);
+  transform: translate3d(0, calc((var(--row-index) - 1.5) * 4px), calc(56px - var(--row-index) * 10px));
 }
 
 .composition-preview .flapkit-departure-row:nth-child(1) {
@@ -617,8 +619,8 @@ h2 {
 
 /* Group: lift every region and spread them from the row center. */
 .composition-preview[data-explode='group'] .flapkit-departure-group {
-  --lift-shadow: 0 5px 12px rgba(0, 0, 0, 0.6);
-  transform: translate3d(calc((var(--group-index) - 2) * 9px), 0, 48px);
+  --lift-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  transform: translate3d(calc((var(--group-index) - 2) * 4px), 0, 40px);
 }
 
 .composition-preview .flapkit-departure-group:nth-child(1) {
@@ -642,8 +644,8 @@ h2 {
   .flapkit-departure-row:first-child
   .flapkit-departure-group:first-child
   [data-slot='cassette']:first-child {
-  --lift-shadow: 0 8px 18px rgba(0, 0, 0, 0.65);
-  transform: translate3d(-6px, -8px, 72px);
+  --lift-shadow: 0 7px 16px rgba(0, 0, 0, 0.65);
+  transform: translate3d(-4px, -6px, 72px);
 }
 
 .composition-preview[data-explode='cell'] .flapkit-departure-row:not(:first-child),

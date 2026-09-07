@@ -97,6 +97,8 @@ export type SplitFlapView = {
   movingVane: HTMLSpanElement
   outgoingLower: HTMLSpanElement
   outgoingLowerGlyph: HTMLSpanElement
+  /** Owned by the controller: the last phase rendered into this view. */
+  phase?: string
   root: HTMLSpanElement
   spareLeafPack: HTMLSpanElement
 }
@@ -153,12 +155,36 @@ function setGlyphScript(element: HTMLElement, glyph: string) {
   }
 }
 
+type GlyphTarget =
+  | { kind: 'compact' }
+  | { kind: 'text' }
+  | { kind: 'wide'; parts: HTMLElement[] }
+
+// The glyph element's shape is fixed for its lifetime; resolve it once instead of per pitch.
+const glyphTargets = new WeakMap<HTMLElement, GlyphTarget>()
+
+function glyphTarget(element: HTMLSpanElement): GlyphTarget {
+  let target = glyphTargets.get(element)
+  if (!target) {
+    target = element.hasAttribute('data-split-flap-wide-glyph')
+      ? {
+          kind: 'wide',
+          parts: Array.from(element.querySelectorAll<HTMLElement>('[data-split-flap-glyph-part]')),
+        }
+      : element.hasAttribute('data-split-flap-compact-glyph')
+        ? { kind: 'compact' }
+        : { kind: 'text' }
+    glyphTargets.set(element, target)
+  }
+  return target
+}
+
 function setGlyph(element: HTMLSpanElement, character: string) {
   const glyph = character.trim() === '' ? '' : character
-  if (element.hasAttribute('data-split-flap-wide-glyph')) {
-    const glyphParts = element.querySelectorAll<HTMLElement>('[data-split-flap-glyph-part]')
+  const target = glyphTarget(element)
+  if (target.kind === 'wide') {
     const graphemes = splitFlapGraphemes(glyph)
-    glyphParts.forEach((part, index) => {
+    target.parts.forEach((part, index) => {
       const partGlyph = graphemes[index] ?? ''
       setGlyphScript(part, partGlyph)
       if (part.textContent !== partGlyph) part.textContent = partGlyph
@@ -166,7 +192,7 @@ function setGlyph(element: HTMLSpanElement, character: string) {
     return
   }
   setGlyphScript(element, glyph)
-  if (element.hasAttribute('data-split-flap-compact-glyph')) {
+  if (target.kind === 'compact') {
     if (element.dataset.glyph !== glyph) element.dataset.glyph = glyph
     return
   }
@@ -177,13 +203,30 @@ export function splitFlapVariantVariable(variant: Variant, lower: boolean) {
   return `var(--flapkit-glyph-${variant}-${lower ? 'bottom' : 'top'})`
 }
 
+// Last value written per element and property; skips redundant style invalidations.
+const writtenStyles = new WeakMap<HTMLElement, Record<string, string>>()
+
+function writeStyle(element: HTMLElement, property: string, value: string) {
+  let written = writtenStyles.get(element)
+  if (!written) {
+    written = {}
+    writtenStyles.set(element, written)
+  }
+  if (written[property] === value) return
+  written[property] = value
+  if (property.startsWith('--')) {
+    element.style.setProperty(property, value)
+  } else {
+    element.style[property as 'opacity' | 'transform'] = value
+  }
+}
+
 function setGlyphPosition(element: HTMLSpanElement, position: Position, lower: boolean) {
   setGlyph(element, position.character)
-  element.style.setProperty(
-    activeGlyphColorProperty,
-    splitFlapVariantVariable(position.variant, lower),
-  )
+  writeStyle(element, activeGlyphColorProperty, splitFlapVariantVariable(position.variant, lower))
 }
+
+const idleTransform = 'translate3d(0, 0, 0) rotateX(0deg)'
 
 export class SplitFlapMotionController implements SplitFlapMechanicalEventSource {
   private activeCssCassettes = new Set<number>()
@@ -649,13 +692,13 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
 
     if (!runtime.didImpact) {
       runtime.views.forEach((view) => {
-        if (view.root.dataset.splitFlapPhase === 'waiting') {
-          view.root.dataset.splitFlapPhase = runtime.finalPitch ? 'settle' : 'riffle'
-        }
+        if (view.phase === 'waiting') view.phase = runtime.finalPitch ? 'settle' : 'riffle'
       })
     }
     const pitchHalf = elapsed / runtime.duration <= 0.5 ? 'outgoing' : 'incoming'
     runtime.views.forEach((view) => {
+      // Only the detailed 3D vane has CSS keyed on the pitch half; compact roots stay untouched.
+      if (view.compact) return
       if (view.root.dataset.pitchHalf !== pitchHalf) view.root.dataset.pitchHalf = pitchHalf
     })
     if (elapsed >= runtime.impactAt && !runtime.didImpact) this.emitImpact(runtime)
@@ -667,7 +710,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     runtime.views.forEach((view) => {
       // The vane has landed flat over the lower half, so the swap is invisible.
       setGlyphPosition(view.outgoingLowerGlyph, nextPosition, true)
-      view.root.dataset.splitFlapPhase = 'impact'
+      view.phase = 'impact'
     })
   }
 
@@ -720,26 +763,25 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     const position = runtime.positions[runtime.currentIndex]
 
     this.cancelViewAnimations(view)
-    view.spareLeafPack.style.setProperty(stackShiftProperty, '0px')
     setGlyphPosition(view.outgoingLowerGlyph, position, true)
     setGlyphPosition(view.arrivingUpperGlyph, position, false)
-    // A hidden compact vane is refreshed when it activates, so skip its glyphs while dormant.
+    writeStyle(view.outgoingLower, 'opacity', '1')
+    writeStyle(view.arrivingUpper, 'opacity', '1')
+    // Compact faces never rotate and the compact vane stays display:none while dormant. Writing
+    // 3D transforms onto them only forces a compositor layer per idle cassette, so only the
+    // detailed view (or a promoted compact view) receives the vane reset.
     if (!view.compact || view.compactMotion) {
+      writeStyle(view.spareLeafPack, stackShiftProperty, '0px')
       setGlyphPosition(view.movingFrontGlyph, position, false)
       setGlyphPosition(view.movingBackGlyph, position, true)
+      writeStyle(view.outgoingLower, 'transform', idleTransform)
+      writeStyle(view.arrivingUpper, 'transform', idleTransform)
+      writeStyle(view.movingVane, 'opacity', '0')
+      writeStyle(view.movingVane, 'transform', idleTransform)
+      if (!view.compact) writeStyle(view.movingVane, specularProperty, '0')
+      delete view.root.dataset.pitchHalf
     }
-    view.outgoingLower.style.opacity = '1'
-    view.outgoingLower.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
-    view.arrivingUpper.style.opacity = '1'
-    view.arrivingUpper.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
-    view.movingVane.style.opacity = '0'
-    view.movingVane.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
-    if (!view.compact) view.movingVane.style.setProperty(specularProperty, '0')
-    view.root.dataset.displayedCharacter =
-      position.character.trim() === '' ? 'blank' : position.character
-    view.root.dataset.splitFlapPhase = phase
-    delete view.root.dataset.pitchHalf
-    view.root.dataset.variant = position.variant
+    view.phase = phase
   }
 
   private renderScrubbedPitchView(
@@ -769,7 +811,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     runtime.finalPitch = settle
     runtime.pitchStart = performance.now() - progress * runtime.duration
     this.animatePitchView(runtime, view, performance.now(), progress)
-    view.root.dataset.splitFlapPhase = 'scrub'
+    view.phase = 'scrub'
   }
 
   private animatePitchView(
@@ -797,14 +839,9 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
         )
         setGlyphPosition(view.arrivingUpperGlyph, nextPosition, false)
       }
-      view.outgoingLower.style.opacity = '1'
-      view.arrivingUpper.style.opacity = '1'
-      view.root.dataset.displayedCharacter =
-        currentPosition.character.trim() === '' ? 'blank' : currentPosition.character
-      view.root.dataset.splitFlapPhase =
-        delay > 0 ? 'waiting' : runtime.finalPitch ? 'settle' : 'riffle'
-      view.root.dataset.pitchHalf = pitchProgress <= 0.5 ? 'outgoing' : 'incoming'
-      view.root.dataset.variant = currentPosition.variant
+      writeStyle(view.outgoingLower, 'opacity', '1')
+      writeStyle(view.arrivingUpper, 'opacity', '1')
+      view.phase = delay > 0 ? 'waiting' : runtime.finalPitch ? 'settle' : 'riffle'
       return
     }
 
@@ -822,17 +859,13 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
 
     setGlyphPosition(view.movingFrontGlyph, currentPosition, false)
     setGlyphPosition(view.movingBackGlyph, nextPosition, true)
-    view.outgoingLower.style.opacity = '1'
-    view.outgoingLower.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
-    view.arrivingUpper.style.opacity = '1'
-    view.arrivingUpper.style.transform = 'translate3d(0, 0, 0) rotateX(0deg)'
-    view.movingVane.style.opacity = '1'
-    view.root.dataset.displayedCharacter =
-      currentPosition.character.trim() === '' ? 'blank' : currentPosition.character
-    view.root.dataset.splitFlapPhase =
-      delay > 0 ? 'waiting' : runtime.finalPitch ? 'settle' : 'riffle'
+    writeStyle(view.outgoingLower, 'opacity', '1')
+    writeStyle(view.outgoingLower, 'transform', idleTransform)
+    writeStyle(view.arrivingUpper, 'opacity', '1')
+    writeStyle(view.arrivingUpper, 'transform', idleTransform)
+    writeStyle(view.movingVane, 'opacity', '1')
+    view.phase = delay > 0 ? 'waiting' : runtime.finalPitch ? 'settle' : 'riffle'
     view.root.dataset.pitchHalf = pitchProgress <= 0.5 ? 'outgoing' : 'incoming'
-    view.root.dataset.variant = currentPosition.variant
 
     const specularPeak = Math.min(1, this.motion.specularStrength * 0.72)
     const vaneKeyframes: Keyframe[] = runtime.finalPitch
@@ -900,7 +933,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
             [specularProperty]: 0,
           },
         ]
-    view.movingVane.style.setProperty(specularProperty, '0')
+    writeStyle(view.movingVane, specularProperty, '0')
 
     this.playViewAnimation(view, 0, view.movingVane, vaneKeyframes, timing, elapsed, paused)
     this.playViewAnimation(

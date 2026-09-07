@@ -37,7 +37,6 @@
         transparent 5.9cqw 11.8cqw
       );
     --flapkit-board-unit: 8px;
-    --flapkit-bottom-edge-highlight: rgb(255 255 255 / 0.08);
     --flapkit-bottom-face-color: #111313;
     --flapkit-bottom-face-shadow:
       0 0.02cqw 0 rgba(255, 255, 255, 0.018) inset, 0 -0.12cqw 0.2cqw rgba(0, 0, 0, 0.34) inset;
@@ -51,23 +50,6 @@
     --flapkit-cassette-background-image:
       linear-gradient(180deg, rgba(255, 255, 255, 0.026) 0%, transparent 24%),
       linear-gradient(112deg, #1a1c1c 0%, #111313 58%, #0b0c0c 100%);
-    --flapkit-cassette-bezel-image:
-      linear-gradient(
-        90deg,
-        rgba(74, 76, 76, 0.5) 0,
-        rgba(0, 0, 0, 0.96) 0.06cqw,
-        rgba(0, 0, 0, 0.44) 0.14cqw,
-        transparent 0.3cqw
-      ),
-      linear-gradient(
-        270deg,
-        rgba(66, 68, 68, 0.44) 0,
-        rgba(0, 0, 0, 0.94) 0.06cqw,
-        rgba(0, 0, 0, 0.38) 0.14cqw,
-        transparent 0.28cqw
-      ),
-      linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0, transparent 0.22cqw),
-      linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0, transparent 0.28cqw);
     --flapkit-cassette-radius: 0.02cqw;
     --flapkit-cassette-shadow:
       -0.02cqw 0 0 rgba(255, 255, 255, 0.035), 0.045cqw 0.06cqw 0.11cqw rgba(0, 0, 0, 0.78),
@@ -120,37 +102,6 @@
         transparent 7.45%
       );
     --flapkit-compact-half-cell: 7.27cqw;
-    --flapkit-compact-hardware-background:
-      radial-gradient(
-        ellipse at 39% 28%,
-        rgba(255, 255, 255, 0.09) 0 9%,
-        rgba(47, 49, 49, 0.72) 19%,
-        rgba(6, 7, 7, 0.99) 67%,
-        #010202 100%
-      ),
-      radial-gradient(
-        ellipse at 39% 28%,
-        rgba(255, 255, 255, 0.09) 0 9%,
-        rgba(47, 49, 49, 0.72) 19%,
-        rgba(6, 7, 7, 0.99) 67%,
-        #010202 100%
-      ),
-      linear-gradient(
-        90deg,
-        rgba(1 2 2 / calc(0.98 * var(--compact-seam-base-opacity) * var(--compact-seam-visibility)))
-          0%,
-        rgba(
-            10 11 11 /
-              calc(0.94 * var(--compact-seam-base-opacity) * var(--compact-seam-visibility))
-          )
-          38%,
-        rgba(3 4 4 / calc(var(--compact-seam-base-opacity) * var(--compact-seam-visibility))) 78%,
-        rgba(1 2 2 / calc(0.97 * var(--compact-seam-base-opacity) * var(--compact-seam-visibility)))
-          100%
-      );
-    --flapkit-compact-hardware-position: calc(7% + 0.3cqw) 55%, calc(93% - 0.3cqw) 55%, center 55%;
-    --flapkit-compact-hardware-size:
-      0.58cqw 1.62cqw, 0.58cqw 1.62cqw, calc(86% - 0.2cqw) var(--compact-seam-height);
     --flapkit-cover-bottom-background: linear-gradient(
       180deg,
       rgba(0, 0, 0, 0.42) 0,
@@ -186,7 +137,6 @@
     --flapkit-frame-left: 27px;
     --flapkit-frame-right: 26px;
     --flapkit-frame-top: 17px;
-    --flapkit-glyph-color: #e6e6e1;
     --flapkit-glyph-font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
     --flapkit-glyph-font-weight: 700;
     --flapkit-glyph-orange: #cf9138;
@@ -196,7 +146,6 @@
     --flapkit-glyph-tracking: -0.018em;
     --flapkit-glyph-white: currentColor;
     --flapkit-glyph-scale-y: 0.78;
-    --flapkit-glyph-shadow: 0 0 0.05cqw rgba(255, 255, 255, 0.05);
     --flapkit-glyph-width: 0.88;
     --flapkit-glyph-y: -0.22cqw;
     --flapkit-detailed-glyph-y: 1.4cqw;
@@ -240,15 +189,11 @@
     --flapkit-row-shadow:
       0 0.05cqw 0 rgba(255, 255, 255, 0.012) inset, 0 0.14cqw 0.24cqw rgba(0, 0, 0, 0.34) inset,
       0 0.1cqw 0.16cqw rgba(0, 0, 0, 0.54);
-    --flapkit-seam-color: rgba(0, 0, 0, 0.62);
     --flapkit-seam-opacity: 0.94;
     --flapkit-seam-thickness: 0.18cqw;
     --flapkit-spare-leaf-base-color: #0a0b0b;
     --flapkit-spare-leaf-border-color: rgb(0 0 0 / 0.28);
     --flapkit-spare-leaf-border-width: 0.03cqw;
-    --flapkit-spare-leaf-cast-blur: 0cqw;
-    --flapkit-spare-leaf-cast-opacity: 0.18;
-    --flapkit-spare-leaf-cast-y: 0.02cqw;
     --flapkit-spare-leaf-edge-color: #0a0b0b;
     --flapkit-spare-leaf-highlight-alpha: 0;
     --flapkit-spare-leaf-highlight-inset: 0cqw;

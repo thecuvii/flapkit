@@ -477,10 +477,10 @@ function canvasGlyphScale(
   return axis === 'y' ? 0.78 : 1
 }
 
+/** Font metrics of one glyph element; the baseline is relative to the top face's top edge. */
 function measureCanvasGlyph(
   element: HTMLElement,
   script: SplitFlapGlyphScript,
-  topFaceY: number,
   pseudoElement: '::before' | null,
 ) {
   const previousScript = element.dataset.splitFlapScript
@@ -517,7 +517,7 @@ function measureCanvasGlyph(
     weight: computedStyle.fontWeight,
     width: canvasGlyphScale(computedStyle.transform, hostStyle, 'x'),
   }
-  const baseline = topFaceY + canvasLineBoxBaseline(top, lineHeight, canvasFontMetrics(glyphStyle))
+  const baseline = canvasLineBoxBaseline(top, lineHeight, canvasFontMetrics(glyphStyle))
 
   if (previousScript) {
     element.dataset.splitFlapScript = previousScript
@@ -844,6 +844,16 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         string,
         Pick<CanvasCellVisual, 'bottomFaceColor' | 'glyphColors' | 'topFaceColor'>
       >()
+      // Font metrics and look tokens only depend on the styling context, not on the cassette.
+      // Measuring them once per context avoids a forced style recalc pair for every cassette.
+      const glyphMetrics = new Map<
+        string,
+        {
+          cjk: ReturnType<typeof measureCanvasGlyph>
+          default: ReturnType<typeof measureCanvasGlyph>
+          spareLeafEdgeColor: string
+        }
+      >()
 
       cassettes.forEach((cassette) => {
         const index = Number(cassette.dataset.splitFlapIndex)
@@ -853,15 +863,15 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         const upperFace = cassette.querySelector<HTMLElement>('[data-slot="stationary-upper"]')
         const lowerFace = cassette.querySelector<HTMLElement>('[data-slot="stationary-lower"]')
         const visual = resolvedVisuals[index]
+        const row = cassette.closest<HTMLElement>('[data-split-flap-row]')
+        const group = cassette.closest<HTMLElement>('[data-split-flap-group]')
+        const visualKey = JSON.stringify([
+          row?.className,
+          group?.className,
+          cassette.className,
+          Number(Boolean(activeLayout.rows[cell.rowIndex]?.highlighted)),
+        ])
         if (upperFace && lowerFace && visual) {
-          const row = cassette.closest<HTMLElement>('[data-split-flap-row]')
-          const group = cassette.closest<HTMLElement>('[data-split-flap-group]')
-          const visualKey = JSON.stringify([
-            row?.className,
-            group?.className,
-            cassette.className,
-            Number(Boolean(activeLayout.rows[cell.rowIndex]?.highlighted)),
-          ])
           let computedVisual = computedVisuals.get(visualKey)
           if (!computedVisual) {
             const upperStyle = getComputedStyle(upperFace)
@@ -916,7 +926,6 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         const rectangle = toLayout(cassetteBase.getBoundingClientRect())
         const upperRectangle = toLayout(upperFace.getBoundingClientRect())
         const lowerRectangle = toLayout(lowerFace.getBoundingClientRect())
-        const cassetteStyle = getComputedStyle(cassette)
         const unit = scaleContext.offsetWidth / 100
         const cellX = rectangle.x
         const cellY = rectangle.y
@@ -941,18 +950,19 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
                 return partRectangle.x + partRectangle.width / 2
               })
             : [cellX + cellWidth / 2]
-        const defaultGlyph = measureCanvasGlyph(
-          glyphMeasureElement,
-          'default',
-          topFaceY,
-          glyphPseudoElement,
-        )
-        const cjkGlyph = measureCanvasGlyph(
-          glyphMeasureElement,
-          'cjk',
-          topFaceY,
-          glyphPseudoElement,
-        )
+        const metricsKey = `${visualKey}:${cell.span}`
+        let metrics = glyphMetrics.get(metricsKey)
+        if (!metrics) {
+          metrics = {
+            cjk: measureCanvasGlyph(glyphMeasureElement, 'cjk', glyphPseudoElement),
+            default: measureCanvasGlyph(glyphMeasureElement, 'default', glyphPseudoElement),
+            spareLeafEdgeColor:
+              getComputedStyle(cassette).getPropertyValue('--flapkit-spare-leaf-edge-color').trim() ||
+              '#585644',
+          }
+          glyphMetrics.set(metricsKey, metrics)
+        }
+        const { cjk: cjkGlyph, default: defaultGlyph } = metrics
         const topSurface = context.createLinearGradient(0, topFaceY, 0, topFaceY + topFaceHeight)
         topSurface.addColorStop(0, 'rgba(224, 216, 177, 0.032)')
         topSurface.addColorStop(0.38, 'rgba(0, 0, 0, 0)')
@@ -968,8 +978,8 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         bottomSurface.addColorStop(1, 'rgba(214, 207, 170, 0.025)')
         geometryRef.current[index] = {
           baselines: {
-            cjk: cjkGlyph.baseline,
-            default: defaultGlyph.baseline,
+            cjk: topFaceY + cjkGlyph.baseline,
+            default: topFaceY + defaultGlyph.baseline,
           },
           bottomFaceHeight,
           bottomFaceY,
@@ -986,8 +996,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
             default: defaultGlyph.glyphStyle,
           },
           seamY,
-          spareLeafEdgeColor:
-            cassetteStyle.getPropertyValue('--flapkit-spare-leaf-edge-color').trim() || '#585644',
+          spareLeafEdgeColor: metrics.spareLeafEdgeColor,
           topFaceHeight,
           topFaceY,
           topSurface,

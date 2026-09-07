@@ -12,7 +12,7 @@
     "@fontsource/commit-mono": "^5.3.0",
     "@thecuvii/flapkit": "workspace:*",
     "cn": "^0.2.5",
-    "devjar": "^0.10.0",
+    "devjar": "1.0.0-next.3",
     "foxact": "^0.3.10",
     "next": "catalog:frontend",
     "posthog-js": "^1.427.0",
@@ -23,10 +23,10 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
-    "esbuild": "^0.25.10",
     "@types/node": "catalog:dev",
     "@types/react": "catalog:dev",
     "@types/react-dom": "catalog:dev",
+    "esbuild": "^0.25.10",
     "tailwindcss": "^4.3.3",
     "typescript": "catalog:dev"
   }

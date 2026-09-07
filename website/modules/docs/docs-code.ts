@@ -27,7 +27,7 @@ ${headerLine}    <Flapkit.Row label="STATUS">
 
 export const defaultQuickStartOptions = {
   look: 'airport',
-  motion: 'riffle',
+  motion: 'cascade',
   board: true,
   header: true,
 } as const satisfies QuickStartSnippetOptions
@@ -74,7 +74,7 @@ export const quickStartRanges: readonly QuickStartRange[] = [
     id: 'look-import',
     ...rangeInside(quickStartStaticCode, "import '@thecuvii/flapkit/airport.css'", 'airport'),
   },
-  { id: 'motion', ...rangeInside(quickStartStaticCode, 'motion={Flapkit.riffle()}', 'riffle') },
+  { id: 'motion', ...rangeInside(quickStartStaticCode, 'motion={Flapkit.cascade()}', 'cascade') },
   {
     id: 'frame-open',
     ...rangeInside(quickStartStaticCode, '<Flapkit.Board aria-label', 'Board'),

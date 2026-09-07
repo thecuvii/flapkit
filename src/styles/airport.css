@@ -31,7 +31,7 @@
     --flapkit-board-shadow:
       0 0 0 1px #080906, 0 1px 0 rgba(210, 207, 176, 0.06) inset,
       1px 0 0 rgba(210, 207, 176, 0.025) inset, 0 -2px 4px rgba(0, 0, 0, 0.46) inset,
-      0 1px 1.5px rgba(0, 0, 0, 0.42), 0 3px 7px rgba(0, 0, 0, 0.26),
+      0 1px 2px rgba(0, 0, 0, 0.42), 0 3px 7px rgba(0, 0, 0, 0.26),
       0 10px 22px rgba(0, 0, 0, 0.14);
     --flapkit-board-sheen:
       radial-gradient(ellipse 48% 19% at 31% 16%, rgba(211, 205, 169, 0.025), transparent 76%),
@@ -42,7 +42,7 @@
         rgba(221, 215, 180, 0.006) 5.76cqw 5.83cqw,
         transparent 5.9cqw 11.8cqw
       );
-    --flapkit-board-unit: 8.2px;
+    --flapkit-board-unit: 8px;
     --flapkit-bottom-edge-highlight: rgb(190 182 143 / 0.12);
     --flapkit-bottom-face-color: #25261e;
     --flapkit-bottom-face-shadow:
@@ -109,8 +109,8 @@
     --flapkit-cavity-wall-left-image: linear-gradient(90deg, #1e211c 0%, #080908 100%);
     --flapkit-cavity-wall-right-image: linear-gradient(90deg, #050605 0%, #151712 100%);
     --flapkit-cavity-wall-top-image: linear-gradient(180deg, #252822 0%, #080a08 100%);
-    --flapkit-cell-height: 34.733px;
-    --flapkit-cell-track: 20.58px;
+    --flapkit-cell-height: 34px;
+    --flapkit-cell-track: 20px;
     --flapkit-column-label-color: #92917d;
     --flapkit-compact-cover-detail:
       linear-gradient(
@@ -200,10 +200,10 @@
     --flapkit-face-inset-x: 0.12cqw;
     --flapkit-face-inset-y: 0.18cqw;
     --flapkit-face-radius: 0.03cqw;
-    --flapkit-frame-bottom: 25.83px;
-    --flapkit-frame-left: 27.06px;
-    --flapkit-frame-right: 25.83px;
-    --flapkit-frame-top: 16.81px;
+    --flapkit-frame-bottom: 26px;
+    --flapkit-frame-left: 27px;
+    --flapkit-frame-right: 26px;
+    --flapkit-frame-top: 17px;
     --flapkit-glyph-color: #d9d2b5;
     --flapkit-glyph-font-family: 'Helvetica Neue', Helvetica, 'Arial Narrow', Arial, sans-serif;
     --flapkit-glyph-font-weight: 600;
@@ -229,19 +229,19 @@
       0.14cqw 0.16cqw 0.3cqw rgba(0, 0, 0, 0.38) inset,
       -0.06cqw -0.06cqw 0 rgba(214, 207, 170, 0.015) inset;
     --flapkit-header-color: #a6a58f;
-    --flapkit-header-height: 47.56px;
-    --flapkit-header-text-shadow: 0 0.65px 0 rgba(0, 0, 0, 0.82);
+    --flapkit-header-height: 48px;
+    --flapkit-header-text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
     --flapkit-highlight-face: #3b3d31;
     --flapkit-highlight-glyph: #fff2c8;
     --flapkit-inner-rim-shadow:
-      0 0 0 1.48px rgba(9, 10, 8, 0.78), 0 -0.82px 0 rgba(217, 211, 177, 0.025),
-      0 1.15px 0 rgba(0, 0, 0, 0.62);
+      0 0 0 1.5px rgba(9, 10, 8, 0.78), 0 -1px 0 rgba(217, 211, 177, 0.025),
+      0 1px 0 rgba(0, 0, 0, 0.62);
     --flapkit-label-font-family: 'Helvetica Neue', Helvetica, 'Arial Narrow', Arial, sans-serif;
     --flapkit-leaf-thickness: 0.24cqw;
     --flapkit-meta-color: #858574;
     --flapkit-outer-rim-shadow:
-      0 0 0 1.31px rgba(8, 9, 7, 0.74), 0 1.15px 0 rgba(214, 208, 174, 0.018),
-      0 0 0 0.66px rgba(197, 195, 166, 0.025) inset, 0 -1.48px 2.62px rgba(0, 0, 0, 0.42) inset;
+      0 0 0 1px rgba(8, 9, 7, 0.74), 0 1px 0 rgba(214, 208, 174, 0.018),
+      0 0 0 0.5px rgba(197, 195, 166, 0.025) inset, 0 -1.5px 2.5px rgba(0, 0, 0, 0.42) inset;
     --flapkit-row-background-color: #151713;
     --flapkit-row-background-image: linear-gradient(
       180deg,
@@ -256,7 +256,7 @@
     --flapkit-seam-opacity: 0.78;
     --flapkit-seam-thickness: 0.22cqw;
     --flapkit-title-color: #d0cdb3;
-    --flapkit-title-only-header-height: 25.5px;
+    --flapkit-title-only-header-height: 26px;
     --flapkit-top-face-color: #282921;
     --flapkit-top-face-shadow:
       0 0.03cqw 0 rgba(224, 216, 177, 0.035) inset, 0 -0.07cqw 0.12cqw rgba(0, 0, 0, 0.18) inset;

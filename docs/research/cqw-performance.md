@@ -58,7 +58,7 @@ In `src/split-flap.styles.ts`, `boardContent` and `standaloneGrid` have `contain
 
 The nearest-container rule means group descendants generally resolve against `departureGroupScaleContext`, not necessarily the board container. Board-level descendants outside a group use the board/standalone container.
 
-The current built-in looks give every group scale context an explicit fixed reference width of `11 × cellTrack`: 226.38 px for both Airport and Industrial (`cellTrack: 20.58px`). The board itself is `max-content`. In a live 500-cassette Airport board, each measured group context was 226.375 px before and after changing the viewport from its default width to 800 px. Therefore ordinary host/viewport resizing does **not currently resize the nearest container used by cassette `cqw` values**; the board overflows or is externally transformed instead. Changing the look's track geometry would resize it.
+The current built-in looks give every group scale context an explicit fixed reference width of `11 × cellTrack`: 220 px for both Airport and Industrial (`cellTrack: 20px`). The board itself is `max-content`. In a live 500-cassette Airport board, each measured group context stayed at exactly `11 × cellTrack` before and after changing the viewport from its default width to 800 px. Therefore ordinary host/viewport resizing does **not currently resize the nearest container used by cassette `cqw` values**; the board overflows or is externally transformed instead. Changing the look's track geometry would resize it.
 
 ### Motion architecture
 

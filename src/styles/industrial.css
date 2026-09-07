@@ -25,7 +25,7 @@
     --flapkit-board-shadow:
       0 0 0 1px #050606, 0 1px 0 rgba(255, 255, 255, 0.05) inset,
       1px 0 0 rgba(255, 255, 255, 0.022) inset, 0 -2px 4px rgba(0, 0, 0, 0.5) inset,
-      0 1px 1.5px rgba(0, 0, 0, 0.46), 0 3px 7px rgba(0, 0, 0, 0.28),
+      0 1px 2px rgba(0, 0, 0, 0.46), 0 3px 7px rgba(0, 0, 0, 0.28),
       0 10px 22px rgba(0, 0, 0, 0.16);
     --flapkit-board-sheen:
       radial-gradient(ellipse 48% 19% at 31% 16%, rgba(255, 255, 255, 0.022), transparent 76%),
@@ -36,7 +36,7 @@
         rgba(255, 255, 255, 0.005) 5.76cqw 5.83cqw,
         transparent 5.9cqw 11.8cqw
       );
-    --flapkit-board-unit: 8.2px;
+    --flapkit-board-unit: 8px;
     --flapkit-bottom-edge-highlight: rgb(255 255 255 / 0.08);
     --flapkit-bottom-face-color: #111313;
     --flapkit-bottom-face-shadow:
@@ -89,8 +89,8 @@
     --flapkit-cavity-wall-right-image: linear-gradient(90deg, #040505 0%, #121414 100%);
     --flapkit-cavity-wall-top-image: none;
     /* Same track as Airport so both looks share one board scale; 2:1 cassette kept. */
-    --flapkit-cell-height: 41.16px;
-    --flapkit-cell-track: 20.58px;
+    --flapkit-cell-height: 40px;
+    --flapkit-cell-track: 20px;
     --flapkit-column-label-color: #8b8d8b;
     --flapkit-compact-cover-detail:
       linear-gradient(
@@ -182,10 +182,10 @@
     --flapkit-face-inset-x: 0.1cqw;
     --flapkit-face-inset-y: 0.15cqw;
     --flapkit-face-radius: 0.018cqw;
-    --flapkit-frame-bottom: 25.83px;
-    --flapkit-frame-left: 27.06px;
-    --flapkit-frame-right: 25.83px;
-    --flapkit-frame-top: 16.81px;
+    --flapkit-frame-bottom: 26px;
+    --flapkit-frame-left: 27px;
+    --flapkit-frame-right: 26px;
+    --flapkit-frame-top: 17px;
     --flapkit-glyph-color: #e6e6e1;
     --flapkit-glyph-font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
     --flapkit-glyph-font-weight: 700;
@@ -217,19 +217,19 @@
     --flapkit-grid-shadow:
       0 0 0 1px rgba(0, 0, 0, 0.94), 0.16cqw 0.2cqw 0.34cqw rgba(0, 0, 0, 0.58) inset;
     --flapkit-header-color: #9a9c9a;
-    --flapkit-header-height: 47.56px;
-    --flapkit-header-text-shadow: 0 0.65px 0 rgba(0, 0, 0, 0.9);
+    --flapkit-header-height: 48px;
+    --flapkit-header-text-shadow: 0 1px 0 rgba(0, 0, 0, 0.66);
     --flapkit-highlight-face: #353838;
     --flapkit-highlight-glyph: #f6f6f1;
     --flapkit-inner-rim-shadow:
-      0 0 0 1.48px rgba(0, 0, 0, 0.86), 0 -0.82px 0 rgba(255, 255, 255, 0.028),
-      0 1.15px 0 rgba(0, 0, 0, 0.7);
+      0 0 0 1.5px rgba(0, 0, 0, 0.86), 0 -1px 0 rgba(255, 255, 255, 0.028),
+      0 1px 0 rgba(0, 0, 0, 0.7);
     --flapkit-label-font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
     --flapkit-leaf-thickness: 0.2cqw;
     --flapkit-meta-color: #7c7e7c;
     --flapkit-outer-rim-shadow:
-      0 0 0 1.31px rgba(0, 0, 0, 0.82), 0 1.15px 0 rgba(255, 255, 255, 0.02),
-      0 0 0 0.66px rgba(255, 255, 255, 0.028) inset, 0 -1.48px 2.62px rgba(0, 0, 0, 0.5) inset;
+      0 0 0 1px rgba(0, 0, 0, 0.82), 0 1px 0 rgba(255, 255, 255, 0.02),
+      0 0 0 0.5px rgba(255, 255, 255, 0.028) inset, 0 -1.5px 2.5px rgba(0, 0, 0, 0.5) inset;
     --flapkit-row-background-color: #0c0d0d;
     --flapkit-row-background-image: linear-gradient(
       180deg,
@@ -261,7 +261,7 @@
     --flapkit-spare-leaf-tail-color: #0c0d0d;
     --flapkit-spare-leaf-top-color: #0c0d0d;
     --flapkit-title-color: #d6d7d2;
-    --flapkit-title-only-header-height: 25.5px;
+    --flapkit-title-only-header-height: 26px;
     --flapkit-top-face-color: #171919;
     --flapkit-top-face-shadow:
       0 0.025cqw 0 rgba(255, 255, 255, 0.025) inset, 0 -0.1cqw 0.18cqw rgba(0, 0, 0, 0.32) inset;

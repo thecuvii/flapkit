@@ -10,7 +10,7 @@
     margin: 0;
     width: max-content;
     overflow: hidden;
-    border-radius: 0.98px;
+    border-radius: 1px;
     background-color: var(--flapkit-board-background-color);
     background-image: var(--flapkit-board-background-image);
     box-shadow: var(--flapkit-board-shadow);
@@ -36,18 +36,18 @@
   :where(.flapkit-outer-rim) {
     position: absolute;
     z-index: 2;
-    inset: 5.08px;
-    border-radius: 0.49px;
+    inset: 5px;
+    border-radius: 0.5px;
     box-shadow: var(--flapkit-outer-rim-shadow);
     pointer-events: none;
   }
   :where(.flapkit-inner-rim) {
     position: absolute;
     z-index: 2;
-    top: calc(var(--flapkit-frame-top) + var(--flapkit-rendered-header-height) - 1.07px);
+    top: calc(var(--flapkit-frame-top) + var(--flapkit-rendered-header-height) - 1px);
     right: calc(var(--flapkit-frame-right) - 5px);
-    bottom: calc(var(--flapkit-frame-bottom) - 5.49px);
-    left: calc(var(--flapkit-frame-left) - 5.41px);
+    bottom: calc(var(--flapkit-frame-bottom) - 5px);
+    left: calc(var(--flapkit-frame-left) - 5px);
     border-radius: 0;
     box-shadow: var(--flapkit-inner-rim-shadow);
     pointer-events: none;
@@ -90,14 +90,14 @@
   }
   :where(.flapkit-board-title) {
     color: var(--flapkit-title-color);
-    font-size: 13.1px;
+    font-size: 13px;
     font-weight: 650;
     letter-spacing: 0.125em;
     line-height: 1;
   }
   :where(.flapkit-board-meta) {
     color: var(--flapkit-meta-color);
-    font-size: 7.4px;
+    font-size: 7.5px;
     font-weight: 550;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.11em;
@@ -108,9 +108,9 @@
     display: grid;
     align-self: end;
     min-width: 0;
-    padding-bottom: 7.8px;
+    padding-bottom: 8px;
     color: var(--flapkit-column-label-color);
-    font-size: 7.6px;
+    font-size: 7.5px;
     font-weight: 570;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.075em;

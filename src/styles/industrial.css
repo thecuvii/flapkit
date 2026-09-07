@@ -10,21 +10,31 @@
     --flapkit-axle-background:
       linear-gradient(90deg, #020303 0%, #303131 38%, #090a0a 72%, #010202 100%),
       radial-gradient(ellipse at 39% 28%, rgba(255, 255, 255, 0.1) 0 10%, transparent 31%);
+    --flapkit-axle-color: #070808;
     --flapkit-axle-height: 1.62cqw;
     --flapkit-axle-opacity: 0.96;
     --flapkit-axle-shadow:
       0 0 0 0.025cqw rgba(255, 255, 255, 0.055), -0.07cqw 0 0.13cqw rgba(0, 0, 0, 0.86) inset,
       0 0.04cqw 0.1cqw rgba(0, 0, 0, 0.78);
     --flapkit-axle-width: 0.58cqw;
-    --flapkit-board-background-color: #22231e;
+    --flapkit-board-background-color: #1c1e1e;
     --flapkit-board-background-image:
-      radial-gradient(ellipse 90% 55% at 34% -8%, rgba(215, 211, 178, 0.038), transparent 62%),
-      radial-gradient(circle at 82% 74%, rgba(8, 9, 7, 0.2), transparent 44%),
-      linear-gradient(104deg, #1b1c18 0%, #25261f 44%, #1c1d19 100%);
+      radial-gradient(ellipse 90% 55% at 34% -8%, rgba(255, 255, 255, 0.034), transparent 62%),
+      radial-gradient(circle at 82% 74%, rgba(0, 0, 0, 0.22), transparent 44%),
+      linear-gradient(104deg, #161818 0%, #202222 44%, #171919 100%);
     --flapkit-board-shadow:
-      0 0 0 1px #080906, 0 1px 0 rgba(210, 207, 176, 0.06) inset,
-      1px 0 0 rgba(210, 207, 176, 0.025) inset, 0 -2px 4px rgba(0, 0, 0, 0.46) inset,
-      0 5px 13px rgba(0, 0, 0, 0.7), 0 22px 54px rgba(0, 0, 0, 0.38);
+      0 0 0 1px #050606, 0 1px 0 rgba(255, 255, 255, 0.05) inset,
+      1px 0 0 rgba(255, 255, 255, 0.022) inset, 0 -2px 4px rgba(0, 0, 0, 0.5) inset,
+      0 5px 13px rgba(0, 0, 0, 0.72), 0 22px 54px rgba(0, 0, 0, 0.4);
+    --flapkit-board-sheen:
+      radial-gradient(ellipse 48% 19% at 31% 16%, rgba(255, 255, 255, 0.022), transparent 76%),
+      radial-gradient(ellipse 24% 62% at 76% 54%, rgba(0, 0, 0, 0.16), transparent 78%),
+      repeating-linear-gradient(
+        89deg,
+        transparent 0 5.7cqw,
+        rgba(255, 255, 255, 0.005) 5.76cqw 5.83cqw,
+        transparent 5.9cqw 11.8cqw
+      );
     --flapkit-board-unit: 8.2px;
     --flapkit-bottom-edge-highlight: rgb(255 255 255 / 0.08);
     --flapkit-bottom-face-color: #111313;
@@ -40,10 +50,30 @@
     --flapkit-cassette-background-image:
       linear-gradient(180deg, rgba(255, 255, 255, 0.026) 0%, transparent 24%),
       linear-gradient(112deg, #1a1c1c 0%, #111313 58%, #0b0c0c 100%);
+    --flapkit-cassette-bezel-image:
+      linear-gradient(
+        90deg,
+        rgba(74, 76, 76, 0.5) 0,
+        rgba(0, 0, 0, 0.96) 0.06cqw,
+        rgba(0, 0, 0, 0.44) 0.14cqw,
+        transparent 0.3cqw
+      ),
+      linear-gradient(
+        270deg,
+        rgba(66, 68, 68, 0.44) 0,
+        rgba(0, 0, 0, 0.94) 0.06cqw,
+        rgba(0, 0, 0, 0.38) 0.14cqw,
+        transparent 0.28cqw
+      ),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0, transparent 0.22cqw),
+      linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0, transparent 0.28cqw);
     --flapkit-cassette-radius: 0.02cqw;
     --flapkit-cassette-shadow:
       -0.02cqw 0 0 rgba(255, 255, 255, 0.035), 0.045cqw 0.06cqw 0.11cqw rgba(0, 0, 0, 0.78),
       0 0 0 0.04cqw rgba(0, 0, 0, 0.96) inset;
+    --flapkit-cavity-back-plane-color: #050606;
+    --flapkit-cavity-back-plane-image: linear-gradient(180deg, #040505 0%, #070808 100%);
+    --flapkit-cavity-back-plane-shadow: none;
     --flapkit-cavity-bottom: 6.5%;
     --flapkit-cavity-color: #050606;
     --flapkit-cavity-left: 7%;
@@ -52,8 +82,14 @@
       0 0.08cqw 0.14cqw rgba(0, 0, 0, 0.28) inset, 0.06cqw 0 0.1cqw rgba(0, 0, 0, 0.16) inset,
       -0.05cqw 0 0.08cqw rgba(0, 0, 0, 0.16) inset;
     --flapkit-cavity-top: 13.5%;
+    --flapkit-cavity-wall-color: #080909;
+    --flapkit-cavity-wall-bottom-image: none;
+    --flapkit-cavity-wall-left-image: linear-gradient(90deg, #1a1c1c 0%, #070808 100%);
+    --flapkit-cavity-wall-right-image: linear-gradient(90deg, #040505 0%, #121414 100%);
+    --flapkit-cavity-wall-top-image: none;
     --flapkit-cell-height: 60px;
     --flapkit-cell-track: 30px;
+    --flapkit-column-label-color: #8b8d8b;
     --flapkit-compact-cover-detail:
       linear-gradient(
         180deg,
@@ -148,6 +184,7 @@
     --flapkit-frame-left: 27.06px;
     --flapkit-frame-right: 25.83px;
     --flapkit-frame-top: 16.81px;
+    --flapkit-glyph-color: #e6e6e1;
     --flapkit-glyph-font-family: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
     --flapkit-glyph-font-weight: 700;
     --flapkit-glyph-orange: #cf9138;
@@ -157,6 +194,7 @@
     --flapkit-glyph-tracking: -0.018em;
     --flapkit-glyph-white: currentColor;
     --flapkit-glyph-scale-y: 0.78;
+    --flapkit-glyph-shadow: 0 0 0.05cqw rgba(255, 255, 255, 0.05);
     --flapkit-glyph-width: 0.88;
     --flapkit-glyph-y: -0.22cqw;
     --flapkit-detailed-glyph-y: 1.4cqw;
@@ -176,11 +214,20 @@
     );
     --flapkit-grid-shadow:
       0 0 0 1px rgba(0, 0, 0, 0.94), 0.16cqw 0.2cqw 0.34cqw rgba(0, 0, 0, 0.58) inset;
+    --flapkit-header-color: #9a9c9a;
     --flapkit-header-height: 47.56px;
-    --flapkit-highlight-face: #3b3d31;
-    --flapkit-highlight-glyph: #fff2c8;
+    --flapkit-header-text-shadow: 0 0.65px 0 rgba(0, 0, 0, 0.9);
+    --flapkit-highlight-face: #353838;
+    --flapkit-highlight-glyph: #f6f6f1;
+    --flapkit-inner-rim-shadow:
+      0 0 0 1.48px rgba(0, 0, 0, 0.86), 0 -0.82px 0 rgba(255, 255, 255, 0.028),
+      0 1.15px 0 rgba(0, 0, 0, 0.7);
     --flapkit-label-font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
     --flapkit-leaf-thickness: 0.2cqw;
+    --flapkit-meta-color: #7c7e7c;
+    --flapkit-outer-rim-shadow:
+      0 0 0 1.31px rgba(0, 0, 0, 0.82), 0 1.15px 0 rgba(255, 255, 255, 0.02),
+      0 0 0 0.66px rgba(255, 255, 255, 0.028) inset, 0 -1.48px 2.62px rgba(0, 0, 0, 0.5) inset;
     --flapkit-row-background-color: #0c0d0d;
     --flapkit-row-background-image: linear-gradient(
       180deg,
@@ -191,6 +238,7 @@
     --flapkit-row-shadow:
       0 0.05cqw 0 rgba(255, 255, 255, 0.012) inset, 0 0.14cqw 0.24cqw rgba(0, 0, 0, 0.34) inset,
       0 0.1cqw 0.16cqw rgba(0, 0, 0, 0.54);
+    --flapkit-seam-color: rgba(0, 0, 0, 0.62);
     --flapkit-seam-opacity: 0.94;
     --flapkit-seam-thickness: 0.18cqw;
     --flapkit-spare-leaf-base-color: #0a0b0b;
@@ -210,6 +258,7 @@
     --flapkit-spare-leaf-pack-opacity: 1;
     --flapkit-spare-leaf-tail-color: #0c0d0d;
     --flapkit-spare-leaf-top-color: #0c0d0d;
+    --flapkit-title-color: #d6d7d2;
     --flapkit-title-only-header-height: 25.5px;
     --flapkit-top-face-color: #171919;
     --flapkit-top-face-shadow:
@@ -220,22 +269,9 @@
       transparent 34%,
       transparent 100%
     );
-  }
-
-  :where([data-look='industrial'], .flapkit-industrial) :where(.flapkit-cavity-back-plane) {
-    background-color: #050606;
-    background-image: linear-gradient(180deg, #040505 0%, #070808 100%);
-    box-shadow: none;
-  }
-
-  :where([data-look='industrial'], .flapkit-industrial) :where(.flapkit-cavity-wall-top) {
-    background-color: #080909;
-    background-image: none;
-  }
-
-  :where([data-look='industrial'], .flapkit-industrial) :where(.flapkit-cavity-wall-bottom) {
-    background-color: #080909;
-    background-image: none;
+    --flapkit-vane-side-color: #0e0f0f;
+    --flapkit-vane-side-image: linear-gradient(180deg, #232525 0%, #080909 48%, #161818 100%);
+    --flapkit-vane-side-shadow: 0 0 0 0.012cqw rgba(0, 0, 0, 0.9);
   }
 
   :where([data-look='industrial'], .flapkit-industrial) :where(.flapkit-spare-leaf-plate) {

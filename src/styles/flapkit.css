@@ -38,11 +38,7 @@
     z-index: 2;
     inset: 5.08px;
     border-radius: 0.49px;
-    box-shadow:
-      0 0 0 1.31px rgba(8, 9, 7, 0.74),
-      0 1.15px 0 rgba(214, 208, 174, 0.018),
-      0 0 0 0.66px rgba(197, 195, 166, 0.025) inset,
-      0 -1.48px 2.62px rgba(0, 0, 0, 0.42) inset;
+    box-shadow: var(--flapkit-outer-rim-shadow);
     pointer-events: none;
   }
   :where(.flapkit-inner-rim) {
@@ -53,25 +49,14 @@
     bottom: calc(var(--flapkit-frame-bottom) - 5.49px);
     left: calc(var(--flapkit-frame-left) - 5.41px);
     border-radius: 0;
-    box-shadow:
-      0 0 0 1.48px rgba(9, 10, 8, 0.78),
-      0 -0.82px 0 rgba(217, 211, 177, 0.025),
-      0 1.15px 0 rgba(0, 0, 0, 0.62);
+    box-shadow: var(--flapkit-inner-rim-shadow);
     pointer-events: none;
   }
   :where(.flapkit-board-sheen) {
     position: absolute;
     z-index: 4;
     inset: 0;
-    background-image:
-      radial-gradient(ellipse 48% 19% at 31% 16%, rgba(211, 205, 169, 0.025), transparent 76%),
-      radial-gradient(ellipse 24% 62% at 76% 54%, rgba(0, 0, 0, 0.12), transparent 78%),
-      repeating-linear-gradient(
-        89deg,
-        transparent 0 5.7cqw,
-        rgba(221, 215, 180, 0.006) 5.76cqw 5.83cqw,
-        transparent 5.9cqw 11.8cqw
-      );
+    background-image: var(--flapkit-board-sheen);
     pointer-events: none;
   }
   :where(.flapkit-board-grain) {
@@ -91,9 +76,9 @@
     box-sizing: border-box;
     height: var(--flapkit-rendered-header-height);
     grid-template-rows: max-content 1fr;
-    color: #a6a58f;
+    color: var(--flapkit-header-color);
     font-family: var(--flapkit-label-font-family);
-    text-shadow: 0 0.65px 0 rgba(0, 0, 0, 0.82);
+    text-shadow: var(--flapkit-header-text-shadow);
     text-transform: uppercase;
     pointer-events: none;
   }
@@ -104,14 +89,14 @@
     min-width: 0;
   }
   :where(.flapkit-board-title) {
-    color: #d0cdb3;
+    color: var(--flapkit-title-color);
     font-size: 13.1px;
     font-weight: 650;
     letter-spacing: 0.125em;
     line-height: 1;
   }
   :where(.flapkit-board-meta) {
-    color: #858574;
+    color: var(--flapkit-meta-color);
     font-size: 7.4px;
     font-weight: 550;
     font-variant-numeric: tabular-nums;
@@ -124,7 +109,7 @@
     align-self: end;
     min-width: 0;
     padding-bottom: 7.8px;
-    color: #92917d;
+    color: var(--flapkit-column-label-color);
     font-size: 7.6px;
     font-weight: 570;
     font-variant-numeric: tabular-nums;
@@ -244,28 +229,22 @@
     position: absolute;
     z-index: 0;
     inset: 0;
-    background-color: #030403;
-    background-image:
-      linear-gradient(180deg, #010201 0%, #070806 48%, #020302 100%),
-      repeating-linear-gradient(
-        180deg,
-        transparent 0 0.27cqw,
-        rgba(190, 182, 143, 0.07) 0.274cqw 0.282cqw
-      );
-    box-shadow: 0 0.04cqw 0.08cqw rgba(0, 0, 0, 0.2) inset;
+    background-color: var(--flapkit-cavity-back-plane-color);
+    background-image: var(--flapkit-cavity-back-plane-image);
+    box-shadow: var(--flapkit-cavity-back-plane-shadow);
     pointer-events: none;
   }
   :where(.flapkit-cavity-wall) {
     position: absolute;
     z-index: 1;
-    background-color: #10120f;
+    background-color: var(--flapkit-cavity-wall-color);
     pointer-events: none;
   }
   :where(.flapkit-cavity-wall-top) {
     top: 0;
     right: 0;
     left: 0;
-    background-image: linear-gradient(180deg, #252822 0%, #080a08 100%);
+    background-image: var(--flapkit-cavity-wall-top-image);
     transform: rotateX(-90deg);
     transform-origin: 50% 0%;
   }
@@ -273,7 +252,7 @@
     top: 0;
     right: 0;
     bottom: 0;
-    background-image: linear-gradient(90deg, #050605 0%, #151712 100%);
+    background-image: var(--flapkit-cavity-wall-right-image);
     transform: rotateY(-90deg);
     transform-origin: 100% 50%;
   }
@@ -281,16 +260,8 @@
     right: 0;
     bottom: 0;
     left: 0;
-    /* Dark floor with a hairline at the front lip, matching the leaf edge catch. */
-    background-image: linear-gradient(
-      180deg,
-      #050605 0%,
-      #070807 88%,
-      #0a0b09 96%,
-      #2a2c24 98.6%,
-      #1c1e19 99.2%,
-      #0c0d0b 100%
-    );
+    /* Dark floor; looks may add a hairline at the front lip matching the leaf edge catch. */
+    background-image: var(--flapkit-cavity-wall-bottom-image);
     transform: rotateX(90deg);
     transform-origin: 50% 100%;
   }
@@ -298,7 +269,7 @@
     top: 0;
     bottom: 0;
     left: 0;
-    background-image: linear-gradient(90deg, #1e211c 0%, #080908 100%);
+    background-image: var(--flapkit-cavity-wall-left-image);
     transform: rotateY(90deg);
     transform-origin: 0% 50%;
   }
@@ -384,7 +355,7 @@
   :where(.flapkit-compact-moving-vane-face) {
     overflow: hidden;
     border-radius: var(--flapkit-face-radius);
-    background-color: #25261f;
+    background-color: var(--flapkit-bottom-face-color);
     background-repeat: no-repeat;
   }
   :where(.flapkit-compact-moving-stack) {
@@ -458,9 +429,9 @@
     z-index: 7;
     top: var(--flapkit-face-inset-y);
     height: calc(50% - var(--flapkit-face-inset-y));
-    background-color: #111310;
-    background-image: linear-gradient(180deg, #252823 0%, #0a0c0a 48%, #1a1c18 100%);
-    box-shadow: 0 0 0 0.012cqw rgba(0, 0, 0, 0.82);
+    background-color: var(--flapkit-vane-side-color);
+    background-image: var(--flapkit-vane-side-image);
+    box-shadow: var(--flapkit-vane-side-shadow);
     pointer-events: none;
   }
   /* After the vane crosses the seam it is the arriving lower leaf, which must
@@ -558,7 +529,7 @@
     left: 50%;
     display: block;
     width: 10cqw;
-    color: #d9d2b5;
+    color: var(--flapkit-glyph-color);
     font-family: inherit;
     font-size: inherit;
     font-weight: inherit;
@@ -566,7 +537,7 @@
     line-height: 12.2cqw;
     opacity: var(--flapkit-glyph-opacity);
     text-align: center;
-    text-shadow: 0 0 0.05cqw rgba(226, 217, 181, 0.06);
+    text-shadow: var(--flapkit-glyph-shadow);
     transform: translateX(-50%) scaleX(0.62);
     transform-origin: 50% 50%;
   }
@@ -635,7 +606,7 @@
     right: 0.1cqw;
     left: 0.1cqw;
     height: 0.08cqw;
-    background-color: rgba(7, 8, 6, 0.55);
+    background-color: var(--flapkit-seam-color);
     transform: translateY(-50%);
   }
   :where(.flapkit-upper-seam-shadow) {
@@ -661,7 +632,7 @@
     width: var(--flapkit-axle-width);
     height: var(--flapkit-axle-height);
     border-radius: 42%;
-    background-color: #0a0b08;
+    background-color: var(--flapkit-axle-color);
     background-image: var(--flapkit-axle-background);
     box-shadow: var(--flapkit-axle-shadow);
     opacity: var(--flapkit-axle-opacity);
@@ -706,7 +677,7 @@
     width: 0.36cqw;
     height: 4.6cqw;
     border-radius: 28%;
-    background-color: #0a0b08;
+    background-color: var(--flapkit-axle-color);
     background-image: var(--flapkit-axle-background);
     box-shadow: var(--flapkit-axle-shadow);
     opacity: var(--flapkit-axle-opacity);
@@ -789,23 +760,7 @@
     position: absolute;
     z-index: 6;
     inset: 0;
-    background-image:
-      linear-gradient(
-        90deg,
-        rgba(82, 83, 68, 0.5) 0,
-        rgba(5, 6, 4, 0.96) 0.06cqw,
-        rgba(0, 0, 0, 0.42) 0.14cqw,
-        transparent 0.3cqw
-      ),
-      linear-gradient(
-        270deg,
-        rgba(72, 73, 60, 0.44) 0,
-        rgba(5, 6, 4, 0.94) 0.06cqw,
-        rgba(0, 0, 0, 0.36) 0.14cqw,
-        transparent 0.28cqw
-      ),
-      linear-gradient(180deg, rgba(4, 5, 3, 0.78) 0, transparent 0.22cqw),
-      linear-gradient(0deg, rgba(3, 4, 2, 0.88) 0, transparent 0.28cqw);
+    background-image: var(--flapkit-cassette-bezel-image);
     pointer-events: none;
   }
 }

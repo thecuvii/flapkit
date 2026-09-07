@@ -16,6 +16,7 @@
         rgba(2, 3, 1, 0.98) 100%
       ),
       radial-gradient(ellipse at 42% 31%, rgba(211, 204, 168, 0.1) 0 14%, transparent 34%);
+    --flapkit-axle-color: #0a0b08;
     --flapkit-axle-height: 1.48cqw;
     --flapkit-axle-opacity: 0.9;
     --flapkit-axle-shadow:
@@ -31,6 +32,15 @@
       0 0 0 1px #080906, 0 1px 0 rgba(210, 207, 176, 0.06) inset,
       1px 0 0 rgba(210, 207, 176, 0.025) inset, 0 -2px 4px rgba(0, 0, 0, 0.46) inset,
       0 5px 13px rgba(0, 0, 0, 0.7), 0 22px 54px rgba(0, 0, 0, 0.38);
+    --flapkit-board-sheen:
+      radial-gradient(ellipse 48% 19% at 31% 16%, rgba(211, 205, 169, 0.025), transparent 76%),
+      radial-gradient(ellipse 24% 62% at 76% 54%, rgba(0, 0, 0, 0.12), transparent 78%),
+      repeating-linear-gradient(
+        89deg,
+        transparent 0 5.7cqw,
+        rgba(221, 215, 180, 0.006) 5.76cqw 5.83cqw,
+        transparent 5.9cqw 11.8cqw
+      );
     --flapkit-board-unit: 8.2px;
     --flapkit-bottom-edge-highlight: rgb(190 182 143 / 0.12);
     --flapkit-bottom-face-color: #25261e;
@@ -46,10 +56,36 @@
     --flapkit-cassette-background-image:
       radial-gradient(ellipse 82% 46% at 28% 10%, rgba(213, 207, 172, 0.026), transparent 72%),
       linear-gradient(180deg, #22241f 0%, #191b17 100%);
+    --flapkit-cassette-bezel-image:
+      linear-gradient(
+        90deg,
+        rgba(82, 83, 68, 0.5) 0,
+        rgba(5, 6, 4, 0.96) 0.06cqw,
+        rgba(0, 0, 0, 0.42) 0.14cqw,
+        transparent 0.3cqw
+      ),
+      linear-gradient(
+        270deg,
+        rgba(72, 73, 60, 0.44) 0,
+        rgba(5, 6, 4, 0.94) 0.06cqw,
+        rgba(0, 0, 0, 0.36) 0.14cqw,
+        transparent 0.28cqw
+      ),
+      linear-gradient(180deg, rgba(4, 5, 3, 0.78) 0, transparent 0.22cqw),
+      linear-gradient(0deg, rgba(3, 4, 2, 0.88) 0, transparent 0.28cqw);
     --flapkit-cassette-radius: 0.03cqw;
     --flapkit-cassette-shadow:
       -0.025cqw 0 0 rgba(207, 202, 172, 0.045), 0.07cqw 0 0.12cqw rgba(0, 0, 0, 0.55),
       0 0 0 0.035cqw rgba(5, 6, 4, 0.94) inset;
+    --flapkit-cavity-back-plane-color: #030403;
+    --flapkit-cavity-back-plane-image:
+      linear-gradient(180deg, #010201 0%, #070806 48%, #020302 100%),
+      repeating-linear-gradient(
+        180deg,
+        transparent 0 0.27cqw,
+        rgba(190, 182, 143, 0.07) 0.274cqw 0.282cqw
+      );
+    --flapkit-cavity-back-plane-shadow: 0 0.04cqw 0.08cqw rgba(0, 0, 0, 0.2) inset;
     --flapkit-cavity-bottom: 7%;
     --flapkit-cavity-color: #11120e;
     --flapkit-cavity-left: 8%;
@@ -58,8 +94,23 @@
       0 0.22cqw 0.38cqw rgba(0, 0, 0, 0.52) inset, 0.12cqw 0 0.22cqw rgba(0, 0, 0, 0.26) inset,
       0 -0.05cqw 0.08cqw rgba(211, 204, 167, 0.02) inset;
     --flapkit-cavity-top: 17%;
+    --flapkit-cavity-wall-color: #10120f;
+    /* Dark floor with a hairline at the front lip, matching the leaf edge catch. */
+    --flapkit-cavity-wall-bottom-image: linear-gradient(
+      180deg,
+      #050605 0%,
+      #070807 88%,
+      #0a0b09 96%,
+      #2a2c24 98.6%,
+      #1c1e19 99.2%,
+      #0c0d0b 100%
+    );
+    --flapkit-cavity-wall-left-image: linear-gradient(90deg, #1e211c 0%, #080908 100%);
+    --flapkit-cavity-wall-right-image: linear-gradient(90deg, #050605 0%, #151712 100%);
+    --flapkit-cavity-wall-top-image: linear-gradient(180deg, #252822 0%, #080a08 100%);
     --flapkit-cell-height: 34.733px;
     --flapkit-cell-track: 20.58px;
+    --flapkit-column-label-color: #92917d;
     --flapkit-compact-cover-detail:
       linear-gradient(
         180deg,
@@ -152,6 +203,7 @@
     --flapkit-frame-left: 27.06px;
     --flapkit-frame-right: 25.83px;
     --flapkit-frame-top: 16.81px;
+    --flapkit-glyph-color: #d9d2b5;
     --flapkit-glyph-font-family: 'Helvetica Neue', Helvetica, 'Arial Narrow', Arial, sans-serif;
     --flapkit-glyph-font-weight: 600;
     --flapkit-glyph-orange: #cf9138;
@@ -161,6 +213,7 @@
     --flapkit-glyph-tracking: 0.025em;
     --flapkit-glyph-white: currentColor;
     --flapkit-glyph-scale-y: 0.78;
+    --flapkit-glyph-shadow: 0 0 0.05cqw rgba(226, 217, 181, 0.06);
     --flapkit-glyph-width: 0.62;
     --flapkit-glyph-y: 0.15cqw;
     --flapkit-grid-background-color: #0c0d0b;
@@ -174,11 +227,20 @@
     --flapkit-grid-shadow:
       0.14cqw 0.16cqw 0.3cqw rgba(0, 0, 0, 0.38) inset,
       -0.06cqw -0.06cqw 0 rgba(214, 207, 170, 0.015) inset;
+    --flapkit-header-color: #a6a58f;
     --flapkit-header-height: 47.56px;
+    --flapkit-header-text-shadow: 0 0.65px 0 rgba(0, 0, 0, 0.82);
     --flapkit-highlight-face: #3b3d31;
     --flapkit-highlight-glyph: #fff2c8;
+    --flapkit-inner-rim-shadow:
+      0 0 0 1.48px rgba(9, 10, 8, 0.78), 0 -0.82px 0 rgba(217, 211, 177, 0.025),
+      0 1.15px 0 rgba(0, 0, 0, 0.62);
     --flapkit-label-font-family: 'Helvetica Neue', Helvetica, 'Arial Narrow', Arial, sans-serif;
     --flapkit-leaf-thickness: 0.24cqw;
+    --flapkit-meta-color: #858574;
+    --flapkit-outer-rim-shadow:
+      0 0 0 1.31px rgba(8, 9, 7, 0.74), 0 1.15px 0 rgba(214, 208, 174, 0.018),
+      0 0 0 0.66px rgba(197, 195, 166, 0.025) inset, 0 -1.48px 2.62px rgba(0, 0, 0, 0.42) inset;
     --flapkit-row-background-color: #151713;
     --flapkit-row-background-image: linear-gradient(
       180deg,
@@ -189,8 +251,10 @@
     --flapkit-row-shadow:
       0 0.05cqw 0 rgba(214, 208, 174, 0.016) inset, 0 0.1cqw 0.18cqw rgba(0, 0, 0, 0.26) inset,
       0 -0.06cqw 0.12cqw rgba(0, 0, 0, 0.18) inset, 0 0.16cqw 0.24cqw rgba(0, 0, 0, 0.34);
+    --flapkit-seam-color: rgba(7, 8, 6, 0.55);
     --flapkit-seam-opacity: 0.78;
     --flapkit-seam-thickness: 0.22cqw;
+    --flapkit-title-color: #d0cdb3;
     --flapkit-title-only-header-height: 25.5px;
     --flapkit-top-face-color: #282921;
     --flapkit-top-face-shadow:
@@ -201,5 +265,8 @@
       transparent 38%,
       transparent 100%
     );
+    --flapkit-vane-side-color: #111310;
+    --flapkit-vane-side-image: linear-gradient(180deg, #252823 0%, #0a0c0a 48%, #1a1c18 100%);
+    --flapkit-vane-side-shadow: 0 0 0 0.012cqw rgba(0, 0, 0, 0.82);
   }
 }

@@ -133,7 +133,7 @@ export function presentationSignature(presentation: CompiledBoardPresentation) {
 function splitFlapValueSignature(value: SplitFlapSource['rows'][number]['values'][string]) {
   return typeof value === 'string'
     ? `white:${value}`
-    : `${value.variant ?? 'white'}:${value.text}`
+    : `${value.variant ?? 'white'}:${value.text}:${JSON.stringify(value.cassettes ?? [])}`
 }
 
 export function sourceSignature(source: SplitFlapSource) {
@@ -323,15 +323,17 @@ export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
     highlighted: row.highlighted,
     id: row.id,
     values: Object.fromEntries(
-      row.groups.map((group) => [
-        group.id,
-        group.variant === 'white'
-          ? group.cells.map((cell) => cell.text).join('')
-          : {
-              text: group.cells.map((cell) => cell.text).join(''),
-              variant: group.variant,
-            },
-      ]),
+      row.groups.map((group) => {
+        const cassettes = group.cells.map((cell) => cell.text || ' '.repeat(cell.span))
+        return [
+          group.id,
+          {
+            cassettes,
+            text: cassettes.join(''),
+            ...(group.variant === 'white' ? null : { variant: group.variant }),
+          },
+        ]
+      }),
     ),
   }))
   const source = { columns, rows: sourceRows }

@@ -1474,8 +1474,10 @@ function LooksSection({
       <p>
         Looks are separate CSS subpaths. Put the look class on the Board or Grid styling host. Font family,
         weight, and style inherit from Board, Row, and Group; set size on Cell. Ordinary classes and Tailwind
-        utilities work without a Flapkit-specific API. Use <code>data-slot</code> and{' '}
-        <code>data-part="face"</code> only for surfaces that cannot inherit, such as leaf faces.
+        utilities work without a Flapkit-specific API. Stable <code>data-slot</code> values expose the board,
+        grid, row, group, and cassette; <code>data-part="face"</code> and <code>data-part="retainer"</code>{' '}
+        expose repeated surfaces. Canvas motion carries over typography, glyph and face colors, and geometry,
+        but not paint-only effects such as filters, shadows, or background images.
       </p>
       <ChoiceSwitch
         label="Look"

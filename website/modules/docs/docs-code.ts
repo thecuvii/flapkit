@@ -134,7 +134,7 @@ import '@thecuvii/flapkit/${look}.css'
 
 export const looksStaticCode = looksCode('custom')
 export const looksCssCode = `.operations-board [data-part='face'] {
-  filter: saturate(0.9);
+  background-color: #20231f;
 }`
 
 export type LooksRangeId = 'look-import' | 'board-class' | 'row-class' | 'cell-class'

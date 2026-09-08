@@ -150,8 +150,47 @@ export function Operations() {
 Font family, weight, and style inherit from `Board`, `Row`, and `Group`; size can
 be set directly on `Cell`. Ordinary classes and Tailwind utilities work without
 a Flapkit-specific API.
-For non-inheritable surfaces, scope CSS to your class and the rendered
-`data-slot` anatomy:
+
+### CSS customization contract
+
+Flapkit renders settled cassettes in the DOM and animated cassettes on Canvas.
+Customize both paths through the supported tokens and anatomy below rather than
+depending on implementation classes or renderer state.
+
+The stable consumer tokens are:
+
+- Typography: `--flapkit-glyph-font-family`, `--flapkit-glyph-font-weight`,
+  `--flapkit-glyph-size`, `--flapkit-glyph-tracking`, `--flapkit-glyph-width`,
+  `--flapkit-glyph-scale-y`, `--flapkit-glyph-y`, and `--flapkit-glyph-opacity`.
+- Glyph and face colors: `--flapkit-glyph-{variant}`,
+  `--flapkit-glyph-{variant}-top`, `--flapkit-glyph-{variant}-bottom`,
+  `--flapkit-top-face-color`, `--flapkit-bottom-face-color`,
+  `--flapkit-highlight-face`, and `--flapkit-highlight-glyph`.
+- Geometry: `--flapkit-board-unit`, `--flapkit-cell-track`,
+  `--flapkit-cell-height`, `--flapkit-frame-top`, `--flapkit-frame-right`,
+  `--flapkit-frame-bottom`, `--flapkit-frame-left`,
+  `--flapkit-header-height`, and `--flapkit-title-only-header-height`.
+
+Look authors may additionally define the `--flapkit-board-*`,
+`--flapkit-grid-*`, `--flapkit-row-*`, `--flapkit-cassette-*`,
+`--flapkit-cavity-*`, `--flapkit-cover-*`, `--flapkit-axle-*`,
+`--flapkit-spare-leaf-*`, and face surface/shadow tokens used by the bundled
+look files. These describe the DOM material around the animated leaves; they do
+not imply that Canvas reproduces every CSS paint effect.
+
+The stable rendered anatomy is intentionally small:
+
+| Selector | Meaning |
+| --- | --- |
+| `[data-slot='split-flap-board']` | Framed styling host |
+| `[data-slot='split-flap-grid']` | Frameless styling host |
+| `[data-slot='row']` | One display row |
+| `[data-slot='group']` | One adjacent cassette group |
+| `[data-slot='cassette']` | One independently driven cassette |
+| `[data-part='face']` | Upper, lower, or moving leaf face |
+| `[data-part='retainer']` | Axle or wide-cassette retainer |
+
+For example, a face color is measured and carried into Canvas animation:
 
 ```css
 .operations-board {
@@ -159,9 +198,30 @@ For non-inheritable surfaces, scope CSS to your class and the rendered
 }
 
 .operations-board [data-part='face'] {
-  filter: saturate(0.9);
+  background-color: #20231f;
 }
 ```
+
+Canvas supports the following CSS subset during motion:
+
+| Customization | Settled DOM | Canvas motion |
+| --- | --- | --- |
+| Font family, size, weight, style, stretch, tracking, opacity, and glyph scale | Yes | Yes |
+| Variant glyph colors and face `background-color` | Yes | Yes |
+| Cassette and face geometry | Yes | Yes |
+| Board, frame, cavity, cover, and retainer materials | Yes | DOM remains responsible |
+| `background-image`, `filter`, `box-shadow`, `text-shadow`, blend modes, and custom pseudo-elements on a face | Yes | No |
+
+Canvas remeasures when Board/Grid props or ancestor attributes change, layout
+resizes, presentation classes change, or fonts finish loading. Pure CSS state
+changes such as `:hover` or a media query that neither changes geometry nor an
+observed attribute are not guaranteed to trigger remeasurement.
+
+Variables beginning with `--fk-`, `--flapkit-active-*`,
+`--flapkit-rendered-*`, `--flapkit-moving-*`, `--flapkit-stack-*`,
+`--flapkit-specular`, and undocumented `data-split-flap-*` attributes belong to
+the renderer/controller protocol and are not public API. Do not target internal
+`.flapkit-*` classes; use the stable anatomy above.
 
 ## Sound
 

@@ -41,12 +41,18 @@ describe('Flapkit structural compiler', () => {
       {
         highlighted: undefined,
         id: 'first',
-        values: { 'group-0': '55', 'group-1': { text: '5', variant: 'yellow' } },
+        values: {
+          'group-0': { cassettes: ['55'], text: '55' },
+          'group-1': { cassettes: ['5'], text: '5', variant: 'yellow' },
+        },
       },
       {
         highlighted: true,
         id: 'second',
-        values: { 'group-0': '14', 'group-1': { text: '4', variant: 'yellow' } },
+        values: {
+          'group-0': { cassettes: ['14'], text: '14' },
+          'group-1': { cassettes: ['4'], text: '4', variant: 'yellow' },
+        },
       },
     ])
   })
@@ -71,7 +77,12 @@ describe('Flapkit structural compiler', () => {
           flapSequence: 'alphanumeric' as const,
         },
       ],
-      rows: [{ id: 'row-0', values: { 'group-0': 'AB4' } }],
+      rows: [
+        {
+          id: 'row-0',
+          values: { 'group-0': { cassettes: ['A', 'B', '4'], text: 'AB4' } },
+        },
+      ],
     }
 
     expect(result.boardProps).toEqual({
@@ -82,6 +93,27 @@ describe('Flapkit structural compiler', () => {
     })
     expect(result.source).toEqual(source)
     expect(resolveSplitFlapSource(result.source)).toEqual(resolveSplitFlapSource(source))
+  })
+
+  it('preserves empty and Unicode cell boundaries through source resolution', () => {
+    const combiningDeck = createDeck([' ', 'A', '\u0301', 'B'])
+    const result = compileFlapkitBoard(
+      <Board>
+        <Row deck={combiningDeck}>
+          <Cell>A</Cell>
+          <Cell>{''}</Cell>
+          <Cell>{'\u0301'}</Cell>
+          <Cell>B</Cell>
+        </Row>
+      </Board>,
+    )
+
+    expect(resolveSplitFlapSource(result.source).cells.map((cell) => cell.character)).toEqual([
+      'A',
+      ' ',
+      '\u0301',
+      'B',
+    ])
   })
 
   it('compiles a frameless grid through the same component model', () => {
@@ -108,7 +140,7 @@ describe('Flapkit structural compiler', () => {
     )
 
     expect(result.source.rows[0]?.values).toEqual({
-      'group-0': { text: '4', variant: 'orange' },
+      'group-0': { cassettes: ['4'], text: '4', variant: 'orange' },
     })
     expect(() => resolveSplitFlapSource(result.source)).not.toThrow()
   })

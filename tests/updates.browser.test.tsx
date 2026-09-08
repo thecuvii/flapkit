@@ -132,6 +132,19 @@ it.each([false, true])(
   },
 )
 
+it.each([false, true])('exposes the stable styling anatomy (grid=%s)', async (grid) => {
+  await render(display({ grid }))
+
+  expect(host.querySelectorAll(`[data-slot="split-flap-${grid ? 'grid' : 'board'}"]`)).toHaveLength(
+    1,
+  )
+  expect(host.querySelectorAll('[data-slot="row"]')).toHaveLength(2)
+  expect(host.querySelectorAll('[data-slot="group"]')).toHaveLength(2)
+  expect(host.querySelectorAll('[data-slot="cassette"]')).toHaveLength(2)
+  expect(host.querySelectorAll('[data-part="face"]')).not.toHaveLength(0)
+  expect(host.querySelectorAll('[data-part="retainer"]')).not.toHaveLength(0)
+})
+
 it('uses the latest schedule closure without remounting or restarting unchanged targets', async () => {
   const first = vi.fn<Parameters<typeof motion>[0]>((cells, context) =>
     cells.forEach((cell) => context.start(cell.index, context.now)),
@@ -205,8 +218,8 @@ it('measures each cassette rather than treating equal class names as equal style
   await render(
     <>
       <style>{`
-        .custom [data-slot="stationary-upper"] { background-color: rgb(20, 30, 200); }
-        .custom [data-split-flap-row]:nth-child(2) [data-slot="stationary-upper"] { background-color: rgb(200, 20, 30); }
+        .custom [data-part="face"] { background-color: rgb(20, 30, 200); }
+        .custom [data-slot="row"]:nth-child(2) [data-part="face"] { background-color: rgb(200, 20, 30); }
       `}</style>
       {display({ className: 'custom' })}
     </>,
@@ -226,7 +239,7 @@ it('measures each cassette rather than treating equal class names as equal style
 })
 
 it('remeasures data attributes without relying on a resize', async () => {
-  const css = `.themed[data-theme="red"] [data-slot="stationary-upper"] { background-color: rgb(200, 20, 30); }`
+  const css = `.themed[data-theme="red"] [data-part="face"] { background-color: rgb(200, 20, 30); }`
   await render(
     <>
       <style>{css}</style>
@@ -320,7 +333,7 @@ it('measures per-row fonts for wide Latin and CJK glyphs and restores DOM attrib
 it('keeps measured colors during presentation updates and does not loop on its own DOM writes', async () => {
   const tree = (highlighted: boolean) => (
     <>
-      <style>{`.colored [data-slot="stationary-upper"] { background-color: rgb(20, 30, 200); }`}</style>
+      <style>{`.colored [data-part="face"] { background-color: rgb(20, 30, 200); }`}</style>
       <Root motion={adapter} sound={<Probe />}>
         <Grid data-look="airport" className="colored">
           <Row deck={deck} highlighted={highlighted}>

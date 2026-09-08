@@ -29,6 +29,8 @@ export type SplitFlapColumn = {
 export type SplitFlapValue =
   | string
   | {
+      /** Per-cassette content retained by the structural compiler. */
+      cassettes?: readonly string[]
       text: string
       variant?: Variant
     }
@@ -151,8 +153,12 @@ function splitFlapDeckKey(deck: Deck | undefined) {
 
 function splitFlapValue(value: SplitFlapValue | undefined) {
   return typeof value === 'string'
-    ? { text: value, variant: 'white' as const }
-    : { text: value?.text ?? '', variant: value?.variant ?? ('white' as const) }
+    ? { cassettes: undefined, text: value, variant: 'white' as const }
+    : {
+        cassettes: value?.cassettes,
+        text: value?.text ?? '',
+        variant: value?.variant ?? ('white' as const),
+      }
 }
 
 export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFlapSource {
@@ -174,11 +180,15 @@ export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFl
     columns.flatMap((column) => {
       const value = splitFlapValue(row.values[column.id])
       const valueCharacters = splitFlapGraphemes(value.text)
-      const characters = Array.from({ length: column.cells }, (_, cassetteIndex) =>
-        Array.from(
-          { length: column.cassetteSpan },
-          (_, spanIndex) => valueCharacters[cassetteIndex * column.cassetteSpan + spanIndex] ?? ' ',
-        ).join(''),
+      const characters = Array.from(
+        { length: column.cells },
+        (_, cassetteIndex) =>
+          value.cassettes?.[cassetteIndex] ??
+          Array.from(
+            { length: column.cassetteSpan },
+            (_, spanIndex) =>
+              valueCharacters[cassetteIndex * column.cassetteSpan + spanIndex] ?? ' ',
+          ).join(''),
       )
 
       return characters.map((character, columnIndex) => {

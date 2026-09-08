@@ -161,18 +161,22 @@ function WideRetainers() {
     <>
       <span
         {...classProps(styles.wideRetainer, styles.wideRetainerOuterLeft)}
+        data-part="retainer"
         data-slot="retainer"
       />
       <span
         {...classProps(styles.wideRetainer, styles.wideRetainerInnerLeft)}
+        data-part="retainer"
         data-slot="retainer"
       />
       <span
         {...classProps(styles.wideRetainer, styles.wideRetainerInnerRight)}
+        data-part="retainer"
         data-slot="retainer"
       />
       <span
         {...classProps(styles.wideRetainer, styles.wideRetainerOuterRight)}
+        data-part="retainer"
         data-slot="retainer"
       />
     </>
@@ -182,8 +186,16 @@ function WideRetainers() {
 function Axles() {
   return (
     <>
-      <span {...classProps(styles.axle, styles.axleLeft)} data-slot="retainer" />
-      <span {...classProps(styles.axle, styles.axleRight)} data-slot="retainer" />
+      <span
+        {...classProps(styles.axle, styles.axleLeft)}
+        data-part="retainer"
+        data-slot="retainer"
+      />
+      <span
+        {...classProps(styles.axle, styles.axleRight)}
+        data-part="retainer"
+        data-slot="retainer"
+      />
     </>
   )
 }
@@ -488,6 +500,7 @@ export const BoardRow = memo(function BoardRow({
   return (
     <div
       {...classProps(styles.departureRow, presentation?.className)}
+      data-slot="row"
       data-split-flap-row
       data-split-flap-row-id={row.id}
       style={
@@ -502,6 +515,7 @@ export const BoardRow = memo(function BoardRow({
         <div
           key={column.id}
           {...classProps(styles.departureGroup, presentation?.groups[columnIndex]?.className)}
+          data-slot="group"
           data-split-flap-group={column.id}
         >
           <div

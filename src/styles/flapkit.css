@@ -1,5 +1,8 @@
 /* Must be declared before this file or Tailwind is first loaded. Otherwise
    @layer flapkit is created first and loses to Tailwind preflight (* { padding: 0 }). */
+/* The public styling contract is documented under "CSS customization contract" in README.md.
+   Only the documented --flapkit-* tokens, data-slot values, and data-part values are stable.
+   --fk-*, undocumented data-split-flap-* attributes, and rendered/active variables are private. */
 @layer theme, base, components, flapkit, utilities;
 
 @layer flapkit {

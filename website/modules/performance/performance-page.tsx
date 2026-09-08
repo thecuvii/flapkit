@@ -119,9 +119,7 @@ function BenchmarkSummary({
           </span>
           <strong className="mt-1 block text-sm">{statusLabel}</strong>
         </div>
-        <p className="m-0 text-[11px] text-muted">
-          Median across measured runs. p95 is shown where it helps expose tail latency.
-        </p>
+        <p className="m-0 text-[11px] text-muted">Medians; p95 where shown.</p>
       </header>
       <div className="grid grid-cols-7 gap-px border-t border-rule bg-rule max-[860px]:grid-cols-4 max-[560px]:grid-cols-2">
         {metric(
@@ -418,8 +416,7 @@ export function PerformancePage() {
         </div>
         <h1 className="mt-[72px] mb-[18px] max-[560px]:mt-14">Bench</h1>
         <p className="m-0 max-w-[720px] leading-[1.65] text-muted">
-          Warm up the selected renderer, repeat identical target updates, and compare median and p95
-          results in the same browser. The board stays mounted between measured runs.
+          Compare median and p95 for identical updates in the same browser.
         </p>
       </header>
 
@@ -528,9 +525,8 @@ export function PerformancePage() {
       </section>
 
       <p className="mx-auto mt-3.5 w-[min(100%,1120px)] text-xs leading-[1.5] text-muted">
-        One warm-up run is excluded. Each measured update samples 1.5 seconds of animation frames.
-        Keep the tab visible and compare configurations in the same browser; these results are
-        diagnostic, not cross-device scores.
+        Excludes one warm-up. Each run samples 1.5 seconds of animation. Keep this tab visible; results are not
+        comparable across devices.
       </p>
     </main>
     </SiteFrame>

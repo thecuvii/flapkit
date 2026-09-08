@@ -36,7 +36,7 @@
   --font-display: 'Barlow Condensed', Inter, var(--font-sans);
   --font-mono: 'Commit Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
-  --spacing-u: round(down, clamp(64px, 6vw, 96px), 8px);
+  --spacing-u: round(down, clamp(64px, 6vw, 96px), 4px);
   --spacing-u4: calc(var(--spacing-u) / 4);
   --text-meta: 0.625rem;
 }
@@ -141,7 +141,7 @@ a:focus-visible {
   z-index: 0;
   pointer-events: none;
   background-image: linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: var(--u) 100%;
+  background-size: calc(2 * var(--u)) 100%;
   background-position: 0 0;
 }
 
@@ -961,4 +961,3 @@ h2 {
     visibility: hidden;
   }
 }
-

@@ -109,7 +109,7 @@ export function ExperimentsPage() {
             )}
             onClick={() => setPresetIndex((index) => (index + 1) % presets.length)}
           >
-            Update all boards
+            Update boards
           </button>
         </header>
 
@@ -119,7 +119,7 @@ export function ExperimentsPage() {
             Examples
           </h1>
           <p className="mt-6 mb-0 max-w-[580px] text-base leading-[1.65] text-muted">
-            Compare motion engines, Unicode decks, and double-width cassettes with live updates.
+            Compare motion, Unicode decks, and wide cassettes.
           </p>
         </div>
 
@@ -129,8 +129,8 @@ export function ExperimentsPage() {
           look="airport"
           motion="riffle"
           deck="A–Z"
-          title="Randomized rapid flipping"
-          description="Canvas-assisted motion spreads starts across the board and stays lightweight on dense layouts."
+          title="Randomized starts"
+          description="Canvas-assisted motion for dense boards."
         >
           <Flapkit.Root motion={Flapkit.riffle()}>
             <Flapkit.Board className="flapkit-airport">
@@ -146,8 +146,8 @@ export function ExperimentsPage() {
           look="industrial"
           motion="cascade"
           deck="A–Z"
-          title="Row-staggered 3D leaves"
-          description="The same canvas leaf as riffle, with starts staggered across rows and per-cell cadence variation."
+          title="Row-staggered motion"
+          description="Canvas leaves with per-cell cadence variation."
         >
           <Flapkit.Root motion={Flapkit.cascade()}>
             <Flapkit.Board className="flapkit-industrial">
@@ -164,7 +164,7 @@ export function ExperimentsPage() {
           motion="riffle"
           deck="custom"
           title="One grapheme per cell"
-          description="Each CJK grapheme occupies one independently driven character cell with its own upper and lower leaves."
+          description="Each grapheme moves independently."
         >
           <div className={demoFrame}>
             <Flapkit.Root motion={Flapkit.riffle()}>
@@ -191,8 +191,8 @@ export function ExperimentsPage() {
           look="airport"
           motion="riffle"
           deck="numeric"
-          title="One leaf stack, two graphemes"
-          description="Each double-width cassette has one deck and one motion state while every leaf position carries two graphemes."
+          title="Two graphemes, one cassette"
+          description="One deck and one motion state."
         >
           <div className={demoFrame}>
             <Flapkit.Root motion={Flapkit.riffle()}>

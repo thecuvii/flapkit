@@ -12,8 +12,7 @@ import { SiteGrain } from '../modules/site/site-grain'
 
 export const metadata: Metadata = {
   title: 'Flapkit — Split-flap displays for React',
-  description:
-    'Composable React split-flap displays with mechanical motion, sound, and customizable looks.',
+  description: 'React split-flap displays with motion, sound, and custom looks.',
 }
 
 export const viewport: Viewport = {

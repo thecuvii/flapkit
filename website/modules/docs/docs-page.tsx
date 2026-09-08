@@ -59,6 +59,9 @@ const navigation = [
   },
 ] as const
 
+const docsNavItemClass =
+  'grid w-fit max-w-full grid-cols-[8px_minmax(0,1fr)] items-center gap-2 py-1 font-display text-[15px] font-semibold uppercase tracking-[0.06em] text-faint [overflow-wrap:anywhere] hover:text-ink max-[860px]:inline-flex max-[860px]:shrink-0 max-[860px]:py-[5px]'
+
 const sectionMeta = [
   { id: 'quick-start', index: '01', title: 'Quick start' },
   { id: 'how-it-works', index: '02', title: 'How it works' },
@@ -550,6 +553,20 @@ function DocsNav() {
           {group.items.map(([label, id]) => (
             <DocsNavLink key={id} href={id} label={label} />
           ))}
+          {group.label === 'Guides' ? (
+            <a
+              href="https://github.com/thecuvii/flapkit#api"
+              className={docsNavItemClass}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span
+                aria-hidden="true"
+                className="size-1 justify-self-center rounded-full bg-[oklch(0.5_0_0)] max-[860px]:hidden"
+              />
+              API reference
+            </a>
+          ) : null}
         </div>
       ))}
     </nav>
@@ -564,8 +581,7 @@ function DocsNavLink({ href, label }: { href: SectionId; label: string }) {
     <a
       href={`#${href}`}
       className={cn(
-        'grid w-fit max-w-full grid-cols-[8px_minmax(0,1fr)] items-center gap-2 py-1 font-display text-[15px] font-semibold uppercase tracking-[0.06em] text-faint [overflow-wrap:anywhere] hover:text-ink',
-        'max-[860px]:inline-flex max-[860px]:shrink-0 max-[860px]:py-[5px]',
+        docsNavItemClass,
         isActive && 'text-ink',
       )}
       aria-current={isActive ? 'location' : undefined}
@@ -723,14 +739,7 @@ function QuickStartSection({ lines }: { lines: readonly QuickStartToken[][] }) {
       fillPreview
       preview={<DepartureBoard look={look} motion={motion} frame={board} header={showHeader} />}
     >
-      <p>
-        Install Flapkit. React 19 is a peer dependency. Import the structural stylesheet and one look; Flapkit
-        does not inject styles at runtime.
-      </p>
-      <p>
-        The preview is a fuller departure board. The snippet is the smallest first board, and follows the
-        options.
-      </p>
+      <p>Install Flapkit. React 19 is required. Import the structural stylesheet and one look.</p>
       <ChoiceSwitch label="Look" options={lookNames} value={look} onChange={setLook} />
       <ChoiceSwitch
         label="Motion"
@@ -762,12 +771,6 @@ function QuickStartSection({ lines }: { lines: readonly QuickStartToken[][] }) {
         }}
       />
       <TorphCodeBlock lines={lines} options={options} source={source} />
-      <p>
-        The API is in the{' '}
-        <a href="https://github.com/thecuvii/flapkit#api" target="_blank" rel="noreferrer">
-          README
-        </a>.
-      </p>
     </DocsSection>
   )
 }
@@ -777,32 +780,32 @@ const anatomyParts = [
   {
     id: 'board',
     name: 'Board',
-    note: 'Framed display with grain, labels, and optional header',
+    note: 'Frame, labels, optional header',
   },
   {
     id: 'grid',
     name: 'Grid',
-    note: 'Frameless display with the same cassette grid',
+    note: 'Cassette grid without a frame',
   },
   {
     id: 'header',
     name: 'Header',
-    note: 'Optional board title. Board only',
+    note: 'Optional Board title',
   },
   {
     id: 'row',
     name: 'Row',
-    note: 'One horizontal record',
+    note: 'Horizontal record',
   },
   {
     id: 'group',
     name: 'Group',
-    note: 'Optional adjacent region with shared settings',
+    note: 'Adjacent cells with shared settings',
   },
   {
     id: 'cell',
     name: 'Cell / WideCell',
-    note: 'One independently driven cassette. A group cannot mix widths',
+    note: 'One cassette; groups cannot mix widths',
   },
 ] as const
 
@@ -815,19 +818,19 @@ const compositionAnnotations = {
   row: {
     selector:
       '.composition-mechanism .flapkit-departure-row:first-child .flapkit-departure-group:first-child',
-    text: 'Row: one horizontal record',
+    text: 'Row',
     place: 'left',
   },
   group: {
     selector:
       '.composition-mechanism .flapkit-departure-row:first-child .flapkit-departure-group:nth-child(4)',
-    text: 'Group: shared label, deck & variant',
+    text: 'Group',
     place: 'top',
   },
   cell: {
     selector:
       '.composition-mechanism .flapkit-departure-row:first-child .flapkit-departure-group:nth-child(1) [data-slot="cassette"]',
-    text: 'Cell: one cassette, driven on its own',
+    text: 'Cell',
     place: 'top',
   },
 } as const
@@ -974,9 +977,9 @@ function CompositionSection({ html }: { html: string }) {
       }
     >
       <p>
-        Root compiles a declarative board and hands animation to a motion adapter. Use a flat Row when the
-        whole row shares one label, deck, sequence, and variant. Add Group only when adjacent regions need
-        different settings. Give Row and Group stable ids when items can reorder so cassette identity survives.
+        <code>Root</code> compiles the board and owns motion. A flat <code>Row</code> sets its cell defaults. With
+        explicit groups, each <code>Group</code> sets its own defaults. Add stable <code>id</code>s to reorderable
+        rows and groups.
       </p>
       <ul className="m-0 grid list-none gap-0 p-0" aria-label="Flapkit component tree">
         {anatomyParts.map((item) => (
@@ -994,10 +997,6 @@ function CompositionSection({ html }: { html: string }) {
           </li>
         ))}
       </ul>
-      <p>
-        <code>deck</code>, <code>sequence</code>, <code>variant</code>, and <code>label</code> cascade from Row
-        to Group to Cell. Set them on the nearest owner.
-      </p>
       <CodeBlock html={html} source={docsCode.composition.code} />
     </DocsSection>
   )
@@ -1077,10 +1076,8 @@ function SoundSection({ html }: { html: string }) {
       }
     >
       <p>
-        Sound is optional and ships without audio assets. Supply click and settle URLs you own, then pass{' '}
-        <code>{'mechanicalSound({ bank })'}</code> to Root. Flip the preview to hear the same bank. The React
-        adapter unlocks audio on the first pointer or keyboard gesture. <code>SoundEngine</code> is exported
-        from the same subpath for non-React wiring.
+        Audio files are not bundled. Pass click and settle URLs to <code>{'mechanicalSound({ bank })'}</code>.
+        The first interaction unlocks audio. Use <code>SoundEngine</code> without React.
       </p>
       <ChoiceSwitch
         label="Motion"
@@ -1093,7 +1090,7 @@ function SoundSection({ html }: { html: string }) {
         className="relative z-1 min-h-11 w-fit cursor-pointer touch-manipulation border border-rule-strong bg-transparent px-3 font-mono text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         onClick={playFlaps}
       >
-        {played ? 'Replay flap sounds' : 'Play flap sounds'}
+        {played ? 'Replay sounds' : 'Play sounds'}
       </button>
       <CodeBlock html={html} source={docsCode.sound.code} />
     </DocsSection>
@@ -1203,10 +1200,7 @@ function HowItWorksSection() {
         </div>
       }
     >
-      <p>
-        Scrub one cassette through its full deck. Each step is one pitch — the leaf that is turning, while the
-        rest stay packed.
-      </p>
+      <p>Scrub the deck one pitch at a time. Only the active leaf turns.</p>
       <ChoiceSwitch label="Look" options={lookNames} value={look} onChange={setLook} />
       <ChoiceSwitch
         label="Motion"
@@ -1318,9 +1312,8 @@ function MotionSection({ html }: { html: string }) {
       }
     >
       <p>
-        Both adapters drive the same component tree and preserve the same looks. <code>riffle()</code> is for
-        dense boards: canvas-assisted, randomized starts. <code>cascade()</code> paints the same leaf as riffle
-        and staggers starts across rows.
+        Both render the same canvas leaves. <code>riffle()</code> randomizes starts; <code>cascade()</code> staggers
+        them by row.
       </p>
       <ChoiceSwitch
         label="Motion"
@@ -1339,8 +1332,7 @@ function MotionSection({ html }: { html: string }) {
         <div className={optionRowClass}>
           <code>cascade()</code>
           <span className="text-[13px] leading-[1.55] text-muted">
-            <code>pitchMs</code>, <code>rowDelayMs</code>, <code>withinRowJitterMs</code>, plus the shared
-            settle options
+            <code>pitchMs</code>, <code>rowDelayMs</code>, <code>withinRowJitterMs</code>, shared settle options
           </span>
         </div>
       </div>
@@ -1472,12 +1464,10 @@ function LooksSection({
       }
     >
       <p>
-        Looks are separate CSS subpaths. Put the look class on the Board or Grid styling host. Font family,
-        weight, and style inherit from Board, Row, and Group; set size on Cell. Ordinary classes and Tailwind
-        utilities work without a Flapkit-specific API. Stable <code>data-slot</code> values expose the board,
-        grid, row, group, and cassette; <code>data-part="face"</code> and <code>data-part="retainer"</code>{' '}
-        expose repeated surfaces. Canvas motion carries over typography, glyph and face colors, and geometry,
-        but not paint-only effects such as filters, shadows, or background images.
+        Import one look and apply its class to <code>Board</code> or <code>Grid</code>. Typography inherits; set
+        size on <code>Cell</code>. Stable <code>data-slot</code> hooks cover board, grid, row, group, and cassette;
+        stable <code>data-part</code> hooks cover face and retainer. Canvas motion mirrors typography, colors,
+        and geometry—not filters, shadows, or background images.
       </p>
       <ChoiceSwitch
         label="Look"
@@ -1642,36 +1632,30 @@ function DecksSection({ html }: { html: string }) {
       }
     >
       <p>
-        A deck is the ordered stops a cassette can land on. Built-in sequences cover Latin letters, numbers,
-        and common punctuation. Use <code>createDeck</code> for Chinese, Japanese, emoji, or any other
-        grapheme. Text is segmented with <code>Intl.Segmenter</code>, so combining marks and emoji sequences
-        are not split across cells. <code>WideCell</code> is one cassette whose leaves carry two graphemes.
-        Rows in the same Board or Grid must share one Group / Cell / WideCell structure.
+        A deck lists cassette stops. Built-ins cover letters, numbers, and punctuation; <code>createDeck</code>{' '}
+        handles any grapheme with <code>Intl.Segmenter</code>. <code>WideCell</code> holds two graphemes per leaf.
+        Every row in a <code>Board</code> or <code>Grid</code> must use the same Group / Cell / WideCell structure.
       </p>
       <div>
         <div className={optionRowClass}>
           <code>alphanumeric</code>
           <span className="text-[13px] leading-[1.55] text-muted">
-            Letters, numbers, and <code>-./:</code>. The default sequence.
+            Letters, digits, and <code>-./:</code>. Default.
           </span>
         </div>
         <div className={optionRowClass}>
           <code>numeric</code>
-          <span className="text-[13px] leading-[1.55] text-muted">
-            Space and digits for clocks, gates, and counts.
-          </span>
+          <span className="text-[13px] leading-[1.55] text-muted">Space and digits.</span>
         </div>
         <div className={optionRowClass}>
           <code>punctuation</code>
-          <span className="text-[13px] leading-[1.55] text-muted">
-            Space, colon, period, slash, and hyphen.
-          </span>
+          <span className="text-[13px] leading-[1.55] text-muted">Space and <code>:./-</code>.</span>
         </div>
         <div className={optionRowClass}>
           <code>variant</code>
           <span className="text-[13px] leading-[1.55] text-muted">
-            <code>white</code>, <code>yellow</code>, or <code>orange</code>. Pass variants as the second
-            argument to <code>createDeck</code>.
+            <code>white</code>, <code>yellow</code>, or <code>orange</code>. Pass as <code>createDeck</code>’s
+            second argument.
           </span>
         </div>
       </div>

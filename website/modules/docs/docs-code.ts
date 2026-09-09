@@ -112,6 +112,7 @@ export const looksTabs = [
 ] as const
 
 export type LooksTab = (typeof looksTabs)[number]['id']
+export const looksSampleLines = ['FLAPKIT', 'BY     ', 'CUVII  '] as const
 
 export function looksCode(tab: LooksTab) {
   const look = tab === 'airport' ? 'airport' : 'industrial'
@@ -125,9 +126,13 @@ import '@thecuvii/flapkit/${look}.css'
 
 <Flapkit.Root motion={Flapkit.cascade()}>
   <Flapkit.Board className="${boardClass}">
-    <Flapkit.Row${rowClass} label="STATUS">
-      <Flapkit.Cell${cellClass}>A</Flapkit.Cell>
-    </Flapkit.Row>
+    {['FLAPKIT', 'BY     ', 'CUVII  '].map((line, row) => (
+      <Flapkit.Row key={row}${rowClass}>
+        {[...line].map((character, column) => (
+          <Flapkit.Cell key={column}${cellClass}>{character}</Flapkit.Cell>
+        ))}
+      </Flapkit.Row>
+    ))}
   </Flapkit.Board>
 </Flapkit.Root>`
 }
@@ -161,6 +166,19 @@ export function looksLiveValue(id: LooksRangeId, tab: LooksTab) {
     case 'cell-class':
       return tab === 'custom' ? ' className="text-xl font-bold"' : ''
   }
+}
+
+function motionCode(motion: 'cascade' | 'riffle') {
+  const motionCall = motion === 'cascade' ? 'Flapkit.cascade()' : 'Flapkit.riffle()'
+  return `<Flapkit.Root motion={${motionCall}}>
+  <Flapkit.Board className="flapkit-airport">
+    <Flapkit.Row label="STATUS">
+      {[...'FLAPKIT'].map((character, index) => (
+        <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+      ))}
+    </Flapkit.Row>
+  </Flapkit.Board>
+</Flapkit.Root>`
 }
 
 export const docsCode = {
@@ -223,18 +241,12 @@ const numberDeck = Flapkit.createDeck(['  ', '14', '05', '55', '30'])
 </Flapkit.Root>`,
     language: 'tsx',
   },
-  motion: {
-    code: `const motion = dense ? Flapkit.riffle() : Flapkit.cascade({ rowDelayMs: 120 })
-
-<Flapkit.Root motion={motion}>
-  <Flapkit.Board className="flapkit-airport">
-    <Flapkit.Row label="STATUS">
-      {[...'FLAPKIT'].map((character, index) => (
-        <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
-      ))}
-    </Flapkit.Row>
-  </Flapkit.Board>
-</Flapkit.Root>`,
+  motionRiffle: {
+    code: motionCode('riffle'),
+    language: 'tsx',
+  },
+  motionCascade: {
+    code: motionCode('cascade'),
     language: 'tsx',
   },
   looks: {

@@ -2,7 +2,6 @@
 
 import * as Flapkit from '@thecuvii/flapkit'
 import { mechanicalSound } from '@thecuvii/flapkit/sound'
-import { useClipboard } from 'foxact/use-clipboard'
 import {
   Activity,
   createContext,
@@ -21,13 +20,9 @@ import {
 import { TextMorph } from 'torph/react'
 import { CassettePreview } from '../../../src/render/cassette-preview'
 import {
-  docsCode,
-  looksCode,
-  looksCssCode,
   looksLiveValue,
   looksRanges,
   looksTabs,
-  quickStartCode,
   quickStartLiveValue,
   quickStartRanges,
   type HighlightedDocsCode,
@@ -42,21 +37,13 @@ import { SiteFrame, StreamlineBlockArrowheadsLeft } from '../site'
 import { LooksPlayground } from './looks-playground'
 
 const navigation = [
-  {
-    label: 'Start',
-    items: [['Quick start', 'quick-start']],
-  },
-  {
-    label: 'Guides',
-    items: [
-      ['How it works', 'how-it-works'],
-      ['Composition', 'composition'],
-      ['Decks', 'decks'],
-      ['Looks', 'looks'],
-      ['Motion', 'motion'],
-      ['Sound', 'sound'],
-    ],
-  },
+  ['Quick start', 'quick-start'],
+  ['How it works', 'how-it-works'],
+  ['Composition', 'composition'],
+  ['Decks', 'decks'],
+  ['Looks', 'looks'],
+  ['Motion', 'motion'],
+  ['Sound', 'sound'],
 ] as const
 
 const docsNavItemClass =
@@ -200,32 +187,12 @@ const codeBlockLiveClass =
 const optionRowClass =
   'grid grid-cols-[minmax(160px,0.7fr)_minmax(0,1.3fr)] gap-5 border-b border-dashed border-rule py-3.5 max-[560px]:grid-cols-1 max-[560px]:gap-[9px] [&_code]:font-mono [&_code]:text-xs [&_code]:font-[650] [&_code]:text-ink [&_code]:[overflow-wrap:anywhere]'
 const docsCopyClass = cn(
-  'flex min-w-0 max-w-[36rem] flex-col gap-u4',
+  'grid min-w-0 grid-cols-1 gap-u4 min-[861px]:grid-cols-2 min-[861px]:gap-x-u4',
+  'min-[861px]:[&>*]:col-span-2 min-[861px]:[&>[data-docs-choice]]:col-span-1',
   '[&>p]:m-0 [&>p]:text-base [&>p]:font-[430] [&>p]:tracking-[-0.006em] [&>p]:leading-u4 [&>p]:text-muted [&>p]:text-pretty',
   '[&_p_code]:px-0.5 [&_p_code]:font-mono [&_p_code]:text-[0.86em] [&_p_code]:text-ink',
   '[&_a]:text-link [&_a]:underline [&_a]:underline-offset-[3px] [&_a]:hover:text-ink',
 )
-
-function Logo() {
-  const { onNavClick } = useContext(DocsNavContext)
-
-  return (
-    <a
-      className="mb-9 inline-flex items-center gap-[9px] font-display text-[15px] font-semibold tracking-[0.04em] text-ink max-[860px]:mb-0"
-      href="#quick-start"
-      aria-label="Flapkit documentation home"
-      onClick={(event) => onNavClick(event, 'quick-start')}
-    >
-      <span
-        aria-hidden="true"
-        className="grid size-[22px] place-items-center bg-ink font-mono text-xs font-bold text-on-ink"
-      >
-        F
-      </span>
-      <strong className="max-[860px]:hidden">Flapkit</strong>
-    </a>
-  )
-}
 
 function GithubMark(props: SVGProps<SVGSVGElement>) {
   return (
@@ -238,30 +205,9 @@ function GithubMark(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-function CodeCopyButton({ source }: { source: string }) {
-  const { copied, copy } = useClipboard({ timeout: 1600 })
-  const copySource = useCallback(() => {
-    void copy(source)
-  }, [copy, source])
-
-  return (
-    <button
-      type="button"
-      className="absolute top-0 right-0 z-1 min-h-8 cursor-pointer touch-manipulation border-0 bg-transparent py-1.5 pr-0 pl-2.5 font-mono text-[11px] font-[620] tracking-[0.04em] text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-ink"
-      aria-live="polite"
-      onClick={copySource}
-    >
-      <TextMorph as="span">
-        {copied ? 'Copied' : 'Copy'}
-      </TextMorph>
-    </button>
-  )
-}
-
-function CodeBlock({ html, source }: { html: string; source: string }) {
+function CodeBlock({ html }: { html: string }) {
   return (
     <div className={codeBlockClass} role="region" aria-label="Code example">
-      <CodeCopyButton source={source} />
       <div
         className={codeBlockBodyClass}
         tabIndex={0}
@@ -364,15 +310,12 @@ function QuickStartSnippet({
 function TorphCodeBlock({
   lines,
   options,
-  source,
 }: {
   lines: readonly QuickStartToken[][]
   options: QuickStartSnippetOptions
-  source: string
 }) {
   return (
     <div className={codeBlockClass} role="region" aria-label="Code example">
-      <CodeCopyButton source={source} />
       <div
         className={cn(codeBlockBodyClass, codeBlockLiveClass)}
         style={{ '--qs-code-lines': lines.length } as CSSProperties}
@@ -498,7 +441,7 @@ function DocsSection({
   children: ReactNode
 }) {
   return (
-    <div className="grid min-h-dvh min-w-0 max-[860px]:h-auto min-[861px]:h-dvh min-[861px]:grid-cols-[minmax(0,1fr)_minmax(0,36rem)_var(--u)]">
+    <div className="grid min-h-dvh min-w-0 max-[860px]:h-auto min-[861px]:h-dvh min-[861px]:grid-cols-[minmax(0,1fr)_minmax(0,clamp(26rem,calc(6*var(--u)),30rem))_var(--u)]">
       <div
         className={cn(
           'grid px-u4 py-8 min-[861px]:min-h-0',
@@ -543,32 +486,23 @@ function DocsNav() {
   return (
     <nav
       aria-label="Documentation"
-      className="grid min-w-0 gap-[22px] max-[860px]:flex max-[860px]:gap-4 max-[860px]:overflow-x-auto max-[860px]:pr-7 max-[860px]:[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[860px]:[-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[860px]:[overscroll-behavior-x:contain] max-[860px]:[scrollbar-width:none] max-[860px]:[&::-webkit-scrollbar]:hidden"
+      className="grid min-w-0 gap-0.5 max-[860px]:flex max-[860px]:gap-4 max-[860px]:overflow-x-auto max-[860px]:pr-7 max-[860px]:[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[860px]:[-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[860px]:[overscroll-behavior-x:contain] max-[860px]:[scrollbar-width:none] max-[860px]:[&::-webkit-scrollbar]:hidden"
     >
-      {navigation.map((group) => (
-        <div key={group.label} className="grid min-w-0 gap-0.5 max-[860px]:contents">
-          <p className="mb-1 font-display text-[11px] font-semibold tracking-[0.1em] text-[color-mix(in_oklch,var(--faint)_62%,var(--paper))] uppercase max-[860px]:hidden">
-            {group.label}
-          </p>
-          {group.items.map(([label, id]) => (
-            <DocsNavLink key={id} href={id} label={label} />
-          ))}
-          {group.label === 'Guides' ? (
-            <a
-              href="https://github.com/thecuvii/flapkit#api"
-              className={docsNavItemClass}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <span
-                aria-hidden="true"
-                className="size-1 justify-self-center rounded-full bg-[oklch(0.5_0_0)] max-[860px]:hidden"
-              />
-              API reference
-            </a>
-          ) : null}
-        </div>
+      {navigation.map(([label, id]) => (
+        <DocsNavLink key={id} href={id} label={label} />
       ))}
+      <a
+        href="https://github.com/thecuvii/flapkit#api"
+        className={docsNavItemClass}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <span
+          aria-hidden="true"
+          className="size-1 justify-self-center rounded-full bg-[oklch(0.5_0_0)] max-[860px]:hidden"
+        />
+        API reference
+      </a>
     </nav>
   )
 }
@@ -611,7 +545,12 @@ function ChoiceSwitch<T extends string>({
   onChange: (value: T) => void
 }) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-4" role="group" aria-label={label}>
+    <div
+      className="flex min-w-0 flex-wrap items-baseline gap-x-4"
+      role="group"
+      aria-label={label}
+      data-docs-choice
+    >
       <span className="font-mono text-[10px] font-[620] leading-none tracking-[0.06em] text-ink uppercase opacity-40">
         {label}
       </span>
@@ -730,7 +669,6 @@ function QuickStartSection({ lines }: { lines: readonly QuickStartToken[][] }) {
   const [header, setHeader] = useState(true)
   const showHeader = board && header
   const options = { look, motion, board, header: showHeader }
-  const source = quickStartCode(options)
 
   return (
     <DocsSection
@@ -770,7 +708,7 @@ function QuickStartSection({ lines }: { lines: readonly QuickStartToken[][] }) {
           setHeader(false)
         }}
       />
-      <TorphCodeBlock lines={lines} options={options} source={source} />
+      <TorphCodeBlock lines={lines} options={options} />
     </DocsSection>
   )
 }
@@ -997,7 +935,7 @@ function CompositionSection({ html }: { html: string }) {
           </li>
         ))}
       </ul>
-      <CodeBlock html={html} source={docsCode.composition.code} />
+      <CodeBlock html={html} />
     </DocsSection>
   )
 }
@@ -1030,7 +968,6 @@ function StatusBoard({
 
   return (
     <Flapkit.Root
-      key={motion}
       motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}
       sound={sound}
     >
@@ -1092,7 +1029,7 @@ function SoundSection({ html }: { html: string }) {
       >
         {played ? 'Replay sounds' : 'Play sounds'}
       </button>
-      <CodeBlock html={html} source={docsCode.sound.code} />
+      <CodeBlock html={html} />
     </DocsSection>
   )
 }
@@ -1298,7 +1235,7 @@ function HowItWorksSection() {
   )
 }
 
-function MotionSection({ html }: { html: string }) {
+function MotionSection({ cascadeHtml, riffleHtml }: { cascadeHtml: string; riffleHtml: string }) {
   const [motion, setMotion] = useState<'cascade' | 'riffle'>('riffle')
 
   return (
@@ -1336,7 +1273,7 @@ function MotionSection({ html }: { html: string }) {
           </span>
         </div>
       </div>
-      <CodeBlock html={html} source={docsCode.motion.code} />
+      <CodeBlock html={motion === 'cascade' ? cascadeHtml : riffleHtml} />
     </DocsSection>
   )
 }
@@ -1423,7 +1360,6 @@ function LooksCodeBlock({
 }) {
   return (
     <div className={codeBlockClass} role="region" aria-label="Code example">
-      <CodeCopyButton source={looksCode(tab)} />
       <div
         className={cn(codeBlockBodyClass, codeBlockLiveClass)}
         style={{ '--qs-code-lines': lines.length } as CSSProperties}
@@ -1456,7 +1392,7 @@ function LooksSection({
           aria-labelledby={`${panelId}-tab-${tab}`}
           className={cn(
             'flapkit-industrial',
-            'grid h-[calc(var(--flapkit-frame-top)+var(--flapkit-frame-bottom)+(2*var(--flapkit-cell-height))+(0.4*var(--flapkit-board-unit)))] w-full',
+            'grid h-[calc(var(--flapkit-frame-top)+var(--flapkit-frame-bottom)+(3*var(--flapkit-cell-height))+(0.8*var(--flapkit-board-unit)))] w-full',
           )}
         >
           <LooksPlayground tab={tab} />
@@ -1477,7 +1413,7 @@ function LooksSection({
       />
       <LooksCodeBlock lines={lines} tab={tab} />
       <div className={tab === 'custom' ? undefined : 'invisible'} inert={tab !== 'custom' || undefined}>
-        <CodeBlock html={cssHtml} source={looksCssCode} />
+        <CodeBlock html={cssHtml} />
       </div>
     </DocsSection>
   )
@@ -1659,7 +1595,7 @@ function DecksSection({ html }: { html: string }) {
           </span>
         </div>
       </div>
-      <CodeBlock html={html} source={docsCode.decks.code} />
+      <CodeBlock html={html} />
     </DocsSection>
   )
 }
@@ -1678,8 +1614,7 @@ export function DocsPage({
       <SiteFrame>
         <div className="grid grid-cols-[var(--sidebar-width)_minmax(0,1fr)] max-[860px]:block">
           <aside className="min-w-0 border-r border-dashed border-rule font-mono max-[860px]:sticky max-[860px]:top-0 max-[860px]:z-2 max-[860px]:border-r-0 max-[860px]:border-b">
-            <div className="sticky top-0 flex min-h-dvh flex-col items-start px-u4 pt-u4 pb-6 max-[860px]:static max-[860px]:min-h-0 max-[860px]:grid max-[860px]:grid-cols-[auto_minmax(0,1fr)] max-[860px]:items-center max-[860px]:gap-[18px] max-[860px]:bg-[color-mix(in_oklch,var(--paper)_92%,transparent)] max-[860px]:px-4 max-[860px]:py-2.5">
-              <Logo />
+            <div className="sticky top-0 flex min-h-dvh flex-col items-start px-u4 pt-u4 pb-6 max-[860px]:static max-[860px]:min-h-0 max-[860px]:grid max-[860px]:grid-cols-1 max-[860px]:items-center max-[860px]:bg-[color-mix(in_oklch,var(--paper)_92%,transparent)] max-[860px]:px-4 max-[860px]:py-2.5">
               <DocsNav />
               <div className="mt-auto flex w-full items-end gap-u4 font-mono text-meta font-[620] tracking-[0.08em] text-faint uppercase max-[860px]:hidden">
                 <div className="grid gap-[calc(var(--spacing-u4)/2)]">
@@ -1730,7 +1665,10 @@ export function DocsPage({
               <LooksSection cssHtml={highlightedCode.looksCss} lines={looksLines} />
             </ActivitySection>
             <ActivitySection id="motion">
-              <MotionSection html={highlightedCode.motion} />
+              <MotionSection
+                cascadeHtml={highlightedCode.motionCascade}
+                riffleHtml={highlightedCode.motionRiffle}
+              />
             </ActivitySection>
             <ActivitySection id="sound">
               <SoundSection html={highlightedCode.sound} />

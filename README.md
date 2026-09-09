@@ -6,7 +6,7 @@ independently importable looks, Unicode decks, and multi-cell cassettes.
 ## Install
 
 ```sh
-pnpm add @thecuvii/flapkit
+pnpm add @cuvii/flapkit
 ```
 
 React 19 is a peer dependency. Import the structural stylesheet and one look;
@@ -25,9 +25,9 @@ Root ── motion adapter
 ```
 
 ```tsx
-import * as Flapkit from '@thecuvii/flapkit'
-import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/airport.css'
+import * as Flapkit from '@cuvii/flapkit'
+import '@cuvii/flapkit/flapkit.css'
+import '@cuvii/flapkit/airport.css'
 
 const statusDeck = Flapkit.createDeck(' BOARDING', ['white', 'yellow'])
 
@@ -80,7 +80,7 @@ is segmented with `Intl.Segmenter`, so combining marks and emoji sequences are
 not split across cells.
 
 ```tsx
-import * as Flapkit from '@thecuvii/flapkit'
+import * as Flapkit from '@cuvii/flapkit'
 
 const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 
@@ -130,9 +130,9 @@ that host alongside Flapkit's structural classes. The legacy `flapkit-airport`
 and `flapkit-industrial` classes still work.
 
 ```tsx
-import * as Flapkit from '@thecuvii/flapkit'
-import '@thecuvii/flapkit/flapkit.css'
-import '@thecuvii/flapkit/industrial.css'
+import * as Flapkit from '@cuvii/flapkit'
+import '@cuvii/flapkit/flapkit.css'
+import '@cuvii/flapkit/industrial.css'
 
 export function Operations() {
   return (
@@ -229,8 +229,8 @@ Sound is optional and ships without audio assets. Supply URLs owned by the
 consumer and pass the sound element to `Root`:
 
 ```tsx
-import * as Flapkit from '@thecuvii/flapkit'
-import { mechanicalSound } from '@thecuvii/flapkit/sound'
+import * as Flapkit from '@cuvii/flapkit'
+import { mechanicalSound } from '@cuvii/flapkit/sound'
 
 const soundBank = {
   clicks: ['/audio/flap-1.mp3', '/audio/flap-2.mp3'],
@@ -262,11 +262,11 @@ injection.
 
 ### Package subpaths
 
-- `@thecuvii/flapkit`
-- `@thecuvii/flapkit/sound`
-- `@thecuvii/flapkit/flapkit.css`
-- `@thecuvii/flapkit/airport.css`
-- `@thecuvii/flapkit/industrial.css`
+- `@cuvii/flapkit`
+- `@cuvii/flapkit/sound`
+- `@cuvii/flapkit/flapkit.css`
+- `@cuvii/flapkit/airport.css`
+- `@cuvii/flapkit/industrial.css`
 
 ### Root
 

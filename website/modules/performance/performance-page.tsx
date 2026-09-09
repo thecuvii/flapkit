@@ -1,6 +1,6 @@
 'use client'
 
-import * as Flapkit from '@thecuvii/flapkit'
+import * as Flapkit from '@cuvii/flapkit'
 import { SiteFrame } from '../site'
 import {
   Profiler,

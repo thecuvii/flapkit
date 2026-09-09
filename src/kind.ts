@@ -1,6 +1,6 @@
 import { Fragment, type ReactElement } from 'react'
 
-export const flapkitKind = Symbol.for('@thecuvii/flapkit/kind')
+export const flapkitKind = Symbol.for('@cuvii/flapkit/kind')
 
 export type FlapkitKind = 'board' | 'grid' | 'header' | 'row' | 'group' | 'cell' | 'wide-cell'
 

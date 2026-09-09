@@ -1,7 +1,7 @@
 'use client'
 
-import * as Flapkit from '@thecuvii/flapkit'
-import { mechanicalSound } from '@thecuvii/flapkit/sound'
+import * as Flapkit from '@cuvii/flapkit'
+import { mechanicalSound } from '@cuvii/flapkit/sound'
 import {
   Activity,
   createContext,

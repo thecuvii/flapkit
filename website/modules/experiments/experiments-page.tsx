@@ -1,6 +1,6 @@
 'use client'
 
-import * as Flapkit from '@thecuvii/flapkit'
+import * as Flapkit from '@cuvii/flapkit'
 import { useState, type ReactNode } from 'react'
 import { cn } from 'cn'
 import { Exhibit, SiteFrame } from '../site'

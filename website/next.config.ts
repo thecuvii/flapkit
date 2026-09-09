@@ -3,7 +3,7 @@ import type { NextConfig } from 'next'
 
 const workspaceRoot = path.resolve(import.meta.dirname, '..')
 
-// `@thecuvii/flapkit` resolves to `src/` through the package's `development`
+// `@cuvii/flapkit` resolves to `src/` through the package's `development`
 // export condition in `next dev`, and to `dist/` in `next build`.
 const nextConfig: NextConfig = {
   agentRules: false,
@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   output: 'export',
   trailingSlash: true,
   outputFileTracingRoot: workspaceRoot,
-  transpilePackages: ['@thecuvii/flapkit'],
+  transpilePackages: ['@cuvii/flapkit'],
   turbopack: {
     root: workspaceRoot,
   },

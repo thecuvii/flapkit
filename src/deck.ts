@@ -1,7 +1,6 @@
 export const splitFlapVariants = ['white', 'yellow', 'orange'] as const
 
 export type Variant = (typeof splitFlapVariants)[number] | (string & {})
-export type Sequence = 'alphanumeric' | 'numeric' | 'punctuation'
 export type Position = {
   character: string
   variant: Variant
@@ -41,3 +40,7 @@ export function createDeck(
       .map((character) => ({ character, variant })),
   )
 }
+
+export const alphanumericDeck = createDeck(splitFlapCharacters)
+export const numericDeck = createDeck(splitFlapNumericCharacters)
+export const punctuationDeck = createDeck(splitFlapPunctuationCharacters)

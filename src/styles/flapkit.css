@@ -1,8 +1,7 @@
 /* Must be declared before this file or Tailwind is first loaded. Otherwise
    @layer flapkit is created first and loses to Tailwind preflight (* { padding: 0 }). */
-/* The public styling contract is documented under "CSS customization contract" in README.md.
-   Only the documented --flapkit-* tokens, data-slot values, and data-part values are stable.
-   --fk-*, undocumented data-split-flap-* attributes, and rendered/active variables are private. */
+/* Style the public primitives with ordinary CSS. All custom properties below are
+   private renderer geometry/materials, not a consumer configuration API. */
 @layer theme, base, components, flapkit, utilities;
 
 @layer flapkit {
@@ -22,6 +21,9 @@
     z-index: 1;
     box-sizing: border-box;
     margin: 0;
+    padding: var(--flapkit-frame-top, 16px) var(--flapkit-frame-right, 16px)
+      var(--flapkit-frame-bottom, 16px) var(--flapkit-frame-left, 16px);
+    row-gap: 3.2px;
     width: max-content;
     overflow: hidden;
     border-radius: 1px;
@@ -31,11 +33,9 @@
   }
   :where(.flapkit-board-content) {
     position: relative;
-    display: grid;
+    display: block;
     box-sizing: border-box;
-    padding: var(--flapkit-frame-top) var(--flapkit-frame-right) var(--flapkit-frame-bottom)
-      var(--flapkit-frame-left);
-    container-type: inline-size;
+    row-gap: inherit;
   }
   :where(.flapkit-standalone-grid) {
     position: relative;
@@ -45,7 +45,7 @@
     overflow: clip;
     overflow-clip-margin: 1px;
     isolation: isolate;
-    container-type: inline-size;
+    row-gap: 3.2px;
   }
   :where(.flapkit-outer-rim) {
     position: absolute;
@@ -58,10 +58,10 @@
   :where(.flapkit-inner-rim) {
     position: absolute;
     z-index: 2;
-    top: calc(var(--flapkit-frame-top) + var(--flapkit-rendered-header-height) - 1px);
-    right: calc(var(--flapkit-frame-right) - 5px);
-    bottom: calc(var(--flapkit-frame-bottom) - 5px);
-    left: calc(var(--flapkit-frame-left) - 5px);
+    top: calc(var(--flapkit-rendered-header-height) - 1px);
+    right: -5px;
+    bottom: -5px;
+    left: -5px;
     border-radius: 0;
     box-shadow: var(--flapkit-inner-rim-shadow);
     pointer-events: none;
@@ -88,6 +88,8 @@
     z-index: 3;
     display: grid;
     box-sizing: border-box;
+    width: 0;
+    min-width: 100%;
     height: var(--flapkit-rendered-header-height);
     grid-template-rows: max-content 1fr;
     color: var(--flapkit-header-color);
@@ -119,6 +121,7 @@
     z-index: 3;
     display: grid;
     width: max-content;
+    row-gap: inherit;
     background-color: var(--flapkit-grid-background-color);
     background-image: var(--flapkit-grid-background-image);
     box-shadow: var(--flapkit-grid-shadow);
@@ -137,7 +140,8 @@
   }
   :where(.flapkit-departure-row) {
     position: relative;
-    display: grid;
+    display: flex;
+    gap: 6.4px;
     width: max-content;
     background-color: var(--flapkit-row-background-color);
     background-image: var(--flapkit-row-background-image);
@@ -145,7 +149,38 @@
   }
   :where(.flapkit-departure-group) {
     position: relative;
+    display: flex;
+    gap: 0.56px;
     min-width: 0;
+  }
+  :where(.flapkit-departure-row[data-flat]) {
+    gap: 0.56px;
+  }
+  :where(.flapkit-departure-row[data-flat] > .flapkit-departure-group) {
+    display: contents;
+  }
+  :where(.flapkit-cassette-scale) {
+    position: absolute;
+    display: block;
+    width: 1000%;
+    height: 100%;
+    container-type: inline-size;
+    pointer-events: none;
+  }
+  :where(.flapkit-cassette-body) {
+    display: block;
+    position: relative;
+    width: 10%;
+    height: 100%;
+  }
+  .flapkit-cassette:where([data-wide]) {
+    width: calc(2 * var(--flapkit-cell-track, 20px));
+  }
+  :where(.flapkit-cassette[data-wide] > .flapkit-cassette-scale) {
+    width: 500%;
+  }
+  :where(.flapkit-cassette[data-wide] > .flapkit-cassette-scale > .flapkit-cassette-body) {
+    width: 20%;
   }
   :where(.flapkit-departure-group-scale-context) {
     position: relative;
@@ -158,15 +193,16 @@
     pointer-events: auto;
   }
   :where(.flapkit-cassette) {
-    font-size: var(--flapkit-glyph-size);
+    font-size: var(--fk-default-font-size, 19.1px);
     letter-spacing: var(--flapkit-glyph-tracking);
     /* Canvas text ignores the host's `antialiased` smoothing; keep the DOM glyph on the
        same raster weight so the canvas -> DOM hand-off after a pitch does not jump. */
     -webkit-font-smoothing: auto;
     position: relative;
     display: block;
-    width: 100%;
-    height: var(--flapkit-cell-height);
+    flex: none;
+    width: var(--flapkit-cell-track, 20px);
+    height: var(--flapkit-cell-height, 34px);
     min-width: 0;
     overflow: visible;
     border-radius: var(--flapkit-cassette-radius);
@@ -408,7 +444,10 @@
   :where(.flapkit-cell-scene) {
     position: absolute;
     inset: 0;
-    transform-style: preserve-3d;
+    /* Stack settled leaves above the cavity; only the moving vane needs a
+       shared 3D context. Keep its perspective local to this scene. */
+    perspective: 22cqw;
+    perspective-origin: 50% 50%;
     pointer-events: none;
   }
   /* Cavity depth shared by the back plane and the four walls. */
@@ -483,7 +522,9 @@
   /* Upper/lower leaf halves: glyph placement, face colour, and wear layers. */
   :where(.flapkit-compact-upper) {
     --compact-glyph-fallback-color: var(--flapkit-glyph-white-top);
-    --compact-glyph-top: calc(var(--flapkit-glyph-y) - var(--flapkit-face-inset-y));
+    --compact-glyph-top: calc(
+      var(--fk-half-cell, 6.1cqw) - 6.1cqw + var(--flapkit-glyph-y) - var(--flapkit-face-inset-y)
+    );
     --compact-glyph-transform: translateX(-50%)
       scaleX(var(--flapkit-active-glyph-width, var(--flapkit-glyph-width)))
       scaleY(var(--flapkit-active-glyph-scale-y, var(--flapkit-glyph-scale-y, 0.78)));
@@ -493,7 +534,7 @@
   }
   :where(.flapkit-compact-lower) {
     --compact-glyph-fallback-color: var(--flapkit-glyph-white-bottom);
-    --compact-glyph-top: calc(var(--flapkit-glyph-y) - var(--flapkit-compact-half-cell));
+    --compact-glyph-top: calc(var(--flapkit-glyph-y) - 6.1cqw);
     --compact-glyph-transform: translateX(-50%) translateX(0.03cqw)
       scaleX(var(--flapkit-active-glyph-width, var(--flapkit-glyph-width)))
       scaleY(var(--flapkit-active-glyph-scale-y, var(--flapkit-glyph-scale-y, 0.78)));
@@ -527,6 +568,9 @@
     transform-origin: 50% 50%;
     width: var(--compact-glyph-width, 10cqw);
     pointer-events: none;
+  }
+  :where(.flapkit-compact-glyph-carrier[data-custom-glyph])::before {
+    color: inherit;
   }
   :where(.flapkit-compact-wide-glyph-carrier) {
     --compact-glyph-width: 20cqw;
@@ -662,8 +706,8 @@
   }
   :where(.flapkit-moving-vane-back)::after {
     clip-path: inset(
-      50% var(--flapkit-face-inset-x) var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y))
-        var(--flapkit-face-inset-x)
+      50% var(--flapkit-face-inset-x)
+        var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y)) var(--flapkit-face-inset-x)
     );
   }
   :where(.flapkit-moving-vane-side) {
@@ -684,15 +728,18 @@
     height: calc(50% - var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y)));
   }
   :where([data-pitch-half='incoming']) {
-    --flapkit-moving-front-face-top: var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y));
+    --flapkit-moving-front-face-top: var(
+      --flapkit-active-bottom-inset,
+      var(--flapkit-face-inset-y)
+    );
     --flapkit-moving-front-face-height: calc(
       50% - var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y))
     );
   }
   :where([data-pitch-half='incoming'] .flapkit-moving-vane-front)::after {
     clip-path: inset(
-      var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y)) var(--flapkit-face-inset-x) 50%
-        var(--flapkit-face-inset-x)
+      var(--flapkit-active-bottom-inset, var(--flapkit-face-inset-y)) var(--flapkit-face-inset-x)
+        50% var(--flapkit-face-inset-x)
     );
   }
   :where(.flapkit-moving-vane-side-left) {
@@ -786,7 +833,7 @@
   }
   :where(.flapkit-glyph) {
     position: absolute;
-    top: var(--flapkit-active-detailed-glyph-y, var(--flapkit-detailed-glyph-y, var(--flapkit-glyph-y)));
+    top: calc(var(--fk-half-cell, 6.1cqw) - 6.1cqw + var(--flapkit-glyph-y));
     left: 50%;
     display: block;
     width: 10cqw;
@@ -807,7 +854,7 @@
     transform: translateX(-50%)
       scaleX(var(--flapkit-active-glyph-width, var(--flapkit-glyph-width)))
       scaleY(var(--flapkit-active-glyph-scale-y, var(--flapkit-glyph-scale-y, 0.78)));
-    transform-origin: 50% 0%;
+    transform-origin: 50% 50%;
     --wide-glyph-x-offset: 0cqw;
   }
   :where(.flapkit-bottom-glyph-half .flapkit-glyph) {
@@ -837,8 +884,7 @@
     display: block;
     grid-row: 1;
     text-align: center;
-    transform:
-      translateX(var(--wide-glyph-x-offset, 0cqw))
+    transform: translateX(var(--wide-glyph-x-offset, 0cqw))
       scaleX(var(--flapkit-active-glyph-width, var(--flapkit-glyph-width)))
       scaleY(var(--flapkit-active-glyph-scale-y, var(--flapkit-glyph-scale-y, 0.78)));
     transform-origin: 50% 50%;
@@ -1015,23 +1061,22 @@
     background-image: linear-gradient(
       180deg,
       var(--flapkit-spare-leaf-top-color, #24251e) 0%,
-      var(--flapkit-spare-leaf-middle-color, #1a1b16)
-        var(--flapkit-spare-leaf-middle-stop, 68%),
-      var(--flapkit-spare-leaf-lower-color, #181910)
-        var(--flapkit-spare-leaf-lower-stop, 96.2%),
+      var(--flapkit-spare-leaf-middle-color, #1a1b16) var(--flapkit-spare-leaf-middle-stop, 68%),
+      var(--flapkit-spare-leaf-lower-color, #181910) var(--flapkit-spare-leaf-lower-stop, 96.2%),
       color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) var(--fk-le), black)
         var(--flapkit-spare-leaf-edge-start, 97.6%),
       color-mix(in srgb, var(--flapkit-spare-leaf-edge-color, #585644) var(--fk-le), black)
         var(--flapkit-spare-leaf-edge-end, 98.3%),
-      var(--flapkit-spare-leaf-tail-color, #1a1b16)
-        var(--flapkit-spare-leaf-tail-stop, 98.9%),
+      var(--flapkit-spare-leaf-tail-color, #1a1b16) var(--flapkit-spare-leaf-tail-stop, 98.9%),
       var(--flapkit-spare-leaf-base-color, #161710) 100%
     );
     /* Hairline lip, same scale as the stationary leaf's bottom catch. */
-    box-shadow:
-      0 var(--flapkit-spare-leaf-highlight-inset, -0.03cqw) 0
-        rgb(var(--flapkit-spare-leaf-highlight-rgb, 190 182 143) /
-          calc(var(--fk-les) * var(--flapkit-spare-leaf-highlight-alpha, 0.1))) inset;
+    box-shadow: 0 var(--flapkit-spare-leaf-highlight-inset, -0.03cqw) 0
+      rgb(
+        var(--flapkit-spare-leaf-highlight-rgb, 190 182 143) /
+          calc(var(--fk-les) * var(--flapkit-spare-leaf-highlight-alpha, 0.1))
+      )
+      inset;
     filter: brightness(var(--fk-lb)) saturate(var(--fk-lsat));
     transform: translateX(var(--fk-lx));
     clip-path: polygon(

@@ -2,24 +2,35 @@
 
 // DOM cassette renderer shared by the motion adapters.
 
-import { memo, useEffect, useRef, type CSSProperties, type RefObject } from 'react'
+import {
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type RefObject,
+} from 'react'
+import type { CellPresentation, CompiledBoardPresentation } from '../compiler'
 import {
   glyphOffsetValues,
   spareLeafStep,
   spareLeafXOffsets,
   splitFlapLeafBrightnessVariation,
-  splitFlapReferenceTracks,
   splitFlapSpareLeafCount,
 } from '../motion/constants'
 import { signedLeafNoise, type SplitFlapMotionController } from '../motion/runtime'
 import type { ResolvedSplitFlapCell, ResolvedSplitFlapSource } from '../layout'
 import { classProps, glyphOffsets, styles } from './classes'
-import { cssValue as splitFlapLook } from './css-values'
+const PartsContext = createContext<CellPresentation>({})
 
-function splitFlapColumnTracks(layout: ResolvedSplitFlapSource) {
-  return layout.columns
-    .map((column) => `calc(${column.cells * column.cassetteSpan} * ${splitFlapLook.cellTrack})`)
-    .join(' ')
+function usePartProps(part: 'face' | 'glyph' | 'retainer', ...classes: string[]) {
+  const presentation = useContext(PartsContext)[part]
+  return {
+    ...classProps(...classes, presentation?.className),
+    style: presentation?.style,
+    [`data-custom-${part}`]: presentation ? '' : undefined,
+  }
 }
 
 /** Short numeric token for a custom property; trims trailing zeros. */
@@ -45,7 +56,8 @@ function cellWearStyle(index: number, detailed: boolean) {
   const bottomWearStrength = wear(bottomWearNoise)
   const topBrightness = 1 + signedLeafNoise(index, 7) * brightnessVariation
   const bottomBrightness = 1 + signedLeafNoise(index, 31) * brightnessVariation
-  const saturation = (noise: number) => Math.max(0.88, 1 - Math.max(0, noise) * 0.08 * wearVariation)
+  const saturation = (noise: number) =>
+    Math.max(0.88, 1 - Math.max(0, noise) * 0.08 * wearVariation)
   const mottleRange = 32 * Math.min(wearVariation, 1)
   const mottle = (salt: number) => `${Math.round(50 + signedLeafNoise(index, salt) * mottleRange)}%`
   const scratchX = (salt: number) => `${Math.round(50 + signedLeafNoise(index, salt) * 34)}%`
@@ -108,7 +120,10 @@ function cellWearStyle(index: number, detailed: boolean) {
         signedLeafNoise(index, 277 + leafIndex * 31) * 0.035 * spareLeafVariation)
     const shadowOpacity = Math.min(
       0.22,
-      Math.max(0.12, 0.17 + signedLeafNoise(index, 307 + leafIndex * 37) * 0.05 * spareLeafVariation),
+      Math.max(
+        0.12,
+        0.17 + signedLeafNoise(index, 307 + leafIndex * 37) * 0.05 * spareLeafVariation,
+      ),
     )
     const xOffset =
       baseXOffset +
@@ -160,22 +175,22 @@ function WideRetainers() {
   return (
     <>
       <span
-        {...classProps(styles.wideRetainer, styles.wideRetainerOuterLeft)}
+        {...usePartProps('retainer', styles.wideRetainer, styles.wideRetainerOuterLeft)}
         data-part="retainer"
         data-slot="retainer"
       />
       <span
-        {...classProps(styles.wideRetainer, styles.wideRetainerInnerLeft)}
+        {...usePartProps('retainer', styles.wideRetainer, styles.wideRetainerInnerLeft)}
         data-part="retainer"
         data-slot="retainer"
       />
       <span
-        {...classProps(styles.wideRetainer, styles.wideRetainerInnerRight)}
+        {...usePartProps('retainer', styles.wideRetainer, styles.wideRetainerInnerRight)}
         data-part="retainer"
         data-slot="retainer"
       />
       <span
-        {...classProps(styles.wideRetainer, styles.wideRetainerOuterRight)}
+        {...usePartProps('retainer', styles.wideRetainer, styles.wideRetainerOuterRight)}
         data-part="retainer"
         data-slot="retainer"
       />
@@ -187,12 +202,12 @@ function Axles() {
   return (
     <>
       <span
-        {...classProps(styles.axle, styles.axleLeft)}
+        {...usePartProps('retainer', styles.axle, styles.axleLeft)}
         data-part="retainer"
         data-slot="retainer"
       />
       <span
-        {...classProps(styles.axle, styles.axleRight)}
+        {...usePartProps('retainer', styles.axle, styles.axleRight)}
         data-part="retainer"
         data-slot="retainer"
       />
@@ -224,7 +239,9 @@ function FaceGlyph({
     <span {...classProps(styles.glyphHalf, lower ? styles.bottomGlyphHalf : styles.topGlyphHalf)}>
       <span
         ref={glyphRef}
-        {...classProps(styles.glyph, glyphOffset, wide && styles.wideGlyphCarrier)}
+        {...usePartProps('glyph', styles.glyph, glyphOffset, wide ? styles.wideGlyphCarrier : '')}
+        data-part="glyph"
+        data-slot="glyph"
         data-split-flap-wide-glyph={wide || undefined}
       >
         {wide && <WideGlyphParts />}
@@ -236,22 +253,24 @@ function FaceGlyph({
 // One compact leaf half. The glyph is the ::before pseudo-element reading `data-glyph`.
 function CompactFace({
   faceRef,
+  glyphRef,
   lower,
   moving = false,
   slot,
   wide,
 }: {
-  faceRef: RefObject<HTMLSpanElement | null>
+  faceRef?: RefObject<HTMLSpanElement | null>
+  glyphRef: RefObject<HTMLSpanElement | null>
   lower: boolean
   moving?: boolean
   slot: string
   wide: boolean
 }) {
+  const { face, glyph } = useContext(PartsContext)
   return (
     <span
       ref={faceRef}
       {...classProps(
-        styles.compactGlyphCarrier,
         lower ? styles.compactLower : styles.compactUpper,
         moving ? styles.movingVaneFace : styles.compactStaticFace,
         moving
@@ -259,15 +278,29 @@ function CompactFace({
           : lower
             ? styles.compactStaticBottom
             : styles.compactStaticTop,
-        wide && styles.compactWideGlyphCarrier,
+        face?.className,
       )}
+      style={face?.style}
       data-part="face"
-      data-glyph=""
       data-slot={slot}
-      data-split-flap-compact-glyph
-      data-split-flap-wide-glyph={wide || undefined}
     >
-      {wide && <WideGlyphParts compact />}
+      <span
+        ref={glyphRef}
+        {...classProps(
+          styles.compactGlyphCarrier,
+          wide && styles.compactWideGlyphCarrier,
+          glyph?.className,
+        )}
+        style={glyph?.style}
+        data-custom-glyph={glyph ? '' : undefined}
+        data-part="glyph"
+        data-slot="glyph"
+        data-glyph=""
+        data-split-flap-compact-glyph
+        data-split-flap-wide-glyph={wide || undefined}
+      >
+        {wide && <WideGlyphParts compact />}
+      </span>
     </span>
   )
 }
@@ -277,11 +310,13 @@ export const FlapCell = memo(function FlapCell({
   controller,
   detailed = false,
   className,
+  presentation = {},
 }: {
   cell: ResolvedSplitFlapCell
   controller: SplitFlapMotionController
   detailed?: boolean
   className?: string
+  presentation?: CellPresentation
 }) {
   const { index } = cell
   const wide = cell.span === 2
@@ -298,10 +333,21 @@ export const FlapCell = memo(function FlapCell({
   const glyphOffset = glyphOffsets[index % glyphOffsets.length]
   const wearStyle = cellWearStyle(index, detailed)
 
+  useEffect(() => {
+    const root = rootRef.current!
+    const base = root.querySelector<HTMLElement>('[data-slot="cassette-base"]')!
+    const measure = () =>
+      root.style.setProperty('--fk-half-cell', `${parseFloat(getComputedStyle(base).height) / 2}px`)
+    const observer = new ResizeObserver(measure)
+    observer.observe(base)
+    measure()
+    return () => observer.disconnect()
+  }, [detailed, className, presentation.style])
+
   // The view registers once per mount; the controller toggles compact 3D motion by attribute.
   useEffect(() => {
-    const outgoingLowerGlyph = detailed ? outgoingLowerGlyphRef.current : outgoingLowerRef.current
-    const arrivingUpperGlyph = detailed ? arrivingUpperGlyphRef.current : arrivingUpperRef.current
+    const outgoingLowerGlyph = outgoingLowerGlyphRef.current
+    const arrivingUpperGlyph = arrivingUpperGlyphRef.current
     const movingFrontGlyph = movingFrontGlyphRef.current
     const movingBackGlyph = movingBackGlyphRef.current
     const movingVane = movingVaneRef.current
@@ -341,157 +387,205 @@ export const FlapCell = memo(function FlapCell({
 
   if (!detailed) {
     return (
-      <span
-        ref={rootRef}
-        {...classProps(styles.cassette, styles.compactCassette, className)}
-        data-slot="cassette"
-        data-split-flap-cassette
-        data-split-flap-index={index}
-        style={wearStyle}
-      >
-        <span {...classProps(styles.cell, styles.compactCell)} data-slot="cassette-base">
-          <CompactFace faceRef={outgoingLowerRef} lower slot="stationary-lower" wide={wide} />
-          <CompactFace faceRef={arrivingUpperRef} lower={false} slot="stationary-upper" wide={wide} />
-          {/* Mounted permanently; hidden by CSS until the controller marks the cassette active. */}
-          <span
-            ref={compactMovingStackRef}
-            {...classProps(styles.compactMovingStack)}
-            data-slot="moving-spare-leaves"
-          />
-          <span
-            ref={movingVaneRef}
-            {...classProps(styles.movingVane, styles.compactMovingVane)}
-            data-slot="moving-leaf"
-          >
-            <CompactFace
-              faceRef={movingFrontGlyphRef}
-              lower={false}
-              moving
-              slot="moving-leaf-front"
-              wide={wide}
-            />
-            <CompactFace
-              faceRef={movingBackGlyphRef}
-              lower
-              moving
-              slot="moving-leaf-back"
-              wide={wide}
-            />
+      <PartsContext value={presentation}>
+        <span
+          ref={rootRef}
+          {...classProps(styles.cassette, styles.compactCassette, className)}
+          data-slot="cassette"
+          data-split-flap-cassette
+          data-split-flap-index={index}
+          data-wide={wide || undefined}
+          style={{ ...wearStyle, ...presentation.style }}
+        >
+          <span className="flapkit-cassette-scale" data-split-flap-scale-context>
+            <span className="flapkit-cassette-body">
+              <span {...classProps(styles.cell, styles.compactCell)} data-slot="cassette-base">
+                <CompactFace
+                  faceRef={outgoingLowerRef}
+                  glyphRef={outgoingLowerGlyphRef}
+                  lower
+                  slot="stationary-lower"
+                  wide={wide}
+                />
+                <CompactFace
+                  faceRef={arrivingUpperRef}
+                  glyphRef={arrivingUpperGlyphRef}
+                  lower={false}
+                  slot="stationary-upper"
+                  wide={wide}
+                />
+                {/* Mounted permanently; hidden by CSS until the controller marks the cassette active. */}
+                <span
+                  ref={compactMovingStackRef}
+                  {...classProps(styles.compactMovingStack)}
+                  data-slot="moving-spare-leaves"
+                />
+                <span
+                  ref={movingVaneRef}
+                  {...classProps(styles.movingVane, styles.compactMovingVane)}
+                  data-slot="moving-leaf"
+                >
+                  <CompactFace
+                    glyphRef={movingFrontGlyphRef}
+                    lower={false}
+                    moving
+                    slot="moving-leaf-front"
+                    wide={wide}
+                  />
+                  <CompactFace
+                    glyphRef={movingBackGlyphRef}
+                    lower
+                    moving
+                    slot="moving-leaf-back"
+                    wide={wide}
+                  />
+                </span>
+              </span>
+              <CompactHardware wide={wide} />
+            </span>
           </span>
         </span>
-        <CompactHardware wide={wide} />
-      </span>
+      </PartsContext>
     )
   }
 
   return (
-    <span
-      ref={rootRef}
-      {...classProps(styles.cassette, className)}
-      data-slot="cassette"
-      data-split-flap-cassette
-      data-split-flap-index={index}
-      style={wearStyle}
-    >
-      <span {...classProps(styles.cell)} data-slot="cassette-base">
-        <span {...classProps(styles.cellScene)} data-slot="leaf-pack">
-          <span {...classProps(styles.cavityBackPlane)} />
-          <span {...classProps(styles.cavityWall, styles.cavityWallTop)} />
-          <span {...classProps(styles.cavityWall, styles.cavityWallRight)} />
-          <span {...classProps(styles.cavityWall, styles.cavityWallBottom)} />
-          <span {...classProps(styles.cavityWall, styles.cavityWallLeft)} />
-          <span ref={spareLeafPackRef} {...classProps(styles.spareLeafPack)}>
-            {Array.from({ length: splitFlapSpareLeafCount }, (_, leafIndex) => (
-              <span key={leafIndex} {...classProps(styles.spareLeafPlate)} />
-            ))}
-          </span>
-          <span ref={outgoingLowerRef} {...classProps(styles.faceLayer, styles.outgoingLower)}>
+    <PartsContext value={presentation}>
+      <span
+        ref={rootRef}
+        {...classProps(styles.cassette, className)}
+        data-slot="cassette"
+        data-split-flap-cassette
+        data-split-flap-index={index}
+        data-wide={wide || undefined}
+        style={{ ...wearStyle, ...presentation.style }}
+      >
+        <span className="flapkit-cassette-scale" data-split-flap-scale-context>
+          <span className="flapkit-cassette-body">
+            <span {...classProps(styles.cell)} data-slot="cassette-base">
+              <span {...classProps(styles.cellScene)} data-slot="leaf-pack">
+                <span {...classProps(styles.cavityBackPlane)} />
+                <span {...classProps(styles.cavityWall, styles.cavityWallTop)} />
+                <span {...classProps(styles.cavityWall, styles.cavityWallRight)} />
+                <span {...classProps(styles.cavityWall, styles.cavityWallBottom)} />
+                <span {...classProps(styles.cavityWall, styles.cavityWallLeft)} />
+                <span ref={spareLeafPackRef} {...classProps(styles.spareLeafPack)}>
+                  {Array.from({ length: splitFlapSpareLeafCount }, (_, leafIndex) => (
+                    <span key={leafIndex} {...classProps(styles.spareLeafPlate)} />
+                  ))}
+                </span>
+                <span
+                  ref={outgoingLowerRef}
+                  {...classProps(styles.faceLayer, styles.outgoingLower)}
+                >
+                  <span
+                    {...classProps(styles.face, styles.bottomFace, presentation.face?.className)}
+                    style={presentation.face?.style}
+                    data-part="face"
+                    data-slot="face"
+                  />
+                  <FaceGlyph
+                    glyphOffset={glyphOffset}
+                    glyphRef={outgoingLowerGlyphRef}
+                    lower
+                    wide={wide}
+                  />
+                </span>
+                <span
+                  ref={arrivingUpperRef}
+                  {...classProps(styles.faceLayer, styles.arrivingUpper)}
+                >
+                  <span
+                    {...classProps(styles.face, styles.topFace, presentation.face?.className)}
+                    style={presentation.face?.style}
+                    data-part="face"
+                    data-slot="face"
+                  />
+                  <FaceGlyph
+                    glyphOffset={glyphOffset}
+                    glyphRef={arrivingUpperGlyphRef}
+                    lower={false}
+                    wide={wide}
+                  />
+                </span>
+                <span
+                  ref={movingVaneRef}
+                  {...classProps(styles.movingVane)}
+                  data-slot="moving-leaf"
+                >
+                  <span {...classProps(styles.movingVaneFace, styles.movingVaneFront)}>
+                    <span
+                      {...classProps(styles.face, styles.topFace, presentation.face?.className)}
+                      style={presentation.face?.style}
+                      data-part="face"
+                      data-slot="face"
+                    />
+                    <FaceGlyph
+                      glyphOffset={glyphOffset}
+                      glyphRef={movingFrontGlyphRef}
+                      lower={false}
+                      wide={wide}
+                    />
+                  </span>
+                  <span {...classProps(styles.movingVaneFace, styles.movingVaneBack)}>
+                    <span
+                      {...classProps(styles.face, styles.bottomFace, presentation.face?.className)}
+                      style={presentation.face?.style}
+                      data-part="face"
+                      data-slot="face"
+                    />
+                    <FaceGlyph
+                      glyphOffset={glyphOffset}
+                      glyphRef={movingBackGlyphRef}
+                      lower
+                      wide={wide}
+                    />
+                  </span>
+                  <span {...classProps(styles.movingVaneSide, styles.movingVaneSideLeft)} />
+                  <span {...classProps(styles.movingVaneSide, styles.movingVaneSideRight)} />
+                </span>
+                <span {...classProps(styles.seam)} />
+                {wide ? <WideRetainers /> : <Axles />}
+                <span {...classProps(styles.cassetteBezel)} />
+              </span>
+            </span>
             <span
-              {...classProps(styles.face, styles.bottomFace)}
-              data-part="face"
-              data-slot="face"
+              {...classProps(styles.cassetteCover, styles.cassetteCoverTop)}
+              data-slot="cover"
             />
-            <FaceGlyph
-              glyphOffset={glyphOffset}
-              glyphRef={outgoingLowerGlyphRef}
-              lower
-              wide={wide}
+            <span
+              {...classProps(styles.cassetteCover, styles.cassetteCoverRight)}
+              data-slot="cover"
             />
-          </span>
-          <span ref={arrivingUpperRef} {...classProps(styles.faceLayer, styles.arrivingUpper)}>
-            <span {...classProps(styles.face, styles.topFace)} data-part="face" data-slot="face" />
-            <FaceGlyph
-              glyphOffset={glyphOffset}
-              glyphRef={arrivingUpperGlyphRef}
-              lower={false}
-              wide={wide}
+            <span
+              {...classProps(styles.cassetteCover, styles.cassetteCoverBottom)}
+              data-slot="cover"
+            />
+            <span
+              {...classProps(styles.cassetteCover, styles.cassetteCoverLeft)}
+              data-slot="cover"
             />
           </span>
-          <span ref={movingVaneRef} {...classProps(styles.movingVane)} data-slot="moving-leaf">
-            <span {...classProps(styles.movingVaneFace, styles.movingVaneFront)}>
-              <span
-                {...classProps(styles.face, styles.topFace)}
-                data-part="face"
-                data-slot="face"
-              />
-              <FaceGlyph
-                glyphOffset={glyphOffset}
-                glyphRef={movingFrontGlyphRef}
-                lower={false}
-                wide={wide}
-              />
-            </span>
-            <span {...classProps(styles.movingVaneFace, styles.movingVaneBack)}>
-              <span
-                {...classProps(styles.face, styles.bottomFace)}
-                data-part="face"
-                data-slot="face"
-              />
-              <FaceGlyph
-                glyphOffset={glyphOffset}
-                glyphRef={movingBackGlyphRef}
-                lower
-                wide={wide}
-              />
-            </span>
-            <span {...classProps(styles.movingVaneSide, styles.movingVaneSideLeft)} />
-            <span {...classProps(styles.movingVaneSide, styles.movingVaneSideRight)} />
-          </span>
-          <span {...classProps(styles.seam)} />
-          {wide ? <WideRetainers /> : <Axles />}
-          <span {...classProps(styles.cassetteBezel)} />
         </span>
       </span>
-      <span {...classProps(styles.cassetteCover, styles.cassetteCoverTop)} data-slot="cover" />
-      <span {...classProps(styles.cassetteCover, styles.cassetteCoverRight)} data-slot="cover" />
-      <span {...classProps(styles.cassetteCover, styles.cassetteCoverBottom)} data-slot="cover" />
-      <span {...classProps(styles.cassetteCover, styles.cassetteCoverLeft)} data-slot="cover" />
-    </span>
+    </PartsContext>
   )
 })
 
 export const BoardRow = memo(function BoardRow({
-  columnGap,
   controller,
   detailed = false,
-  groupGap,
   layout,
   rowIndex,
   presentation,
 }: {
-  columnGap: number
   controller: SplitFlapMotionController
   detailed?: boolean
-  groupGap: number
   layout: ResolvedSplitFlapSource
   rowIndex: number
-  presentation?: {
-    className?: string
-    groups: Array<{ className?: string; cells: Array<{ className?: string }> }>
-  }
+  presentation?: CompiledBoardPresentation['rows'][number]
 }) {
   const row = layout.rows[rowIndex]
-  const columnTracks = splitFlapColumnTracks(layout)
   // Highlight mixes are resolved in CSS; the row only publishes the strength once.
   const highlightStyle = row.highlighted
     ? { '--fk-hlf': '12%', '--fk-hlfi': '88%', '--fk-hlg': '70%', '--fk-hlgi': '30%' }
@@ -503,11 +597,11 @@ export const BoardRow = memo(function BoardRow({
       data-slot="row"
       data-split-flap-row
       data-split-flap-row-id={row.id}
+      data-flat={presentation?.flat || undefined}
       style={
         {
           ...highlightStyle,
-          columnGap: `calc(${groupGap} * ${splitFlapLook.boardUnit})`,
-          gridTemplateColumns: columnTracks,
+          ...presentation?.style,
         } as CSSProperties
       }
     >
@@ -517,37 +611,22 @@ export const BoardRow = memo(function BoardRow({
           {...classProps(styles.departureGroup, presentation?.groups[columnIndex]?.className)}
           data-slot="group"
           data-split-flap-group={column.id}
+          style={presentation?.groups[columnIndex]?.style}
         >
-          <div
-            {...classProps(styles.departureGroupScaleContext)}
-            data-split-flap-scale-context
-            style={{
-              width: `calc(${splitFlapReferenceTracks} * ${splitFlapLook.cellTrack})`,
-            }}
-          >
-            <div
-              {...classProps(styles.departureGroupGrid)}
-              style={{
-                columnGap: `${columnGap}cqw`,
-                gridTemplateColumns: `repeat(${column.cells}, minmax(0, 1fr))`,
-                width: `calc(${column.cells * column.cassetteSpan} * ${splitFlapLook.cellTrack})`,
-              }}
-            >
-              {Array.from({ length: column.cells }, (_, cassetteIndex) => {
-                const cell =
-                  layout.cells[rowIndex * layout.rowCellCount + column.offset + cassetteIndex]
-                return (
-                  <FlapCell
-                    key={cell.id}
-                    cell={cell}
-                    controller={controller}
-                    detailed={detailed}
-                    className={presentation?.groups[columnIndex]?.cells[cassetteIndex]?.className}
-                  />
-                )
-              })}
-            </div>
-          </div>
+          {Array.from({ length: column.cells }, (_, cassetteIndex) => {
+            const cell =
+              layout.cells[rowIndex * layout.rowCellCount + column.offset + cassetteIndex]
+            return (
+              <FlapCell
+                key={cell.id}
+                cell={cell}
+                controller={controller}
+                detailed={detailed}
+                className={presentation?.groups[columnIndex]?.cells[cassetteIndex]?.className}
+                presentation={presentation?.groups[columnIndex]?.cells[cassetteIndex]}
+              />
+            )
+          })}
         </div>
       ))}
     </div>

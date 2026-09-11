@@ -2,7 +2,7 @@
 
 // Board and grid renderers for the Flapkit component model.
 
-import { memo, useId, type CSSProperties, type ReactNode } from 'react'
+import { memo, useId, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { presentationSignature } from '../compiler'
 import type { ResolvedSplitFlapSource } from '../layout'
 import { useSplitFlap, useSplitFlapContent } from '../motion/provider'
@@ -23,12 +23,6 @@ function liveBoardText(layout: ResolvedSplitFlapSource) {
         .join(' '),
     )
     .join('. ')
-}
-
-function splitFlapColumnTracks(layout: ResolvedSplitFlapSource) {
-  return layout.columns
-    .map((column) => `calc(${column.cells * column.cassetteSpan} * ${cssValue.cellTrack})`)
-    .join(' ')
 }
 
 const BoardGrain = memo(function BoardGrain({ opacity }: { opacity: number }) {
@@ -87,10 +81,7 @@ export type BoardViewProps = DataAttributes & {
   'aria-label'?: string
   children?: ReactNode
   className?: string
-  columnGap?: number
-  groupGap?: number
   grainOpacity?: number
-  rowGap?: number
   showColumnLabels?: boolean
   style?: CSSProperties
 }
@@ -98,31 +89,12 @@ export type BoardViewProps = DataAttributes & {
 export type GridViewProps = DataAttributes & {
   'aria-label'?: string
   className?: string
-  columnGap?: number
-  groupGap?: number
-  rowGap?: number
   style?: CSSProperties
 }
 
-function splitFlapGridWidth(layout: ResolvedSplitFlapSource, groupGap: number) {
-  const trackCount = layout.columns.reduce(
-    (count, column) => count + column.cells * column.cassetteSpan,
-    0,
-  )
-  return `calc(${trackCount} * ${cssValue.cellTrack} + ${Math.max(0, layout.columns.length - 1) * groupGap} * ${cssValue.boardUnit})`
-}
-
-function GridContent({
-  columnGap,
-  groupGap,
-  rowGap,
-}: {
-  columnGap: number
-  groupGap: number
-  rowGap: number
-}) {
+function GridContent() {
   const { controller, layout, motion, presentation } = useSplitFlap()
-  const canvasGeometryKey = `${layout.layoutKey}:${columnGap}:${groupGap}:${rowGap}:${presentationSignature(presentation)}`
+  const canvasGeometryKey = `${layout.layoutKey}:${presentationSignature(presentation)}`
 
   return (
     <div
@@ -130,22 +102,21 @@ function GridContent({
       aria-hidden="true"
       style={{
         gridTemplateRows: `repeat(${layout.rows.length}, max-content)`,
-        rowGap: `calc(${rowGap} * ${cssValue.boardUnit})`,
       }}
     >
       {layout.rows.map((row, rowIndex) => (
         <BoardRow
           key={row.id}
-          columnGap={columnGap}
           controller={controller}
-          detailed={motion.variant === 'scrub'}
-          groupGap={groupGap}
+          detailed={motion.variant === 'scrub' || motion.renderer === 'css'}
           layout={layout}
           rowIndex={rowIndex}
           presentation={presentation.rows[rowIndex]}
         />
       ))}
-      {motion.variant !== 'scrub' && <MotionCanvas geometryKey={canvasGeometryKey} />}
+      {motion.variant !== 'scrub' && motion.renderer !== 'css' && (
+        <MotionCanvas geometryKey={canvasGeometryKey} />
+      )}
     </div>
   )
 }
@@ -153,9 +124,6 @@ function GridContent({
 export function GridView({
   'aria-label': ariaLabel = 'Split-flap display grid',
   className,
-  columnGap = 0.28,
-  groupGap = 0.8,
-  rowGap = 0.4,
   style,
   ...dataAttributes
 }: GridViewProps) {
@@ -169,17 +137,12 @@ export function GridView({
       aria-label={ariaLabel}
       className={[gridProps.className, className].filter(Boolean).join(' ')}
       data-slot="split-flap-grid"
-      style={
-        {
-          width: splitFlapGridWidth(layout, groupGap),
-          ...style,
-        } as CSSProperties
-      }
+      style={style}
     >
       <span {...classProps(styles.srOnly)} aria-live="polite">
         {liveBoardText(layout)}
       </span>
-      <GridContent columnGap={columnGap} groupGap={groupGap} rowGap={rowGap} />
+      <GridContent />
     </figure>
   )
 }
@@ -188,28 +151,42 @@ export function BoardView({
   'aria-label': ariaLabel = 'Split-flap display board',
   children,
   className,
-  columnGap = 0.28,
-  groupGap = 0.8,
   grainOpacity = 0.32,
-  rowGap = 0.4,
   showColumnLabels = true,
   style,
   ...dataAttributes
 }: BoardViewProps) {
   const layout = useSplitFlapContent()
+  const boardRef = useRef<HTMLElement>(null)
+  const labelsRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const row = boardRef.current?.querySelector<HTMLElement>('[data-slot="row"]')
+    const labels = labelsRef.current
+    if (!row || !labels) return
+    const groups = Array.from(row.querySelectorAll<HTMLElement>(':scope > [data-slot="group"]'))
+    const measure = () => {
+      labels.style.gridTemplateColumns = row.dataset.flat
+        ? `${row.offsetWidth}px`
+        : groups.map((group) => `${group.offsetWidth}px`).join(' ')
+      labels.style.columnGap = getComputedStyle(row).columnGap
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(row)
+    groups.forEach((group) => observer.observe(group))
+    measure()
+    return () => observer.disconnect()
+  }, [layout, className, style, children])
   const hasHeader = children !== undefined && children !== null
   const headerHeight = hasHeader
     ? showColumnLabels
       ? cssValue.headerHeight
       : cssValue.titleOnlyHeaderHeight
     : '0px'
-  const columnTracks = splitFlapColumnTracks(layout)
-  const groupGapSize = `calc(${groupGap} * ${cssValue.boardUnit})`
-  const boardWidth = `calc(${cssValue.frameLeft} + ${splitFlapGridWidth(layout, groupGap)} + ${cssValue.frameRight})`
   const boardProps = classProps(styles.board)
 
   return (
     <figure
+      ref={boardRef}
       {...dataAttributes}
       {...boardProps}
       aria-label={ariaLabel}
@@ -220,27 +197,23 @@ export function BoardView({
       <span {...classProps(styles.srOnly)} aria-live="polite">
         {liveBoardText(layout)}
       </span>
+      <span {...classProps(styles.outerRim)} aria-hidden="true" />
+      <span {...classProps(styles.boardSheen)} aria-hidden="true" />
+      <BoardGrain opacity={grainOpacity} />
       <div
         {...classProps(styles.boardContent)}
         style={
           {
             '--flapkit-rendered-header-height': headerHeight,
-            width: boardWidth,
           } as CSSProperties
         }
       >
-        <span {...classProps(styles.outerRim)} aria-hidden="true" />
         <span {...classProps(styles.innerRim)} aria-hidden="true" />
-        <span {...classProps(styles.boardSheen)} aria-hidden="true" />
-        <BoardGrain opacity={grainOpacity} />
         {hasHeader && (
           <div {...classProps(styles.boardHeader)}>
             {children}
             {showColumnLabels && (
-              <div
-                {...classProps(styles.boardColumnLabels)}
-                style={{ columnGap: groupGapSize, gridTemplateColumns: columnTracks }}
-              >
+              <div ref={labelsRef} {...classProps(styles.boardColumnLabels)}>
                 {layout.columns.map((column) => (
                   <span key={column.id} {...classProps(styles.boardColumnLabel)}>
                     {column.label}
@@ -250,7 +223,7 @@ export function BoardView({
             )}
           </div>
         )}
-        <GridContent columnGap={columnGap} groupGap={groupGap} rowGap={rowGap} />
+        <GridContent />
       </div>
     </figure>
   )

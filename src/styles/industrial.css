@@ -7,6 +7,7 @@
     font-variant: normal;
     font-weight: var(--flapkit-glyph-font-weight);
     font-feature-settings: normal;
+    --fk-default-font-size: 22.7px;
     --flapkit-axle-background:
       linear-gradient(90deg, #020303 0%, #303131 38%, #090a0a 72%, #010202 100%),
       radial-gradient(ellipse at 39% 28%, rgba(255, 255, 255, 0.1) 0 10%, transparent 31%);
@@ -25,8 +26,7 @@
     --flapkit-board-shadow:
       0 0 0 1px #050606, 0 1px 0 rgba(255, 255, 255, 0.05) inset,
       1px 0 0 rgba(255, 255, 255, 0.022) inset, 0 -2px 4px rgba(0, 0, 0, 0.5) inset,
-      0 1px 2px rgba(0, 0, 0, 0.46), 0 3px 7px rgba(0, 0, 0, 0.28),
-      0 10px 22px rgba(0, 0, 0, 0.16);
+      0 1px 2px rgba(0, 0, 0, 0.46), 0 3px 7px rgba(0, 0, 0, 0.28), 0 10px 22px rgba(0, 0, 0, 0.16);
     --flapkit-board-sheen:
       radial-gradient(ellipse 48% 19% at 31% 16%, rgba(255, 255, 255, 0.022), transparent 76%),
       radial-gradient(ellipse 24% 62% at 76% 54%, rgba(0, 0, 0, 0.16), transparent 78%),

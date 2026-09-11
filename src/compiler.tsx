@@ -1,6 +1,13 @@
 'use client'
 
-import { Children, Fragment, isValidElement, type ReactElement, type ReactNode } from 'react'
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import {
   type BoardProps,
   type CellProps,
@@ -10,15 +17,21 @@ import {
   type RowProps,
   type Variant,
 } from './components'
-import { splitFlapGraphemes, type Deck, type Sequence } from './deck'
+import { splitFlapGraphemes, type Deck } from './deck'
 import { kindOf } from './kind'
 import { type SplitFlapCassetteSpan, type SplitFlapSource } from './layout'
 import type { BoardViewProps } from './render/board'
 
-type CellDescriptor = {
+export type CellPresentation = {
   className?: string
+  style?: CSSProperties
+  face?: { className?: string; style?: CSSProperties }
+  glyph?: { className?: string; style?: CSSProperties }
+  retainer?: { className?: string; style?: CSSProperties }
+}
+
+type CellDescriptor = CellPresentation & {
   deck?: Deck
-  sequence?: Sequence
   span: SplitFlapCassetteSpan
   text: string
 }
@@ -26,6 +39,7 @@ type CellDescriptor = {
 type GroupDescriptor = {
   cells: CellDescriptor[]
   className?: string
+  style?: CSSProperties
   id: string
   label: string
   variant: Variant
@@ -44,7 +58,9 @@ export type CompiledBoard = {
 export type CompiledBoardPresentation = {
   rows: Array<{
     className?: string
-    groups: Array<{ className?: string; cells: Array<{ className?: string }> }>
+    style?: CSSProperties
+    flat?: boolean
+    groups: Array<{ className?: string; style?: CSSProperties; cells: CellPresentation[] }>
   }>
 }
 
@@ -78,7 +94,7 @@ function structuralElements(children: ReactNode, owner: string): ReactElement[] 
 function cellDescriptor(
   element: ReactElement,
   rowIndex: number,
-  defaults: Pick<GroupProps, 'deck' | 'sequence'> = {},
+  defaults: Pick<GroupProps, 'deck'> = {},
 ): CellDescriptor {
   const kind = kindOf(element)
   const wide = kind === 'wide-cell'
@@ -88,12 +104,29 @@ function cellDescriptor(
     )
   }
   const props = element.props as CellProps
-  if (typeof props.children !== 'number' && typeof props.children !== 'string') {
-    throw new TypeError(`Flapkit Cell content must be a string or number in row ${rowIndex + 1}`)
+  const presentation: CellPresentation = { className: props.className, style: props.style }
+  let content = props.children
+  if (typeof content !== 'number' && typeof content !== 'string') {
+    content = ''
+    for (const part of structuralElements(props.children, 'Flapkit.Cell')) {
+      const partKind = kindOf(part)
+      if (partKind !== 'face' && partKind !== 'glyph' && partKind !== 'retainer') {
+        throw new TypeError('Flapkit.Cell accepts text or Face, Glyph and Retainer declarations')
+      }
+      if (presentation[partKind]) throw new Error(`Flapkit.Cell accepts at most one ${partKind}`)
+      const partProps = part.props as {
+        children?: ReactNode
+        className?: string
+        style?: CSSProperties
+      }
+      presentation[partKind] = { className: partProps.className, style: partProps.style }
+      if (partKind === 'glyph') content = partProps.children
+    }
   }
-  const text = String(props.children)
+  if (typeof content !== 'string' && typeof content !== 'number')
+    throw new TypeError('Flapkit.Glyph content must be a string or number')
+  const text = String(content)
   const deck = props.deck ?? defaults.deck
-  const sequence = props.sequence ?? defaults.sequence
   const span = wide ? 2 : 1
   const graphemeCount = splitFlapGraphemes(text).length
   if (graphemeCount !== 0 && graphemeCount !== span) {
@@ -105,9 +138,8 @@ function cellDescriptor(
     throw new Error('Flapkit.WideCell requires a custom two-grapheme deck on itself or its Group')
   }
   return {
-    className: props.className,
+    ...presentation,
     deck,
-    sequence,
     span,
     text,
   }
@@ -118,16 +150,7 @@ export function deckSignature(deck: Deck | undefined) {
 }
 
 export function presentationSignature(presentation: CompiledBoardPresentation) {
-  return presentation.rows
-    .map((row) =>
-      [
-        row.className ?? '',
-        ...row.groups.map((group) =>
-          [group.className ?? '', ...group.cells.map((cell) => cell.className ?? '')].join(','),
-        ),
-      ].join(';'),
-    )
-    .join('|')
+  return JSON.stringify(presentation)
 }
 
 function splitFlapValueSignature(value: SplitFlapSource['rows'][number]['values'][string]) {
@@ -145,8 +168,6 @@ export function sourceSignature(source: SplitFlapSource) {
           column.cells,
           column.cassetteSpan ?? 1,
           column.label,
-          column.flapSequence ?? '',
-          column.cassetteSequences?.join(',') ?? '',
           deckSignature(column.flapDeck),
           column.cassetteFlapDecks?.map((deck) => deckSignature(deck)).join(';') ?? '',
         ].join(':'),
@@ -167,31 +188,20 @@ export function sourceSignature(source: SplitFlapSource) {
 }
 
 function cellTopologySignature(cell: CellDescriptor) {
-  return `${cell.span}:${cell.sequence ?? 'alphanumeric'}:${deckSignature(cell.deck)}`
+  return `${cell.span}:${deckSignature(cell.deck)}`
 }
 
 function groupColumnOptions(group: GroupDescriptor) {
   const firstDeck = group.cells[0]!.deck
-  const firstSequence = group.cells[0]!.sequence
   const sharesDeck = group.cells.every(
     (cell) => deckSignature(cell.deck) === deckSignature(firstDeck),
   )
-  const sharesSequence = group.cells.every((cell) => cell.sequence === firstSequence)
 
-  return {
-    ...(sharesDeck
-      ? firstDeck
-        ? { flapDeck: firstDeck }
-        : {}
-      : { cassetteFlapDecks: group.cells.map((cell) => cell.deck) }),
-    ...(sharesSequence
-      ? firstSequence
-        ? { flapSequence: firstSequence }
-        : {}
-      : {
-          cassetteSequences: group.cells.map((cell) => cell.sequence ?? ('alphanumeric' as const)),
-        }),
-  }
+  return sharesDeck
+    ? firstDeck
+      ? { flapDeck: firstDeck }
+      : {}
+    : { cassetteFlapDecks: group.cells.map((cell) => cell.deck) }
 }
 
 function groupDescriptor(
@@ -215,6 +225,7 @@ function groupDescriptor(
   return {
     cells,
     className: props.className,
+    style: props.style,
     id: props.id ?? `group-${groupIndex}`,
     label: props.label ?? '',
     variant: props.variant ?? 'white',
@@ -232,11 +243,10 @@ function rowGroups(row: ReactElement<RowProps>, rowIndex: number) {
     if (
       row.props.deck !== undefined ||
       row.props.label !== undefined ||
-      row.props.sequence !== undefined ||
       row.props.variant !== undefined
     ) {
       throw new Error(
-        `Flapkit.Row ${rowIndex + 1} cannot set label, variant, deck, or sequence when it contains Groups`,
+        `Flapkit.Row ${rowIndex + 1} cannot set label, variant, or deck when it contains Groups`,
       )
     }
     return parts.map((part, groupIndex) => groupDescriptor(part, rowIndex, groupIndex))
@@ -293,6 +303,10 @@ export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
     highlighted: row.props.highlighted,
     id: row.props.id ?? `row-${rowIndex}`,
     className: row.props.className,
+    style: row.props.style,
+    flat: !structuralElements(row.props.children, 'Flapkit.Row').some(
+      (part) => kindOf(part) === 'group',
+    ),
   }))
   const firstRow = rows[0]!
   const topology = firstRow.groups.map((group) => group.cells.map(cellTopologySignature).join('|'))
@@ -340,9 +354,12 @@ export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
   const presentation = {
     rows: rows.map((row) => ({
       className: row.className,
+      style: row.style,
+      flat: row.flat,
       groups: row.groups.map((group) => ({
         className: group.className,
-        cells: group.cells.map((cell) => ({ className: cell.className })),
+        style: group.style,
+        cells: group.cells.map(({ deck: _deck, span: _span, text: _text, ...cell }) => cell),
       })),
     })),
   }
@@ -350,7 +367,14 @@ export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
   return {
     boardProps: boardProps as Omit<BoardViewProps, 'children'>,
     frame,
-    header: headers[0] ? (headers[0].props as HeaderProps).children : undefined,
+    header: headers[0] ? (
+      <div
+        className={(headers[0].props as HeaderProps).className}
+        style={(headers[0].props as HeaderProps).style}
+      >
+        {(headers[0].props as HeaderProps).children}
+      </div>
+    ) : undefined,
     presentation,
     presentationSignature: presentationSignature(presentation),
     source,

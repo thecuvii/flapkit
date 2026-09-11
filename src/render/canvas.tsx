@@ -443,7 +443,9 @@ function measureCanvasGlyph(element: HTMLElement, pseudoElement: '::before' | nu
     height: canvasGlyphScale(computedStyle.transform, hostStyle, 'y'),
     letterSpacing: computedStyle.letterSpacing === 'normal' ? '0px' : computedStyle.letterSpacing,
     lineHeight,
-    opacity: Number.isFinite(opacity) ? opacity : 1,
+    opacity:
+      (Number.isFinite(opacity) ? opacity : 1) *
+      (pseudoElement ? parseCssNumber(hostStyle.opacity) : 1),
     size,
     stretch: computedStyle.fontStretch as CanvasFontStretch,
     style: computedStyle.fontStyle,
@@ -773,20 +775,24 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
         const upperFace = cassette.querySelector<HTMLElement>('[data-slot="stationary-upper"]')
         const lowerFace = cassette.querySelector<HTMLElement>('[data-slot="stationary-lower"]')
         const cassetteBase = cassette.querySelector<HTMLElement>('[data-slot="cassette-base"]')
-        const scaleContext = cassette.closest<HTMLElement>('[data-split-flap-scale-context]')
+        const scaleContext = cassette.querySelector<HTMLElement>('[data-split-flap-scale-context]')
         const visual = resolvedVisuals[index]
         if (!cell || !cassetteBase || !scaleContext || !upperFace || !lowerFace || !visual)
           return []
         const glyphParts = Array.from(
           upperFace.querySelectorAll<HTMLElement>('[data-split-flap-glyph-part]'),
         )
-        const glyphElement = glyphParts[0] ?? upperFace
+        const upperGlyph = upperFace.querySelector<HTMLElement>('[data-slot="glyph"]')!
+        const lowerGlyph = lowerFace.querySelector<HTMLElement>('[data-slot="glyph"]')!
+        const glyphElement = glyphParts[0] ?? upperGlyph
         return [
           {
             cassette,
             index,
             upperFace,
             lowerFace,
+            upperGlyph,
+            lowerGlyph,
             cassetteBase,
             scaleContext,
             visual,
@@ -794,7 +800,7 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
             glyphElement,
             pseudoElement: glyphParts[0] ? null : ('::before' as const),
             previousScript: glyphElement.getAttribute('data-split-flap-script'),
-            previousColors: [upperFace, lowerFace].map((face) => ({
+            previousColors: [upperGlyph, lowerGlyph].map((face) => ({
               value: face.style.getPropertyValue(activeGlyphColorProperty),
               priority: face.style.getPropertyPriority(activeGlyphColorProperty),
             })),
@@ -809,25 +815,25 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
       const variants = new Set(measurements.flatMap(({ visual }) => visual.variants))
       for (const variant of variants) {
         const matching = measurements.filter(({ visual }) => visual.variants.includes(variant))
-        matching.forEach(({ upperFace, lowerFace }) => {
-          upperFace.style.setProperty(
+        matching.forEach(({ upperGlyph, lowerGlyph }) => {
+          upperGlyph.style.setProperty(
             activeGlyphColorProperty,
             splitFlapVariantVariable(variant, false),
           )
-          lowerFace.style.setProperty(
+          lowerGlyph.style.setProperty(
             activeGlyphColorProperty,
             splitFlapVariantVariable(variant, true),
           )
         })
-        matching.forEach(({ upperFace, lowerFace, glyphColors }) => {
+        matching.forEach(({ upperGlyph, lowerGlyph, glyphColors }) => {
           glyphColors[variant] = {
-            bottom: getComputedStyle(lowerFace, '::before').color,
-            top: getComputedStyle(upperFace, '::before').color,
+            bottom: getComputedStyle(lowerGlyph, '::before').color,
+            top: getComputedStyle(upperGlyph, '::before').color,
           }
         })
       }
-      measurements.forEach(({ upperFace, lowerFace, previousColors }) => {
-        ;[upperFace, lowerFace].forEach((face, index) => {
+      measurements.forEach(({ upperGlyph, lowerGlyph, previousColors }) => {
+        ;[upperGlyph, lowerGlyph].forEach((face, index) => {
           const previous = previousColors[index]
           if (previous.value) {
             face.style.setProperty(activeGlyphColorProperty, previous.value, previous.priority)
@@ -841,9 +847,12 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
           if (script === 'cjk') glyphElement.dataset.splitFlapScript = 'cjk'
           else delete glyphElement.dataset.splitFlapScript
         })
-        return measurements.map(({ glyphElement, pseudoElement }) =>
-          measureCanvasGlyph(glyphElement, pseudoElement),
-        )
+        return measurements.map(({ glyphElement, pseudoElement, upperGlyph }) => {
+          const measurement = measureCanvasGlyph(glyphElement, pseudoElement)
+          if (!pseudoElement)
+            measurement.glyphStyle.opacity *= parseCssNumber(getComputedStyle(upperGlyph).opacity)
+          return measurement
+        })
       }
       const cjkGlyphs = measureGlyphs('cjk')
       const defaultGlyphs = measureGlyphs('default')
@@ -1020,6 +1029,9 @@ export const MotionCanvas = memo(function MotionCanvas({ geometryKey }: { geomet
       '[data-slot="split-flap-board"], [data-slot="split-flap-grid"]',
     )
     resizeObserver.observe(parent)
+    parent
+      .querySelectorAll('[data-split-flap-cassette]')
+      .forEach((element) => resizeObserver.observe(element))
     for (let element = board; element; element = element.parentElement) {
       // Consumer data-* attributes can select looks too. Do not observe the cassette
       // subtree: controller writes and our own measurement probes must not retrigger us.

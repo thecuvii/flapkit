@@ -35,6 +35,7 @@ import {
 import { cn } from 'cn'
 import { SiteFrame, StreamlineBlockArrowheadsLeft } from '../site'
 import { LooksPlayground } from './looks-playground'
+import { useInView } from './use-in-view'
 
 const navigation = [
   ['Quick start', 'quick-start'],
@@ -254,7 +255,8 @@ function QuickStartSnippet({
       <code>
         {lines.map((line, lineIndex) => {
           const isHeaderLine = Boolean(
-            headerRange && line.some((token) => tokenOverlapsRange(token, headerRange.start, headerRange.end)),
+            headerRange &&
+            line.some((token) => tokenOverlapsRange(token, headerRange.start, headerRange.end)),
           )
           const hideHeaderLine = isHeaderLine && !(options.board && options.header)
 
@@ -349,7 +351,8 @@ function DocsProvider({ children }: { children: ReactNode }) {
 
   const onNavClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>, id: SectionId) => {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+        return
       event.preventDefault()
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
       const adjacent = Math.abs(sectionIds.indexOf(id) - sectionIds.indexOf(activeId)) <= 1
@@ -401,13 +404,14 @@ function DocsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  return <DocsNavContext.Provider value={{ activeId, onNavClick }}>{children}</DocsNavContext.Provider>
+  return (
+    <DocsNavContext.Provider value={{ activeId, onNavClick }}>{children}</DocsNavContext.Provider>
+  )
 }
 
 function ActivitySection({ id, children }: { id: SectionId; children: ReactNode }) {
-  const { activeId } = useContext(DocsNavContext)
-  const inView = Math.abs(sectionIds.indexOf(id) - sectionIds.indexOf(activeId)) <= 1
   const sectionRef = useRef<HTMLElement>(null)
+  const inView = useInView(sectionRef)
   const heightRef = useRef(0)
 
   useLayoutEffect(() => {
@@ -420,7 +424,9 @@ function ActivitySection({ id, children }: { id: SectionId; children: ReactNode 
       ref={sectionRef}
       id={id}
       className="w-full min-h-dvh max-[860px]:scroll-mt-14"
-      style={inView ? undefined : { minHeight: heightRef.current > 0 ? heightRef.current : '100dvh' }}
+      style={
+        inView ? undefined : { minHeight: heightRef.current > 0 ? heightRef.current : '100dvh' }
+      }
     >
       <Activity mode={inView ? 'visible' : 'hidden'}>{children}</Activity>
     </section>
@@ -465,7 +471,12 @@ function DocsSection({
               viewBox="0 0 16 16"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path fill="currentColor" fillRule="evenodd" clipRule="evenodd" d="M9 15H0l7-7l-7-7h9l7 7z" />
+              <path
+                fill="currentColor"
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M9 15H0l7-7l-7-7h9l7 7z"
+              />
             </svg>
             <span className="min-w-0 font-display text-[28px] font-semibold uppercase tracking-[0.04em] leading-none">
               {title}
@@ -514,10 +525,7 @@ function DocsNavLink({ href, label }: { href: SectionId; label: string }) {
   return (
     <a
       href={`#${href}`}
-      className={cn(
-        docsNavItemClass,
-        isActive && 'text-ink',
-      )}
+      className={cn(docsNavItemClass, isActive && 'text-ink')}
       aria-current={isActive ? 'location' : undefined}
       onClick={(event) => onNavClick(event, href)}
     >
@@ -538,11 +546,13 @@ function ChoiceSwitch<T extends string>({
   options,
   value,
   onChange,
+  labels,
 }: {
   label: string
   options: readonly T[]
   value: T
   onChange: (value: T) => void
+  labels?: Record<T, string>
 }) {
   return (
     <div
@@ -554,31 +564,33 @@ function ChoiceSwitch<T extends string>({
       <span className="font-mono text-[10px] font-[620] leading-none tracking-[0.06em] text-ink uppercase opacity-40">
         {label}
       </span>
-      {options.map((option) => {
-        const pressed = value === option
-        return (
-          <button
-            key={option}
-            type="button"
-            aria-pressed={pressed}
-            className={cn(
-              'relative inline-flex min-h-11 min-w-0 cursor-pointer items-center overflow-visible border-0 bg-transparent py-1 font-mono text-[10px] font-semibold tracking-[0.06em] uppercase',
-              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
-              pressed ? 'text-ink' : 'text-muted',
-            )}
-            onClick={() => onChange(option)}
-          >
-            {option}
-            <StreamlineBlockArrowheadsLeft
+      <div className="contents" data-docs-options>
+        {options.map((option) => {
+          const pressed = value === option
+          return (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={pressed}
               className={cn(
-                'absolute top-1/2 left-[calc(100%+4px)] block size-[7px] shrink-0 -translate-y-1/2 text-flare',
-                pressed ? 'visible' : 'invisible',
+                'relative inline-flex min-h-11 min-w-0 cursor-pointer items-center overflow-visible border-0 bg-transparent py-1 font-mono text-[10px] font-semibold tracking-[0.06em] uppercase',
+                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+                pressed ? 'text-ink' : 'text-muted',
               )}
-              aria-hidden="true"
-            />
-          </button>
-        )
-      })}
+              onClick={() => onChange(option)}
+            >
+              {labels?.[option] ?? option}
+              <StreamlineBlockArrowheadsLeft
+                className={cn(
+                  'absolute top-1/2 left-[calc(100%+4px)] block size-[7px] shrink-0 -translate-y-1/2 text-flare',
+                  pressed ? 'visible' : 'invisible',
+                )}
+                aria-hidden="true"
+              />
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -591,7 +603,7 @@ function DepartureBoardTree({
   sound = true,
 }: {
   look: LookName
-  motion: 'cascade' | 'riffle'
+  motion: QuickStartSnippetOptions['motion']
   frame: boolean
   header: boolean
   sound?: boolean
@@ -625,7 +637,13 @@ function DepartureBoardTree({
   return (
     <Flapkit.Root
       key={motion}
-      motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}
+      motion={
+        motion === 'css'
+          ? Flapkit.cascade({ renderer: 'css' })
+          : motion === 'cascade'
+            ? Flapkit.cascade()
+            : Flapkit.riffle()
+      }
       sound={sound ? mechanicalSound({ bank: docsSoundBank }) : undefined}
     >
       <Frame aria-label="Airport departures" className={cn(`flapkit-${look}`, 'w-max')}>
@@ -643,7 +661,7 @@ function DepartureBoard({
   header,
 }: {
   look: LookName
-  motion: 'cascade' | 'riffle'
+  motion: QuickStartSnippetOptions['motion']
   frame: boolean
   header: boolean
 }) {
@@ -660,54 +678,33 @@ function DepartureBoard({
   )
 }
 
-const onOffOptions = ['on', 'off'] as const
-
 function QuickStartSection({ lines }: { lines: readonly QuickStartToken[][] }) {
   const [look, setLook] = useState<LookName>('airport')
-  const [motion, setMotion] = useState<'cascade' | 'riffle'>('cascade')
-  const [board, setBoard] = useState(true)
-  const [header, setHeader] = useState(true)
-  const showHeader = board && header
-  const options = { look, motion, board, header: showHeader }
+  const [motion, setMotion] = useState<QuickStartSnippetOptions['motion']>('cascade')
+  const options = { look, motion, board: true, header: true }
 
   return (
     <DocsSection
       index="01"
       title="Quick start"
       fillPreview
-      preview={<DepartureBoard look={look} motion={motion} frame={board} header={showHeader} />}
+      preview={<DepartureBoard look={look} motion={motion} frame header />}
     >
       <p>Install Flapkit. React 19 is required. Import the structural stylesheet and one look.</p>
-      <ChoiceSwitch label="Look" options={lookNames} value={look} onChange={setLook} />
-      <ChoiceSwitch
-        label="Motion"
-        options={['cascade', 'riffle'] as const}
-        value={motion}
-        onChange={setMotion}
-      />
-      <ChoiceSwitch
-        label="Board"
-        options={onOffOptions}
-        value={board ? 'on' : 'off'}
-        onChange={(value) => {
-          const next = value === 'on'
-          setBoard(next)
-          if (!next) setHeader(false)
-        }}
-      />
-      <ChoiceSwitch
-        label="Header"
-        options={onOffOptions}
-        value={showHeader ? 'on' : 'off'}
-        onChange={(value) => {
-          if (value === 'on') {
-            setBoard(true)
-            setHeader(true)
-            return
-          }
-          setHeader(false)
-        }}
-      />
+      <div className="docs-choice-rows">
+        <ChoiceSwitch label="Look" options={lookNames} value={look} onChange={setLook} />
+        <ChoiceSwitch
+          label="Motion"
+          options={['cascade', 'riffle', 'css'] as const}
+          labels={{
+            cascade: 'Cascade\n(Canvas)',
+            riffle: 'Riffle\n(Canvas)',
+            css: 'Cascade\n(CSS)',
+          }}
+          value={motion}
+          onChange={setMotion}
+        />
+      </div>
       <TorphCodeBlock lines={lines} options={options} />
     </DocsSection>
   )
@@ -892,7 +889,11 @@ function CompositionSection({ html }: { html: string }) {
           data-explode={explode}
           data-scene={scene ? '' : undefined}
         >
-          <div className="quick-start-board-slot flapkit-industrial" data-frame="on" data-header="on">
+          <div
+            className="quick-start-board-slot flapkit-industrial"
+            data-frame="on"
+            data-header="on"
+          >
             <div className="quick-start-board-scale">
               <div className="composition-layers">
                 <div className="composition-housing" aria-hidden="true">
@@ -915,9 +916,9 @@ function CompositionSection({ html }: { html: string }) {
       }
     >
       <p>
-        <code>Root</code> compiles the board and owns motion. A flat <code>Row</code> sets its cell defaults. With
-        explicit groups, each <code>Group</code> sets its own defaults. Add stable <code>id</code>s to reorderable
-        rows and groups.
+        <code>Root</code> compiles the board and owns motion. A flat <code>Row</code> sets its cell
+        defaults. With explicit groups, each <code>Group</code> sets its own defaults. Add stable{' '}
+        <code>id</code>s to reorderable rows and groups.
       </p>
       <ul className="m-0 grid list-none gap-0 p-0" aria-label="Flapkit component tree">
         {anatomyParts.map((item) => (
@@ -1013,8 +1014,9 @@ function SoundSection({ html }: { html: string }) {
       }
     >
       <p>
-        Audio files are not bundled. Pass click and settle URLs to <code>{'mechanicalSound({ bank })'}</code>.
-        The first interaction unlocks audio. Use <code>SoundEngine</code> without React.
+        Audio files are not bundled. Pass click and settle URLs to{' '}
+        <code>{'mechanicalSound({ bank })'}</code>. The first interaction unlocks audio. Use{' '}
+        <code>SoundEngine</code> without React.
       </p>
       <ChoiceSwitch
         label="Motion"
@@ -1040,7 +1042,6 @@ function HowItWorksSection() {
   const [progress, setProgress] = useState(firstCharacterProgress)
   const [isPlaying, setIsPlaying] = useState(false)
   const [look, setLook] = useState<LookName>('airport')
-  const [motionMode, setMotionMode] = useState<'cascade' | 'riffle'>('cascade')
   const playbackFrame = useRef<number | null>(null)
   const progressRef = useRef(progress)
   progressRef.current = progress
@@ -1083,7 +1084,7 @@ function HowItWorksSection() {
     }
 
     const startedAt = performance.now()
-    const duration = distance * (motionMode === 'cascade' ? 95 : 58)
+    const duration = distance * 95
     setIsPlaying(true)
 
     const advance = (now: number) => {
@@ -1117,6 +1118,8 @@ function HowItWorksSection() {
   useEffect(
     () => () => {
       if (playbackFrame.current !== null) cancelAnimationFrame(playbackFrame.current)
+      playbackFrame.current = null
+      setIsPlaying(false)
     },
     [],
   )
@@ -1126,29 +1129,30 @@ function HowItWorksSection() {
       index="02"
       title="How it works"
       preview={
-        <div className="grid h-[290px] w-[176px] justify-items-center content-start">
+        <div
+          className={cn(
+            `flapkit-${look}`,
+            'principle-view grid h-[290px] w-[176px] justify-items-center content-start',
+          )}
+        >
           <CassettePreview
-            className={cn(`flapkit-${look}`, 'principle-cassette')}
+            className="principle-cassette"
             deck={principleDeck}
             fromIndex={fromIndex}
-            mode={motionMode}
+            mode="cascade"
             progress={pitchProgress}
           />
         </div>
       }
     >
-      <p>Scrub the deck one pitch at a time. Only the active leaf turns.</p>
-      <ChoiceSwitch label="Look" options={lookNames} value={look} onChange={setLook} />
-      <ChoiceSwitch
-        label="Motion"
-        options={['cascade', 'riffle'] as const}
-        value={motionMode}
-        onChange={(option) => {
-          stopPlayback()
-          setMotionMode(option)
-        }}
-      />
-      <div className="grid grid-cols-11 gap-[3px]" aria-label="Complete Latin and CJK character deck">
+      <p>Scrub the CSS 3D mechanism one pitch at a time. Only the active leaf turns.</p>
+      <div className="docs-choice-rows">
+        <ChoiceSwitch label="Look" options={lookNames} value={look} onChange={setLook} />
+      </div>
+      <div
+        className="grid grid-cols-11 gap-[3px]"
+        aria-label="Complete Latin and CJK character deck"
+      >
         {principleDeck.map(({ character, variant }, index) => (
           <span
             key={`${character}-${index}`}
@@ -1183,7 +1187,12 @@ function HowItWorksSection() {
         >
           {visiblePosition.character.trim() || 'Blank'} {visibleIndex + 1}/{principleDeck.length}
         </output>
-        <div className={cn('principle-controls', 'col-span-full grid grid-cols-[minmax(0,1fr)_24px] items-center gap-3')}>
+        <div
+          className={cn(
+            'principle-controls',
+            'col-span-full grid grid-cols-[minmax(0,1fr)_24px] items-center gap-3',
+          )}
+        >
           <div className="relative grid h-6 items-center">
             <span
               aria-hidden="true"
@@ -1249,8 +1258,8 @@ function MotionSection({ cascadeHtml, riffleHtml }: { cascadeHtml: string; riffl
       }
     >
       <p>
-        Both render the same canvas leaves. <code>riffle()</code> randomizes starts; <code>cascade()</code> staggers
-        them by row.
+        Both render the same canvas leaves. <code>riffle()</code> randomizes starts;{' '}
+        <code>cascade()</code> staggers them by row.
       </p>
       <ChoiceSwitch
         label="Motion"
@@ -1269,7 +1278,8 @@ function MotionSection({ cascadeHtml, riffleHtml }: { cascadeHtml: string; riffl
         <div className={optionRowClass}>
           <code>cascade()</code>
           <span className="text-[13px] leading-[1.55] text-muted">
-            <code>pitchMs</code>, <code>rowDelayMs</code>, <code>withinRowJitterMs</code>, shared settle options
+            <code>pitchMs</code>, <code>rowDelayMs</code>, <code>withinRowJitterMs</code>, shared
+            settle options
           </span>
         </div>
       </div>
@@ -1296,13 +1306,7 @@ function LooksAnimatedWord({
   )
 }
 
-function LooksSnippet({
-  lines,
-  tab,
-}: {
-  lines: readonly QuickStartToken[][]
-  tab: LooksTab
-}) {
+function LooksSnippet({ lines, tab }: { lines: readonly QuickStartToken[][]; tab: LooksTab }) {
   return (
     <pre className="shiki">
       <code>
@@ -1351,13 +1355,7 @@ function LooksSnippet({
   )
 }
 
-function LooksCodeBlock({
-  lines,
-  tab,
-}: {
-  lines: readonly QuickStartToken[][]
-  tab: LooksTab
-}) {
+function LooksCodeBlock({ lines, tab }: { lines: readonly QuickStartToken[][]; tab: LooksTab }) {
   return (
     <div className={codeBlockClass} role="region" aria-label="Code example">
       <div
@@ -1400,10 +1398,13 @@ function LooksSection({
       }
     >
       <p>
-        Import one look and apply its class to <code>Board</code> or <code>Grid</code>. Typography inherits; set
-        size on <code>Cell</code>. Stable <code>data-slot</code> hooks cover board, grid, row, group, and cassette;
-        stable <code>data-part</code> hooks cover face and retainer. Canvas motion mirrors typography, colors,
-        and geometry—not filters, shadows, or background images.
+        Start with one look, then use ordinary CSS or Tailwind: padding on <code>Board</code>, gap
+        on
+        <code>Row</code> or <code>Group</code>, width and height on <code>Cell</code>. Declare
+        optional
+        <code>Face</code>, <code>Glyph</code>, and <code>Retainer</code> parts to style them
+        directly, or wrap a cell in your own React component. Canvas mirrors typography, colors, and
+        geometry—not filters, shadows, or background images.
       </p>
       <ChoiceSwitch
         label="Look"
@@ -1412,7 +1413,10 @@ function LooksSection({
         onChange={setTab}
       />
       <LooksCodeBlock lines={lines} tab={tab} />
-      <div className={tab === 'custom' ? undefined : 'invisible'} inert={tab !== 'custom' || undefined}>
+      <div
+        className={tab === 'custom' ? undefined : 'invisible'}
+        inert={tab !== 'custom' || undefined}
+      >
         <CodeBlock html={cssHtml} />
       </div>
     </DocsSection>
@@ -1504,7 +1508,8 @@ function SidebarCoords() {
     const fromLines = from.split('\n')
     const toLines = target.split('\n')
     const startedAt = performance.now()
-    const duration = Math.max(0, lineColumnCount(fromLines, toLines) - 1) * scrambleStaggerMs + scrambleWindowMs
+    const duration =
+      Math.max(0, lineColumnCount(fromLines, toLines) - 1) * scrambleStaggerMs + scrambleWindowMs
     const step = (now: number) => {
       const elapsed = now - startedAt
       if (elapsed >= duration) {
@@ -1556,7 +1561,7 @@ function DecksSection({ html }: { html: string }) {
                   <Flapkit.Group deck={wideDeck} label="FLIGHT">
                     <Flapkit.WideCell>14</Flapkit.WideCell>
                   </Flapkit.Group>
-                  <Flapkit.Group sequence="numeric" label="GATE">
+                  <Flapkit.Group deck={Flapkit.numericDeck} label="GATE">
                     <Flapkit.Cell>1</Flapkit.Cell>
                     <Flapkit.Cell>2</Flapkit.Cell>
                   </Flapkit.Group>
@@ -1568,30 +1573,34 @@ function DecksSection({ html }: { html: string }) {
       }
     >
       <p>
-        A deck lists cassette stops. Built-ins cover letters, numbers, and punctuation; <code>createDeck</code>{' '}
-        handles any grapheme with <code>Intl.Segmenter</code>. <code>WideCell</code> holds two graphemes per leaf.
-        Every row in a <code>Board</code> or <code>Grid</code> must use the same Group / Cell / WideCell structure.
+        A deck lists cassette stops. Import a built-in deck and pass it to <code>deck</code>, or use{' '}
+        <code>createDeck</code> for custom graphemes. Without a deck, cells use{' '}
+        <code>alphanumericDeck</code>. <code>WideCell</code> requires a custom deck with two
+        graphemes per leaf. Every row in a <code>Board</code> or <code>Grid</code> must use the same
+        Group / Cell / WideCell structure.
       </p>
       <div>
         <div className={optionRowClass}>
-          <code>alphanumeric</code>
+          <code>alphanumericDeck</code>
           <span className="text-[13px] leading-[1.55] text-muted">
             Letters, digits, and <code>-./:</code>. Default.
           </span>
         </div>
         <div className={optionRowClass}>
-          <code>numeric</code>
+          <code>numericDeck</code>
           <span className="text-[13px] leading-[1.55] text-muted">Space and digits.</span>
         </div>
         <div className={optionRowClass}>
-          <code>punctuation</code>
-          <span className="text-[13px] leading-[1.55] text-muted">Space and <code>:./-</code>.</span>
+          <code>punctuationDeck</code>
+          <span className="text-[13px] leading-[1.55] text-muted">
+            Space and <code>:./-</code>.
+          </span>
         </div>
         <div className={optionRowClass}>
           <code>variant</code>
           <span className="text-[13px] leading-[1.55] text-muted">
-            <code>white</code>, <code>yellow</code>, or <code>orange</code>. Pass as <code>createDeck</code>’s
-            second argument.
+            <code>white</code>, <code>yellow</code>, or <code>orange</code>. Pass as{' '}
+            <code>createDeck</code>’s second argument.
           </span>
         </div>
       </div>

@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  createDeck,
-  splitFlapCharacters,
-  splitFlapGraphemes,
-  splitFlapNumericCharacters,
-  splitFlapPunctuationCharacters,
-} from './deck'
+import { createDeck, splitFlapCharacters, splitFlapGraphemes } from './deck'
+import { alphanumericDeck, numericDeck, punctuationDeck } from './index'
 import { resolveSplitFlapSource, type SplitFlapColumn, type SplitFlapSource } from './layout'
 
 function sourceFor(
@@ -21,16 +16,26 @@ function sourceFor(
 
 describe('Flapkit source resolution', () => {
   it.each([
-    ['alphanumeric', splitFlapCharacters, 'A'],
-    ['numeric', splitFlapNumericCharacters, '7'],
-    ['punctuation', splitFlapPunctuationCharacters, ':'],
-  ] as const)('uses the built-in %s sequence', (flapSequence, characters, value) => {
+    ['alphanumeric', alphanumericDeck, ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-./:', 'A', 1],
+    ['numeric', numericDeck, ' 0123456789', '7', 8],
+    ['punctuation', punctuationDeck, ' :./-', '/', 3],
+  ] as const)('uses the exported %s deck', (_, flapDeck, characters, value, target) => {
     const resolved = resolveSplitFlapSource(
-      sourceFor({ id: 'value', label: 'Value', cells: 1, flapSequence }, value),
+      sourceFor({ id: 'value', label: 'Value', cells: 1, flapDeck }, value),
     )
 
-    expect(resolved.cells[0].flapDeck.map((position) => position.character)).toEqual(characters)
-    expect(resolved.cells[0].targetIndex).toBe(characters.indexOf(value))
+    expect(resolved.cells[0].flapDeck).toEqual(
+      Array.from(characters, (character) => ({ character, variant: 'white' })),
+    )
+    expect(resolved.cells[0].targetIndex).toBe(target)
+  })
+
+  it('defaults to the exported alphanumeric deck', () => {
+    const resolved = resolveSplitFlapSource(
+      sourceFor({ id: 'value', label: 'Value', cells: 1 }, '9'),
+    )
+    expect(resolved.cells[0].flapDeck).toBe(alphanumericDeck)
+    expect(resolved.targetIndices).toEqual([36])
   })
 
   it('normalizes custom decks and resolves custom variants', () => {
@@ -101,29 +106,25 @@ describe('Flapkit source resolution', () => {
     ).toThrow('Split-flap deck for "row:value:0" has no blank fallback position')
   })
 
-  it('selects decks and sequences per cassette before column defaults', () => {
+  it('selects per-cassette decks before the column default', () => {
     const secondDeck = createDeck(' B')
     const resolved = resolveSplitFlapSource(
       sourceFor(
         {
           id: 'value',
           label: 'Value',
-          cells: 2,
-          flapSequence: 'numeric',
-          cassetteSequences: ['punctuation'],
-          cassetteFlapDecks: [undefined, secondDeck],
+          cells: 3,
+          flapDeck: numericDeck,
+          cassetteFlapDecks: [punctuationDeck, secondDeck],
         },
-        ':B',
+        ':B7',
       ),
     )
 
-    expect(resolved.cells[0].flapSequence).toBe('punctuation')
-    expect(resolved.cells[0].flapDeck.map(({ character }) => character)).toEqual(
-      splitFlapPunctuationCharacters,
-    )
-    expect(resolved.cells[1].flapSequence).toBe('numeric')
+    expect(resolved.cells[0].flapDeck).toEqual(punctuationDeck)
     expect(resolved.cells[1].flapDeck).toEqual(secondDeck)
-    expect(resolved.targetIndices).toEqual([1, 1])
+    expect(resolved.cells[2].flapDeck).toEqual(numericDeck)
+    expect(resolved.targetIndices).toEqual([1, 1, 8])
   })
 
   it('resolves one runtime for a cassette spanning two character cells', () => {

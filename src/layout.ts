@@ -1,13 +1,9 @@
 // Internal layout model compiled from Flapkit compound components.
 import {
-  createDeck,
+  alphanumericDeck,
   normalizeDeckCharacter,
-  splitFlapCharacters,
   splitFlapGraphemes,
-  splitFlapNumericCharacters,
-  splitFlapPunctuationCharacters,
   type Deck,
-  type Sequence,
   type Variant,
 } from './deck'
 
@@ -19,9 +15,7 @@ export type SplitFlapColumn = {
   cassetteSpan?: SplitFlapCassetteSpan
   /** Number of independently driven cassettes in this column. */
   cells: number
-  cassetteSequences?: readonly Sequence[]
   flapDeck?: Deck
-  flapSequence?: Sequence
   id: string
   label: string
 }
@@ -58,7 +52,6 @@ export type ResolvedSplitFlapCell = {
   columnIndex: number
   columnOffset: number
   flapDeck: Deck
-  flapSequence: Sequence
   homeIndex: number
   id: string
   index: number
@@ -80,12 +73,6 @@ export type ResolvedSplitFlapSource = {
   targetIndices: readonly number[]
 }
 
-const builtInDecks: Readonly<Record<Sequence, Deck>> = {
-  alphanumeric: createDeck(splitFlapCharacters),
-  numeric: createDeck(splitFlapNumericCharacters),
-  punctuation: createDeck(splitFlapPunctuationCharacters),
-}
-
 function assertUniqueIds(items: readonly { id: string }[], kind: 'column' | 'row') {
   const ids = new Set<string>()
   for (const item of items) {
@@ -98,7 +85,6 @@ function assertUniqueIds(items: readonly { id: string }[], kind: 'column' | 'row
 
 function resolveSplitFlapDeck(
   deck: Deck | undefined,
-  sequence: Sequence,
   cassetteSpan: SplitFlapCassetteSpan,
   columnId: string,
 ) {
@@ -108,7 +94,7 @@ function resolveSplitFlapDeck(
         `Split-flap column "${columnId}" requires a custom deck with ${cassetteSpan}-grapheme positions`,
       )
     }
-    return builtInDecks[sequence]
+    return alphanumericDeck
   }
 
   const positions = deck.map((position) => ({
@@ -193,13 +179,8 @@ export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFl
 
       return characters.map((character, columnIndex) => {
         const index = rowIndex * rowCellCount + column.offset + columnIndex
-        const flapSequence =
-          column.cassetteSequences?.[columnIndex] ??
-          column.flapSequence ??
-          ('alphanumeric' as const)
         const flapDeck = resolveSplitFlapDeck(
           column.cassetteFlapDecks?.[columnIndex] ?? column.flapDeck,
-          flapSequence,
           column.cassetteSpan,
           column.id,
         )
@@ -210,7 +191,6 @@ export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFl
           columnIndex,
           columnOffset: column.offset,
           flapDeck,
-          flapSequence,
           homeIndex: Math.max(
             0,
             flapDeck.findIndex((position) => position.character.trim() === ''),
@@ -235,7 +215,7 @@ export function resolveSplitFlapSource(source: SplitFlapSource): ResolvedSplitFl
     layoutKey: `${columns
       .map(
         (column) =>
-          `${column.id}:${column.cells}:${column.cassetteSpan}:${column.flapSequence ?? 'alphanumeric'}:${column.cassetteSequences?.join(',') ?? ''}:${splitFlapDeckKey(column.flapDeck)}:${column.cassetteFlapDecks?.map(splitFlapDeckKey).join(';') ?? ''}`,
+          `${column.id}:${column.cells}:${column.cassetteSpan}:${splitFlapDeckKey(column.flapDeck)}:${column.cassetteFlapDecks?.map(splitFlapDeckKey).join(';') ?? ''}`,
       )
       .join('|')}::${source.rows.map((row) => row.id).join('|')}`,
     rowCellCount,

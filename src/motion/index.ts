@@ -34,11 +34,12 @@ export function motion(
   }
 }
 
-/** Creates row-staggered canvas motion. */
-export function cascade(options: Partial<CascadeMotion> = {}): MotionAdapter {
+/** Creates row-staggered motion, using Canvas unless CSS 3D is requested. */
+export function cascade(options: Partial<CascadeMotion> & Pick<MotionAdapter, 'renderer'> = {}): MotionAdapter {
   const resolved = { ...defaultCascadeMotion, ...options }
   return {
     id: 'cascade',
+    renderer: options.renderer ?? 'canvas',
     options: {
       cadenceVariationPct: resolved.cadenceVariationPct,
       finalReboundDeg: resolved.finalReboundDeg,
@@ -71,5 +72,5 @@ export function riffle(options: Partial<RiffleMotion> = {}): MotionAdapter {
 }
 
 export function adapterSignature(adapter: MotionAdapter) {
-  return `${adapter.id}:${motionOptionsSignature(adapter.options)}`
+  return `${adapter.id}:${adapter.renderer ?? 'canvas'}:${motionOptionsSignature(adapter.options)}`
 }

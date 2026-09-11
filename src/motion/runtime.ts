@@ -80,6 +80,7 @@ export type MotionTuning = {
   pitchMs: number
   reboundDeg: number
   reduceMotion: boolean
+  renderer?: 'canvas' | 'css'
   rowDelayMs: number
   schedule: MotionSchedule
   specularStrength: number

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { page } from 'vitest/browser'
 import { Board, Cell, Grid, Header, Root, Row, WideCell } from '../src/components'
 import { createDeck } from '../src/deck'
-import { motion, riffle, type MotionAdapter } from '../src/motion'
+import { cascade, motion, riffle, type MotionAdapter } from '../src/motion'
 import { useSplitFlapController } from '../src/motion/provider'
 import type { SplitFlapMotionController } from '../src/motion/runtime'
 import { SplitFlapSound } from '../src/sound/adapter'
@@ -43,13 +43,13 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
-  await act(() => root.unmount())
+  await act(async () => root.unmount())
   host.remove()
   vi.restoreAllMocks()
 })
 
 async function render(children: ReactNode) {
-  await act(() => root.render(<StrictMode>{children}</StrictMode>))
+  await act(async () => root.render(<StrictMode>{children}</StrictMode>))
   await document.fonts.ready
   // Flush initial measurement, the deferred target start, and ResizeObserver delivery.
   for (let index = 0; index < 4; index++) {
@@ -105,6 +105,36 @@ function freezePitch() {
   }
 }
 
+it('plays CSS 3D cascade without a canvas and switches back to Canvas', async () => {
+  const options = {
+    pitchMs: 100,
+    finalSettleMs: 180,
+    rowDelayMs: 70,
+    withinRowJitterMs: 0,
+    cadenceVariationPct: 0,
+  }
+  await render(display({ schedule: cascade({ ...options, renderer: 'css' }) }))
+  expect(host.querySelector('canvas')).toBeNull()
+  controller.setTargets([2, 1])
+  await expect.poll(() => host.getAnimations({ subtree: true }).length).toBeGreaterThan(0)
+  const transforms = host
+    .getAnimations({ subtree: true })
+    .flatMap((animation) =>
+      (animation.effect as KeyframeEffect).getKeyframes().map((frame) => frame.transform),
+    )
+  expect(transforms.some((transform) => String(transform).includes('rotateX'))).toBe(true)
+  await expect.poll(() => controller.readPerformanceCounters().runningCassettes).toBe(0)
+  // DOM geometry alone cannot detect lower leaves hidden behind the 3D cavity.
+  await expect.element(page.elementLocator(host)).toMatchScreenshot('css-settled')
+
+  await render(display({ text: 'B', schedule: cascade(options) }))
+  expect(host.querySelector('canvas')).not.toBeNull()
+  await render(display({ text: 'A', schedule: cascade({ ...options, renderer: 'css' }) }))
+  expect(host.querySelector('canvas')).toBeNull()
+  await expect.poll(() => host.getAnimations({ subtree: true }).length).toBeGreaterThan(0)
+  await expect.poll(() => controller.readPerformanceCounters().runningCassettes).toBe(0)
+})
+
 it.each(['airport', 'industrial'])('preserves %s idle and moving appearance', async (look) => {
   await render(display({ look }))
   await expect.element(page.elementLocator(host)).toMatchScreenshot(`${look}-idle`)
@@ -127,7 +157,11 @@ it.each([false, true])(
     expect(host.querySelector('[aria-live]')?.textContent).toBe('NEW B. NEW B')
     if (!grid) expect(host.querySelector('.flapkit-board-column-label')?.textContent).toBe('NEW')
     await expect
-      .poll(() => host.querySelector('[data-slot="stationary-upper"]')?.getAttribute('data-glyph'))
+      .poll(() =>
+        host
+          .querySelector('[data-slot="stationary-upper"] [data-slot="glyph"]')
+          ?.getAttribute('data-glyph'),
+      )
       .toBe('B')
   },
 )

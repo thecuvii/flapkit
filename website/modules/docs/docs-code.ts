@@ -1,13 +1,14 @@
 export type QuickStartSnippetOptions = {
   look: 'airport' | 'industrial'
-  motion: 'riffle' | 'cascade'
+  motion: 'riffle' | 'cascade' | 'css'
   board: boolean
   header: boolean
 }
 
 export function quickStartCode({ look, motion, board, header }: QuickStartSnippetOptions) {
   const frame = board ? 'Board' : 'Grid'
-  const motionCall = motion === 'cascade' ? 'Flapkit.cascade()' : 'Flapkit.riffle()'
+  const motionCall =
+    motion === 'css' ? "Flapkit.cascade({ renderer: 'css' })" : `Flapkit.${motion}()`
   const headerLine = board && header ? '    <Flapkit.Header>Departures</Flapkit.Header>\n' : ''
 
   return `import * as Flapkit from '@cuvii/flapkit'
@@ -56,14 +57,20 @@ type QuickStartRange = {
   start: number
 }
 
-function rangeInside(source: string, haystack: string, value: string): { end: number; start: number } {
+function rangeInside(
+  source: string,
+  haystack: string,
+  value: string,
+): { end: number; start: number } {
   const at = source.indexOf(haystack)
   if (at === -1) {
     throw new Error(`Quick start snippet is missing ${JSON.stringify(haystack)}`)
   }
   const inner = haystack.indexOf(value)
   if (inner === -1) {
-    throw new Error(`Quick start snippet haystack ${JSON.stringify(haystack)} is missing ${JSON.stringify(value)}`)
+    throw new Error(
+      `Quick start snippet haystack ${JSON.stringify(haystack)} is missing ${JSON.stringify(value)}`,
+    )
   }
   return { end: at + inner + value.length, start: at + inner }
 }
@@ -74,7 +81,7 @@ export const quickStartRanges: readonly QuickStartRange[] = [
     id: 'look-import',
     ...rangeInside(quickStartStaticCode, "import '@cuvii/flapkit/airport.css'", 'airport'),
   },
-  { id: 'motion', ...rangeInside(quickStartStaticCode, 'motion={Flapkit.cascade()}', 'cascade') },
+  { id: 'motion', ...rangeInside(quickStartStaticCode, 'motion={Flapkit.cascade()}', 'cascade()') },
   {
     id: 'frame-open',
     ...rangeInside(quickStartStaticCode, '<Flapkit.Board aria-label', 'Board'),
@@ -87,16 +94,13 @@ export const quickStartRanges: readonly QuickStartRange[] = [
   { id: 'frame-close', ...rangeInside(quickStartStaticCode, '</Flapkit.Board>', 'Board') },
 ]
 
-export function quickStartLiveValue(
-  id: QuickStartRangeId,
-  options: QuickStartSnippetOptions,
-) {
+export function quickStartLiveValue(id: QuickStartRangeId, options: QuickStartSnippetOptions) {
   switch (id) {
     case 'look-import':
     case 'look-class':
       return options.look
     case 'motion':
-      return options.motion
+      return options.motion === 'css' ? "cascade({ renderer: 'css' })" : `${options.motion}()`
     case 'frame-open':
     case 'frame-close':
       return options.board ? 'Board' : 'Grid'
@@ -116,9 +120,10 @@ export const looksSampleLines = ['FLAPKIT', 'BY     ', 'CUVII  '] as const
 
 export function looksCode(tab: LooksTab) {
   const look = tab === 'airport' ? 'airport' : 'industrial'
-  const boardClass = tab === 'custom' ? `flapkit-${look} operations-board` : `flapkit-${look}`
+  const boardClass =
+    tab === 'custom' ? `flapkit-${look} p-5 bg-[#512c86] bg-none` : `flapkit-${look}`
   const rowClass = tab === 'custom' ? ' className="font-mono"' : ''
-  const cellClass = tab === 'custom' ? ' className="text-xl font-bold"' : ''
+  const cellName = tab === 'custom' ? 'EvaCell' : 'Flapkit.Cell'
 
   return `import * as Flapkit from '@cuvii/flapkit'
 import '@cuvii/flapkit/flapkit.css'
@@ -129,7 +134,7 @@ import '@cuvii/flapkit/${look}.css'
     {['FLAPKIT', 'BY     ', 'CUVII  '].map((line, row) => (
       <Flapkit.Row key={row}${rowClass}>
         {[...line].map((character, column) => (
-          <Flapkit.Cell key={column}${cellClass}>{character}</Flapkit.Cell>
+          <${cellName} key={column}>{character}</${cellName}>
         ))}
       </Flapkit.Row>
     ))}
@@ -138,20 +143,39 @@ import '@cuvii/flapkit/${look}.css'
 }
 
 export const looksStaticCode = looksCode('custom')
-export const looksCssCode = `.operations-board [data-part='face'] {
-  background-color: #20231f;
+export const looksCssCode = `function EvaCell({ children }: { children: string }) {
+  return (
+    <Flapkit.Cell className="h-9 w-5 bg-[#34194f] bg-none">
+      <Flapkit.Face className="bg-[#7846bb] bg-none" />
+      <Flapkit.Glyph className="font-mono text-xl font-bold text-[#b6ff36]">
+        {children}
+      </Flapkit.Glyph>
+      <Flapkit.Retainer className="bg-neutral-950 bg-none" />
+    </Flapkit.Cell>
+  )
 }`
 
-export type LooksRangeId = 'look-import' | 'board-class' | 'row-class' | 'cell-class'
+export type LooksRangeId = 'look-import' | 'board-class' | 'row-class' | 'cell-open' | 'cell-close'
 
 export const looksRanges: readonly { end: number; id: LooksRangeId; start: number }[] = [
-  { id: 'look-import', ...rangeInside(looksStaticCode, "import '@cuvii/flapkit/industrial.css'", 'industrial') },
+  {
+    id: 'look-import',
+    ...rangeInside(looksStaticCode, "import '@cuvii/flapkit/industrial.css'", 'industrial'),
+  },
   {
     id: 'board-class',
-    ...rangeInside(looksStaticCode, 'className="flapkit-industrial operations-board"', 'flapkit-industrial operations-board'),
+    ...rangeInside(
+      looksStaticCode,
+      'className="flapkit-industrial p-5 bg-[#512c86] bg-none"',
+      'flapkit-industrial p-5 bg-[#512c86] bg-none',
+    ),
   },
-  { id: 'row-class', ...rangeInside(looksStaticCode, ' className="font-mono"', ' className="font-mono"') },
-  { id: 'cell-class', ...rangeInside(looksStaticCode, ' className="text-xl font-bold"', ' className="text-xl font-bold"') },
+  {
+    id: 'row-class',
+    ...rangeInside(looksStaticCode, ' className="font-mono"', ' className="font-mono"'),
+  },
+  { id: 'cell-open', ...rangeInside(looksStaticCode, '<EvaCell key={column}>', 'EvaCell') },
+  { id: 'cell-close', ...rangeInside(looksStaticCode, '</EvaCell>', 'EvaCell') },
 ]
 
 export function looksLiveValue(id: LooksRangeId, tab: LooksTab) {
@@ -160,11 +184,12 @@ export function looksLiveValue(id: LooksRangeId, tab: LooksTab) {
     case 'look-import':
       return look
     case 'board-class':
-      return tab === 'custom' ? `flapkit-${look} operations-board` : `flapkit-${look}`
+      return tab === 'custom' ? `flapkit-${look} p-5 bg-[#512c86] bg-none` : `flapkit-${look}`
     case 'row-class':
       return tab === 'custom' ? ' className="font-mono"' : ''
-    case 'cell-class':
-      return tab === 'custom' ? ' className="text-xl font-bold"' : ''
+    case 'cell-open':
+    case 'cell-close':
+      return tab === 'custom' ? 'EvaCell' : 'Flapkit.Cell'
   }
 }
 
@@ -232,7 +257,7 @@ const numberDeck = Flapkit.createDeck(['  ', '14', '05', '55', '30'])
       <Flapkit.Group deck={numberDeck} label="FLIGHT">
         <Flapkit.WideCell>14</Flapkit.WideCell>
       </Flapkit.Group>
-      <Flapkit.Group sequence="numeric" label="GATE">
+      <Flapkit.Group deck={Flapkit.numericDeck} label="GATE">
         <Flapkit.Cell>1</Flapkit.Cell>
         <Flapkit.Cell>2</Flapkit.Cell>
       </Flapkit.Group>
@@ -255,7 +280,7 @@ const numberDeck = Flapkit.createDeck(['  ', '14', '05', '55', '30'])
   },
   looksCss: {
     code: looksCssCode,
-    language: 'css',
+    language: 'tsx',
   },
   sound: {
     code: `import * as Flapkit from '@cuvii/flapkit'

@@ -1,14 +1,101 @@
 import { createElement, type ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
-import { Board, Cell, Grid, Group, Header, Row, WideCell } from './components'
+import {
+  Board,
+  Cell,
+  Face,
+  Glyph,
+  Grid,
+  Group,
+  Header,
+  Retainer,
+  Row,
+  WideCell,
+} from './components'
 import { compileFlapkitBoard } from './compiler'
-import { createDeck } from './deck'
+import { alphanumericDeck, createDeck, numericDeck, punctuationDeck, type Deck } from './deck'
 import { resolveSplitFlapSource } from './layout'
 
 const wideDeck = createDeck(['  ', '14', '55'])
 const variantDeck = createDeck(' 45', ['white', 'yellow', 'orange'])
 
 describe('Flapkit structural compiler', () => {
+  it('keeps part styling out of motion identity and fills undeclared parts', () => {
+    const plain = compileFlapkitBoard(
+      <Board>
+        <Row>
+          <Cell>A</Cell>
+        </Row>
+      </Board>,
+    )
+    const composed = compileFlapkitBoard(
+      <Board>
+        <Row>
+          <Cell className="w-6 h-12">
+            <Retainer style={{ backgroundColor: 'black' }} />
+            <Glyph className="text-lime-300">A</Glyph>
+            <Face className="bg-purple-600" />
+          </Cell>
+        </Row>
+      </Board>,
+    )
+    expect(composed.sourceSignature).toBe(plain.sourceSignature)
+    expect(composed.presentationSignature).not.toBe(plain.presentationSignature)
+    expect(composed.presentation.rows[0].groups[0].cells[0]).toMatchObject({
+      className: 'w-6 h-12',
+      face: { className: 'bg-purple-600' },
+      glyph: { className: 'text-lime-300' },
+      retainer: { style: { backgroundColor: 'black' } },
+    })
+    const blank = compileFlapkitBoard(
+      <Board>
+        <Row>
+          <Cell>
+            <Face />
+          </Cell>
+        </Row>
+      </Board>,
+    )
+    expect(blank.source.rows[0].values['group-0']).toEqual({ text: ' ', cassettes: [' '] })
+    expect(blank.presentation.rows[0].groups[0].cells[0].glyph).toBeUndefined()
+  })
+
+  it('validates duplicate parts and the declared glyph grapheme count', () => {
+    expect(() =>
+      compileFlapkitBoard(
+        <Board>
+          <Row>
+            <Cell>
+              <Face />
+              <Face />
+            </Cell>
+          </Row>
+        </Board>,
+      ),
+    ).toThrow('at most one face')
+    expect(() =>
+      compileFlapkitBoard(
+        <Board>
+          <Row>
+            <Cell>
+              <Glyph>AB</Glyph>
+            </Cell>
+          </Row>
+        </Board>,
+      ),
+    ).toThrow('requires 1 grapheme')
+    const wide = compileFlapkitBoard(
+      <Board>
+        <Row deck={wideDeck}>
+          <WideCell>
+            <Glyph>55</Glyph>
+          </WideCell>
+        </Row>
+      </Board>,
+    )
+    expect(resolveSplitFlapSource(wide.source).cells[0].character).toBe('55')
+  })
+
   it('compiles adjacent groups, variants, and wide cells into the source model', () => {
     const result = compileFlapkitBoard(
       <Board aria-label="Numbers">
@@ -32,7 +119,11 @@ describe('Flapkit structural compiler', () => {
       </Board>,
     )
 
-    expect(result.header).toBe('Numbers')
+    expect(result.header).toEqual(
+      <div className={undefined} style={undefined}>
+        Numbers
+      </div>,
+    )
     expect(result.source.columns).toMatchObject([
       { id: 'group-0', label: 'PAIR', cells: 1, cassetteSpan: 2 },
       { id: 'group-1', label: 'SINGLE', cells: 1, cassetteSpan: 1 },
@@ -59,8 +150,8 @@ describe('Flapkit structural compiler', () => {
 
   it('treats a flat row as one group and accepts numeric cell content', () => {
     const result = compileFlapkitBoard(
-      <Board columnGap={0.12} groupGap={1.2} rowGap={0.6} showColumnLabels={false}>
-        <Row label="CODE" sequence="alphanumeric">
+      <Board className="p-4 gap-y-2" showColumnLabels={false}>
+        <Row label="CODE" deck={alphanumericDeck}>
           <Cell>A</Cell>
           <Cell>B</Cell>
           <Cell>{4}</Cell>
@@ -74,7 +165,7 @@ describe('Flapkit structural compiler', () => {
           label: 'CODE',
           cells: 3,
           cassetteSpan: 1 as const,
-          flapSequence: 'alphanumeric' as const,
+          flapDeck: alphanumericDeck,
         },
       ],
       rows: [
@@ -86,9 +177,7 @@ describe('Flapkit structural compiler', () => {
     }
 
     expect(result.boardProps).toEqual({
-      columnGap: 0.12,
-      groupGap: 1.2,
-      rowGap: 0.6,
+      className: 'p-4 gap-y-2',
       showColumnLabels: false,
     })
     expect(result.source).toEqual(source)
@@ -145,6 +234,36 @@ describe('Flapkit structural compiler', () => {
     expect(() => resolveSplitFlapSource(result.source)).not.toThrow()
   })
 
+  it.each(['row', 'group'])('inherits the %s deck and permits a cell override', (owner) => {
+    const compile = (deck: Deck) => {
+      const cells = (
+        <>
+          <Cell>7</Cell>
+          <Cell deck={deck}>:</Cell>
+        </>
+      )
+      return compileFlapkitBoard(
+        <Board>
+          {owner === 'row' ? (
+            <Row deck={numericDeck}>{cells}</Row>
+          ) : (
+            <Row>
+              <Group deck={numericDeck}>{cells}</Group>
+            </Row>
+          )}
+        </Board>,
+      )
+    }
+    const first = compile(punctuationDeck)
+    const second = compile(alphanumericDeck)
+    const firstLayout = resolveSplitFlapSource(first.source)
+    const secondLayout = resolveSplitFlapSource(second.source)
+    expect(firstLayout.targetIndices).toEqual([8, 1])
+    expect(secondLayout.targetIndices).toEqual([8, 40])
+    expect(second.sourceSignature).not.toBe(first.sourceSignature)
+    expect(secondLayout.layoutKey).not.toBe(firstLayout.layoutKey)
+  })
+
   it('keeps presentation class names out of source identity', () => {
     const compile = (className: string) =>
       compileFlapkitBoard(
@@ -190,7 +309,7 @@ describe('Flapkit structural compiler', () => {
           </Row>
         </Board>,
       ),
-    ).toThrow('cannot set label, variant, deck, or sequence when it contains Groups')
+    ).toThrow('cannot set label, variant, or deck when it contains Groups')
   })
 
   it('rejects arbitrary elements inside a row', () => {
@@ -230,9 +349,7 @@ describe('Flapkit structural compiler', () => {
     expect(() =>
       compileFlapkitBoard(
         <Board>
-          <Row>
-            {createElement(FakeCell, null, 'A')}
-          </Row>
+          <Row>{createElement(FakeCell, null, 'A')}</Row>
         </Board>,
       ),
     ).toThrow('only accepts Flapkit.Cell or Flapkit.WideCell')

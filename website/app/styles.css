@@ -357,11 +357,7 @@ h2 {
 /* Tick ruler across the center column, one tick per u/4 */
 .exhibit-band::after {
   grid-column: 2;
-  background: repeating-linear-gradient(
-      90deg,
-      var(--rule-strong) 0 1px,
-      transparent 1px var(--u4)
-    )
+  background: repeating-linear-gradient(90deg, var(--rule-strong) 0 1px, transparent 1px var(--u4))
     0 0 / 100% 6px no-repeat;
   content: '';
 }
@@ -418,14 +414,12 @@ h2 {
   --qs-frame-bottom: var(--flapkit-frame-bottom);
   --qs-header-h: var(--flapkit-header-height);
   --qs-native-width: calc(
-    var(--qs-frame-left) + var(--qs-tracks) * var(--flapkit-cell-track) +
-      (var(--qs-groups) - 1) * var(--qs-group-gap) * var(--flapkit-board-unit) +
-      var(--qs-frame-right)
+    var(--qs-frame-left) + var(--qs-tracks) * var(--flapkit-cell-track) + (var(--qs-groups) - 1) *
+      var(--qs-group-gap) * var(--flapkit-board-unit) + var(--qs-frame-right)
   );
   --qs-native-height: calc(
-    var(--qs-frame-top) + var(--qs-header-h) + var(--qs-rows) *
-      var(--flapkit-cell-height) + (var(--qs-rows) - 1) * var(--qs-row-gap) *
-      var(--flapkit-board-unit) + var(--qs-frame-bottom)
+    var(--qs-frame-top) + var(--qs-header-h) + var(--qs-rows) * var(--flapkit-cell-height) +
+      (var(--qs-rows) - 1) * var(--qs-row-gap) * var(--flapkit-board-unit) + var(--qs-frame-bottom)
   );
   /* Always reserve the framed + header board so BOARD/HEADER toggles do not reflow the stage. */
   --qs-reserve-width: calc(
@@ -475,14 +469,22 @@ h2 {
   }
 }
 
-.principle-cassette {
-  transform: scale(
-    min(
-      calc(176px / var(--flapkit-cell-track)),
-      calc(290px / var(--flapkit-cell-height))
-    )
+.principle-view {
+  --principle-track: min(
+    176px,
+    calc(290px * (var(--flapkit-cell-track) / var(--flapkit-cell-height)))
   );
-  transform-origin: top center;
+}
+
+.principle-cassette {
+  /* Render at display size rather than magnifying a small raster layer. */
+  --flapkit-cell-track: var(--principle-track);
+  --flapkit-cell-height: 290px;
+}
+
+.principle-cassette .flapkit-cassette-body {
+  /* Resolve the look's relative font size inside the cassette's size container. */
+  font-size: var(--flapkit-glyph-size);
 }
 
 .principle-cassette,
@@ -587,12 +589,8 @@ h2 {
   box-shadow: none;
 }
 
-.composition-mechanism :is(
-    .flapkit-outer-rim,
-    .flapkit-inner-rim,
-    .flapkit-board-sheen,
-    .flapkit-board-header
-  ) {
+.composition-mechanism
+  :is(.flapkit-outer-rim, .flapkit-inner-rim, .flapkit-board-sheen, .flapkit-board-header) {
   visibility: hidden;
 }
 
@@ -647,7 +645,8 @@ h2 {
   transform: rotateX(10deg) rotateY(34deg);
 }
 
-.composition-mechanism :is(
+.composition-mechanism
+  :is(
     .flapkit-grid,
     .flapkit-departure-row,
     .flapkit-departure-group,
@@ -658,18 +657,17 @@ h2 {
 }
 
 /* Settle faster than lift, and settle all at once; lift is staggered per part. */
-.composition-mechanism :is(.flapkit-departure-row, .flapkit-departure-group, [data-slot='cassette']) {
+.composition-mechanism
+  :is(.flapkit-departure-row, .flapkit-departure-group, [data-slot='cassette']) {
   --part-index: 0;
   transition:
     transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 300ms ease;
 }
 
-.composition-preview[data-explode] .composition-mechanism :is(
-    .flapkit-departure-row,
-    .flapkit-departure-group,
-    [data-slot='cassette']
-  ) {
+.composition-preview[data-explode]
+  .composition-mechanism
+  :is(.flapkit-departure-row, .flapkit-departure-group, [data-slot='cassette']) {
   transition-duration: 520ms;
   transition-delay: calc(var(--part-index) * 45ms);
 }
@@ -857,10 +855,9 @@ h2 {
 
 .operations-board {
   max-width: 100%;
-}
-
-.operations-board [data-part='face'] {
-  filter: saturate(0.9);
+  padding: 20px;
+  background-color: #512c86;
+  background-image: none;
 }
 
 .lab-cassette {
@@ -940,17 +937,51 @@ h2 {
     transition-duration: 0.01ms !important;
   }
 
-  .composition-preview[data-explode] .composition-mechanism :is(
-    .flapkit-grid,
-    .flapkit-departure-row,
-    .flapkit-departure-group,
-    [data-slot='cassette']
-  ) {
+  .composition-preview[data-explode]
+    .composition-mechanism
+    :is(.flapkit-grid, .flapkit-departure-row, .flapkit-departure-group, [data-slot='cassette']) {
     transform: none !important;
     transition: none !important;
     opacity: 1 !important;
   }
+}
 
+.docs-choice-rows {
+  display: grid;
+  min-width: 0;
+}
+
+.docs-choice-rows [data-docs-choice] {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  padding-block: 6px;
+  border-bottom: 1px dashed var(--rule);
+}
+
+.docs-choice-rows [data-docs-options] {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.docs-choice-rows button {
+  justify-self: start;
+  text-align: left;
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+@media (min-width: 861px) {
+  #quick-start h2 {
+    anchor-name: --quick-start-heading;
+  }
+
+  nav[aria-label='Documentation'] {
+    position: fixed;
+    top: max(32px, anchor(--quick-start-heading top, 32px));
+  }
 }
 
 /* Beat @layer flapkit's `display: block` on the motion canvas. A replaced

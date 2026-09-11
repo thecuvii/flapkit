@@ -22,7 +22,8 @@ const widePresets = ['55', '30', '14', '05'] as const
 const headerType = 'font-sans text-[13px]/[1.2] font-[650]'
 const eyebrowType = 'text-[11px] font-[680] tracking-[0.1em] text-muted uppercase'
 const demoFrame = 'grid w-[340px] justify-items-center gap-[18px] py-[22px] pb-2'
-const demoLabels = 'grid gap-0.5 text-center text-[10px] font-[680] tracking-[0.06em] text-muted uppercase'
+const demoLabels =
+  'grid gap-0.5 text-center text-[10px] font-[680] tracking-[0.06em] text-muted uppercase'
 const demoLabel = 'rounded bg-panel px-1 py-2'
 const demoKicker = 'text-xs font-[680] text-ink'
 
@@ -124,99 +125,98 @@ export function ExperimentsPage() {
         </div>
 
         <div className="col-span-full grid grid-cols-subgrid">
-        <Experiment
-          label="Riffle · Airport"
-          look="airport"
-          motion="riffle"
-          deck="A–Z"
-          title="Randomized starts"
-          description="Canvas-assisted motion for dense boards."
-        >
-          <Flapkit.Root motion={Flapkit.riffle()}>
-            <Flapkit.Board className="flapkit-airport">
-              <Flapkit.Header>Departures</Flapkit.Header>
-              <Flapkit.Row id="one">{DepartureRow(preset)}</Flapkit.Row>
-              <Flapkit.Row id="two">{DepartureRow(alternatePreset)}</Flapkit.Row>
-            </Flapkit.Board>
-          </Flapkit.Root>
-        </Experiment>
-
-        <Experiment
-          label="Cascade · Industrial"
-          look="industrial"
-          motion="cascade"
-          deck="A–Z"
-          title="Row-staggered motion"
-          description="Canvas leaves with per-cell cadence variation."
-        >
-          <Flapkit.Root motion={Flapkit.cascade()}>
-            <Flapkit.Board className="flapkit-industrial">
-              <Flapkit.Header>Departures</Flapkit.Header>
-              <Flapkit.Row id="one">{DepartureRow(preset)}</Flapkit.Row>
-              <Flapkit.Row id="two">{DepartureRow(alternatePreset)}</Flapkit.Row>
-            </Flapkit.Board>
-          </Flapkit.Root>
-        </Experiment>
-
-        <Experiment
-          label="Unicode · Custom deck"
-          look="airport"
-          motion="riffle"
-          deck="custom"
-          title="One grapheme per cell"
-          description="Each grapheme moves independently."
-        >
-          <div className={demoFrame}>
+          <Experiment
+            label="Riffle · Airport"
+            look="airport"
+            motion="riffle"
+            deck="A–Z"
+            title="Randomized starts"
+            description="Canvas-assisted motion for dense boards."
+          >
             <Flapkit.Root motion={Flapkit.riffle()}>
-              <Flapkit.Grid
-                aria-label="Two independent Unicode character cells"
-                className={cn('flapkit-airport', 'my-[72px] origin-center scale-500')}
-                columnGap={2.4}
-              >
-                <Flapkit.Row label="LOCAL">
-                  {cells(unicodePresets[presetIndex]!, 2, unicodeDeck)}
-                </Flapkit.Row>
-              </Flapkit.Grid>
+              <Flapkit.Board className="flapkit-airport">
+                <Flapkit.Header>Departures</Flapkit.Header>
+                <Flapkit.Row id="one">{DepartureRow(preset)}</Flapkit.Row>
+                <Flapkit.Row id="two">{DepartureRow(alternatePreset)}</Flapkit.Row>
+              </Flapkit.Board>
             </Flapkit.Root>
-            <div className={cn(demoLabels, 'w-[280px] grid-cols-2')} aria-hidden="true">
-              <span className={demoLabel}>Cell 1</span>
-              <span className={demoLabel}>Cell 2</span>
-            </div>
-            <strong className={demoKicker}>Two independent cells</strong>
-          </div>
-        </Experiment>
+          </Experiment>
 
-        <Experiment
-          label="Cassette · Double width"
-          look="airport"
-          motion="riffle"
-          deck="numeric"
-          title="Two graphemes, one cassette"
-          description="One deck and one motion state."
-        >
-          <div className={demoFrame}>
-            <Flapkit.Root motion={Flapkit.riffle()}>
-              <Flapkit.Grid
-                aria-label="One double-width and one single-width numeric cassette"
-                className={cn('flapkit-airport', 'my-[72px] origin-center scale-[4.8]')}
-              >
-                <Flapkit.Row>
-                  <Flapkit.Group label="DOUBLE" deck={wideDeck}>
-                    <Flapkit.WideCell>{widePresets[presetIndex]!}</Flapkit.WideCell>
-                  </Flapkit.Group>
-                  <Flapkit.Group label="SINGLE" deck={numericDeck}>
-                    <Flapkit.Cell>{widePresets[presetIndex]![0]!}</Flapkit.Cell>
-                  </Flapkit.Group>
-                </Flapkit.Row>
-              </Flapkit.Grid>
+          <Experiment
+            label="Cascade · Industrial"
+            look="industrial"
+            motion="cascade"
+            deck="A–Z"
+            title="Row-staggered motion"
+            description="Canvas leaves with per-cell cadence variation."
+          >
+            <Flapkit.Root motion={Flapkit.cascade()}>
+              <Flapkit.Board className="flapkit-industrial">
+                <Flapkit.Header>Departures</Flapkit.Header>
+                <Flapkit.Row id="one">{DepartureRow(preset)}</Flapkit.Row>
+                <Flapkit.Row id="two">{DepartureRow(alternatePreset)}</Flapkit.Row>
+              </Flapkit.Board>
             </Flapkit.Root>
-            <div className={cn(demoLabels, 'w-[330px] grid-cols-[2fr_1fr]')} aria-hidden="true">
-              <span className={demoLabel}>Double-width</span>
-              <span className={demoLabel}>Single-width</span>
+          </Experiment>
+
+          <Experiment
+            label="Unicode · Custom deck"
+            look="airport"
+            motion="riffle"
+            deck="custom"
+            title="One grapheme per cell"
+            description="Each grapheme moves independently."
+          >
+            <div className={demoFrame}>
+              <Flapkit.Root motion={Flapkit.riffle()}>
+                <Flapkit.Grid
+                  aria-label="Two independent Unicode character cells"
+                  className={cn('flapkit-airport', 'my-[72px] origin-center scale-500')}
+                >
+                  <Flapkit.Row className="gap-[4.8px]" label="LOCAL">
+                    {cells(unicodePresets[presetIndex]!, 2, unicodeDeck)}
+                  </Flapkit.Row>
+                </Flapkit.Grid>
+              </Flapkit.Root>
+              <div className={cn(demoLabels, 'w-[280px] grid-cols-2')} aria-hidden="true">
+                <span className={demoLabel}>Cell 1</span>
+                <span className={demoLabel}>Cell 2</span>
+              </div>
+              <strong className={demoKicker}>Two independent cells</strong>
             </div>
-            <strong className={demoKicker}>One runtime per cassette</strong>
-          </div>
-        </Experiment>
+          </Experiment>
+
+          <Experiment
+            label="Cassette · Double width"
+            look="airport"
+            motion="riffle"
+            deck="numeric"
+            title="Two graphemes, one cassette"
+            description="One deck and one motion state."
+          >
+            <div className={demoFrame}>
+              <Flapkit.Root motion={Flapkit.riffle()}>
+                <Flapkit.Grid
+                  aria-label="One double-width and one single-width numeric cassette"
+                  className={cn('flapkit-airport', 'my-[72px] origin-center scale-[4.8]')}
+                >
+                  <Flapkit.Row>
+                    <Flapkit.Group label="DOUBLE" deck={wideDeck}>
+                      <Flapkit.WideCell>{widePresets[presetIndex]!}</Flapkit.WideCell>
+                    </Flapkit.Group>
+                    <Flapkit.Group label="SINGLE" deck={numericDeck}>
+                      <Flapkit.Cell>{widePresets[presetIndex]![0]!}</Flapkit.Cell>
+                    </Flapkit.Group>
+                  </Flapkit.Row>
+                </Flapkit.Grid>
+              </Flapkit.Root>
+              <div className={cn(demoLabels, 'w-[330px] grid-cols-[2fr_1fr]')} aria-hidden="true">
+                <span className={demoLabel}>Double-width</span>
+                <span className={demoLabel}>Single-width</span>
+              </div>
+              <strong className={demoKicker}>One runtime per cassette</strong>
+            </div>
+          </Experiment>
         </div>
       </main>
     </SiteFrame>

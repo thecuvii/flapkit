@@ -32,6 +32,7 @@ export type SharedMotionOptions = {
 export type MotionAdapter = {
   readonly id: string
   readonly options: SharedMotionOptions
+  readonly renderer?: 'canvas' | 'css'
   readonly schedule: MotionSchedule
 }
 

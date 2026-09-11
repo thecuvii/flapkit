@@ -1,6 +1,12 @@
 export {
   Board,
   Cell,
+  Face,
+  Glyph,
+  Retainer,
+  type FaceProps,
+  type GlyphProps,
+  type RetainerProps,
   Grid,
   Group,
   Header,
@@ -17,7 +23,7 @@ export {
   type Variant,
   type WideCellProps,
 } from './components'
-export { createDeck, type Deck, type Sequence } from './deck'
+export { alphanumericDeck, numericDeck, punctuationDeck, createDeck, type Deck } from './deck'
 export {
   cascade,
   motion,

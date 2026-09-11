@@ -54,7 +54,7 @@ export function Departures() {
 }
 ```
 
-Use a flat `Row` when the whole row shares one label, deck, sequence, and
+Use a flat `Row` when the whole row shares one label, deck, and
 variant. Add `Group` only when adjacent horizontal regions need different
 settings. `Row` and `Group` IDs are optional; provide stable IDs when items can
 reorder.
@@ -71,6 +71,31 @@ changed. Every row must share the first row's Group, Cell, and WideCell
 structure — that is the physical board. Use another `Root` or `Grid` for a
 different layout. Stable optional row and group IDs keep cassette identity
 when those aligned rows reorder.
+
+## Built-in decks
+
+Import `alphanumericDeck`, `numericDeck`, or `punctuationDeck` and pass it through
+`deck`, just like a custom deck. Without a deck, single cells use `alphanumericDeck`.
+
+| Export             | Characters, in flip order |
+| ------------------ | ------------------------- |
+| `alphanumericDeck` | Space, A–Z, 0–9, `-./:`   |
+| `numericDeck`      | Space, 0–9                |
+| `punctuationDeck`  | Space, `:./-`             |
+
+```tsx
+import { Cell, numericDeck } from '@cuvii/flapkit'
+
+// Inside a Row or Group:
+;<Cell deck={numericDeck}>8</Cell>
+```
+
+Set `deck` on a flat `Row` or a `Group` to share it with their cells; a cell's
+own `deck` overrides that default. These decks contain white positions; use
+`createDeck()` when you need additional variants or custom characters.
+
+The `sequence` prop and `Sequence` type have been removed. Migrate
+`sequence="numeric"` to `deck={numericDeck}` (and likewise for the other decks).
 
 ## Unicode decks
 
@@ -98,11 +123,10 @@ const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭�
 Each grapheme resolves to one independently driven character cell. Every cell
 has its own upper and lower split-flap leaves.
 
-Built-in variants are `white`, `yellow`, and `orange`. `createDeck` accepts
-any variant name; define the matching look tokens
-`--flapkit-glyph-{name}`, `--flapkit-glyph-{name}-top`, and
-`--flapkit-glyph-{name}-bottom` (the structural stylesheet already derives
-top/bottom from `--flapkit-glyph-{name}` for the built-ins).
+Built-in variants are `white`, `yellow`, and `orange`, using the bundled look's
+palette. `createDeck` also accepts custom variant names. Style `Glyph` with
+ordinary `color` or a Tailwind text-color class for a custom color; the default
+`white` variant inherits text color from its ancestors.
 
 ## Double-width cassettes
 
@@ -134,12 +158,24 @@ import * as Flapkit from '@cuvii/flapkit'
 import '@cuvii/flapkit/flapkit.css'
 import '@cuvii/flapkit/industrial.css'
 
+function EvaCell({ children }: { children: string }) {
+  return (
+    <Flapkit.Cell className="h-12 w-6">
+      <Flapkit.Face className="bg-purple-600" />
+      <Flapkit.Glyph className="text-lime-300">{children}</Flapkit.Glyph>
+      <Flapkit.Retainer className="bg-neutral-950" />
+    </Flapkit.Cell>
+  )
+}
+
 export function Operations() {
   return (
     <Flapkit.Root motion={Flapkit.cascade()}>
-      <Flapkit.Board data-look="industrial" className="operations-board">
-        <Flapkit.Row className="font-mono" label="STATUS">
-          <Flapkit.Cell className="text-xl font-bold">A</Flapkit.Cell>
+      <Flapkit.Board data-look="industrial" className="p-5 bg-purple-950">
+        <Flapkit.Header className="font-mono text-lime-300">Operations</Flapkit.Header>
+        <Flapkit.Row className="gap-2 font-mono" label="STATUS">
+          <EvaCell>A</EvaCell>
+          <EvaCell>B</EvaCell>
         </Flapkit.Row>
       </Flapkit.Board>
     </Flapkit.Root>
@@ -147,48 +183,47 @@ export function Operations() {
 }
 ```
 
-Font family, weight, and style inherit from `Board`, `Row`, and `Group`; size can
-be set directly on `Cell`. Ordinary classes and Tailwind utilities work without
-a Flapkit-specific API.
+Keep `<Cell>A</Cell>` for the default appearance. Alternatively, declare any of
+`Face`, `Glyph`, and `Retainer` once inside a cell, in any order. Undeclared parts
+use the look's defaults. `Glyph` supplies the text; omitting it displays a blank.
+Do not mix bare text with part declarations or repeat a part. The same API works
+inside `WideCell`, with two-grapheme content and a matching deck.
+
+Ordinary React wrappers such as `EvaCell` work inside rows and groups, including
+hooks and context. React mounts each wrapper normally; Flapkit never calls a
+component function to inspect its return value. Declarations are collected after
+the client commit, so the visible display requires JavaScript. Structural
+wrappers are declarations, not a way to insert arbitrary visible HTML into a row.
+
+Use `padding` on `Board`, `row-gap` on `Board` or `Grid`, `gap` on `Row` or
+`Group`, and `width`/`height` on `Cell`. A flat Row's gap separates cells; a grouped
+Row's gap separates groups. Typography and text color inherit; override size on
+`Cell` or `Glyph`. All primitives accept `className` and `style`. There is no
+`parts` object, public geometry-token configuration, or numeric gap prop.
+
+Multiple rows still require matching group IDs, labels, cassette counts, spans,
+and decks. Styling can differ per row; CSS determines the rendered dimensions.
+Use consistent cell widths and group gaps when columns should align.
 
 ### CSS customization contract
 
-Flapkit renders settled cassettes in the DOM and animated cassettes on Canvas.
-Customize both paths through the supported tokens and anatomy below rather than
-depending on implementation classes or renderer state.
-
-The stable consumer tokens are:
-
-- Typography: `--flapkit-glyph-font-family`, `--flapkit-glyph-font-weight`,
-  `--flapkit-glyph-size`, `--flapkit-glyph-tracking`, `--flapkit-glyph-width`,
-  `--flapkit-glyph-scale-y`, `--flapkit-glyph-y`, and `--flapkit-glyph-opacity`.
-- Glyph and face colors: `--flapkit-glyph-{variant}`,
-  `--flapkit-glyph-{variant}-top`, `--flapkit-glyph-{variant}-bottom`,
-  `--flapkit-top-face-color`, `--flapkit-bottom-face-color`,
-  `--flapkit-highlight-face`, and `--flapkit-highlight-glyph`.
-- Geometry: `--flapkit-board-unit`, `--flapkit-cell-track`,
-  `--flapkit-cell-height`, `--flapkit-frame-top`, `--flapkit-frame-right`,
-  `--flapkit-frame-bottom`, `--flapkit-frame-left`,
-  `--flapkit-header-height`, and `--flapkit-title-only-header-height`.
-
-Look authors may additionally define the `--flapkit-board-*`,
-`--flapkit-grid-*`, `--flapkit-row-*`, `--flapkit-cassette-*`,
-`--flapkit-cavity-*`, `--flapkit-cover-*`, `--flapkit-axle-*`,
-`--flapkit-spare-leaf-*`, and face surface/shadow tokens used by the bundled
-look files. These describe the DOM material around the animated leaves; they do
-not imply that Canvas reproduces every CSS paint effect.
+The default renderer uses Canvas during motion and DOM for settled leaves.
+Choose `cascade({ renderer: 'css' })` or `riffle({ renderer: 'css' })` to keep
+leaves in CSS 3D throughout the animation. Both consume the same primitives.
+Classes on `Face` apply to every stationary and moving face; classes on `Glyph`
+apply to its glyph carriers, and `Retainer` styles each axle/retainer.
 
 The stable rendered anatomy is intentionally small:
 
-| Selector | Meaning |
-| --- | --- |
-| `[data-slot='split-flap-board']` | Framed styling host |
-| `[data-slot='split-flap-grid']` | Frameless styling host |
-| `[data-slot='row']` | One display row |
-| `[data-slot='group']` | One adjacent cassette group |
-| `[data-slot='cassette']` | One independently driven cassette |
-| `[data-part='face']` | Upper, lower, or moving leaf face |
-| `[data-part='retainer']` | Axle or wide-cassette retainer |
+| Selector                         | Meaning                           |
+| -------------------------------- | --------------------------------- |
+| `[data-slot='split-flap-board']` | Framed styling host               |
+| `[data-slot='split-flap-grid']`  | Frameless styling host            |
+| `[data-slot='row']`              | One display row                   |
+| `[data-slot='group']`            | One adjacent cassette group       |
+| `[data-slot='cassette']`         | One independently driven cassette |
+| `[data-part='face']`             | Upper, lower, or moving leaf face |
+| `[data-part='retainer']`         | Axle or wide-cassette retainer    |
 
 For example, a face color is measured and carried into Canvas animation:
 
@@ -204,24 +239,22 @@ For example, a face color is measured and carried into Canvas animation:
 
 Canvas supports the following CSS subset during motion:
 
-| Customization | Settled DOM | Canvas motion |
-| --- | --- | --- |
-| Font family, size, weight, style, stretch, tracking, opacity, and glyph scale | Yes | Yes |
-| Variant glyph colors and face `background-color` | Yes | Yes |
-| Cassette and face geometry | Yes | Yes |
-| Board, frame, cavity, cover, and retainer materials | Yes | DOM remains responsible |
-| `background-image`, `filter`, `box-shadow`, `text-shadow`, blend modes, and custom pseudo-elements on a face | Yes | No |
+| Customization                                                                                                | Settled DOM | Canvas motion           |
+| ------------------------------------------------------------------------------------------------------------ | ----------- | ----------------------- |
+| Font family, size, weight, style, stretch, tracking, opacity, and glyph scale                                | Yes         | Yes                     |
+| Variant glyph colors and face `background-color`                                                             | Yes         | Yes                     |
+| Cassette and face geometry                                                                                   | Yes         | Yes                     |
+| Board, frame, cavity, cover, and retainer materials                                                          | Yes         | DOM remains responsible |
+| `background-image`, `filter`, `box-shadow`, `text-shadow`, blend modes, and custom pseudo-elements on a face | Yes         | No                      |
 
 Canvas remeasures when Board/Grid props or ancestor attributes change, layout
 resizes, presentation classes change, or fonts finish loading. Pure CSS state
 changes such as `:hover` or a media query that neither changes geometry nor an
 observed attribute are not guaranteed to trigger remeasurement.
 
-Variables beginning with `--fk-`, `--flapkit-active-*`,
-`--flapkit-rendered-*`, `--flapkit-moving-*`, `--flapkit-stack-*`,
-`--flapkit-specular`, and undocumented `data-split-flap-*` attributes belong to
-the renderer/controller protocol and are not public API. Do not target internal
-`.flapkit-*` classes; use the stable anatomy above.
+All `--flapkit-*` and `--fk-*` custom properties, undocumented
+`data-split-flap-*` attributes, and internal `.flapkit-*` classes are private
+renderer details. Use the primitives and ordinary CSS instead.
 
 ## Sound
 
@@ -270,95 +303,96 @@ injection.
 
 ### Root
 
-| Prop | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `children` | `ReactNode` | — | Board or Grid |
-| `motion` | `MotionAdapter` | — | `riffle()` or `cascade()` |
-| `sound` | `ReactElement` | — | `mechanicalSound({ bank })` |
+| Prop       | Type            | Default | Meaning                     |
+| ---------- | --------------- | ------- | --------------------------- |
+| `children` | `ReactNode`     | —       | Board or Grid               |
+| `motion`   | `MotionAdapter` | —       | `riffle()` or `cascade()`   |
+| `sound`    | `ReactElement`  | —       | `mechanicalSound({ bank })` |
 
 ### Board
 
-| Prop | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `data-look` | `'airport' \| 'industrial'` | — | Selects an imported look |
-| `data-*` | `string` | — | Forwarded to the styling host |
-| `className` | `string` | — | Ordinary CSS and utilities |
-| `aria-label` | `string` | Split-flap display board | Accessible name |
-| `columnGap` | `number` | `0.28` | Gap inside a group, in board units |
-| `groupGap` | `number` | `0.8` | Gap between groups |
-| `rowGap` | `number` | `0.4` | Gap between rows |
-| `grainOpacity` | `number` | `0.32` | Frame grain overlay |
-| `showColumnLabels` | `boolean` | `true` | Column labels under the header |
+| Prop               | Type                        | Default                  | Meaning                                   |
+| ------------------ | --------------------------- | ------------------------ | ----------------------------------------- |
+| `data-look`        | `'airport' \| 'industrial'` | —                        | Selects an imported look                  |
+| `data-*`           | `string`                    | —                        | Forwarded to the styling host             |
+| `className`        | `string`                    | —                        | Ordinary CSS and utilities                |
+| `aria-label`       | `string`                    | Split-flap display board | Accessible name                           |
+| `style`            | `CSSProperties`             | —                        | Native padding, row gap, and other styles |
+| `grainOpacity`     | `number`                    | `0.32`                   | Frame grain overlay                       |
+| `showColumnLabels` | `boolean`                   | `true`                   | Column labels under the header            |
 
 ### Grid
 
-| Prop | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `data-look` | `'airport' \| 'industrial'` | — | Selects an imported look |
-| `data-*` | `string` | — | Forwarded to the styling host |
-| `className` | `string` | — | Ordinary CSS and utilities |
-| `aria-label` | `string` | Split-flap display grid | Accessible name |
-| `columnGap` | `number` | `0.28` | Gap inside a group, in board units |
-| `groupGap` | `number` | `0.8` | Gap between groups |
-| `rowGap` | `number` | `0.4` | Gap between rows |
+| Prop         | Type                        | Default                 | Meaning                         |
+| ------------ | --------------------------- | ----------------------- | ------------------------------- |
+| `data-look`  | `'airport' \| 'industrial'` | —                       | Selects an imported look        |
+| `data-*`     | `string`                    | —                       | Forwarded to the styling host   |
+| `className`  | `string`                    | —                       | Ordinary CSS and utilities      |
+| `aria-label` | `string`                    | Split-flap display grid | Accessible name                 |
+| `style`      | `CSSProperties`             | —                       | Native row gap and other styles |
 
 ### Header
 
-| Prop | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `children` | `ReactNode` | — | Board title. Board only |
+| Prop                  | Type                       | Default | Meaning                 |
+| --------------------- | -------------------------- | ------- | ----------------------- |
+| `children`            | `ReactNode`                | —       | Board title. Board only |
+| `className` / `style` | `string` / `CSSProperties` | —       | Title styling           |
 
 ### Row
 
-| Prop | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `id` | `string` | generated | Stable identity when rows reorder |
-| `label` | `string` | — | Column label when the row is one region |
-| `deck` | `Deck` | — | Stops for every cassette in the row |
-| `sequence` | `Sequence` | `alphanumeric` | Built-in deck if no custom deck |
-| `variant` | `Variant` | `white` | `white`, `yellow`, or `orange` |
-| `highlighted` | `boolean` | `false` | Lifted, brighter row |
-| `className` | `string` | — | Inherits into glyphs |
+| Prop          | Type      | Default            | Meaning                                 |
+| ------------- | --------- | ------------------ | --------------------------------------- |
+| `id`          | `string`  | generated          | Stable identity when rows reorder       |
+| `label`       | `string`  | —                  | Column label when the row is one region |
+| `deck`        | `Deck`    | `alphanumericDeck` | Stops for every cassette in a flat row  |
+| `variant`     | `Variant` | `white`            | `white`, `yellow`, or `orange`          |
+| `highlighted` | `boolean` | `false`            | Lifted, brighter row                    |
+| `className`   | `string`  | —                  | Inherits into glyphs                    |
 
 ### Group
 
-| Prop | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `id` | `string` | generated | Stable identity when groups reorder |
-| `label` | `string` | — | Column label for this region |
-| `deck` | `Deck` | inherited | Overrides the row deck |
-| `sequence` | `Sequence` | inherited | Overrides the row sequence |
-| `variant` | `Variant` | inherited | Overrides the row variant |
-| `className` | `string` | — | Inherits into glyphs |
+| Prop        | Type      | Default            | Meaning                                |
+| ----------- | --------- | ------------------ | -------------------------------------- |
+| `id`        | `string`  | generated          | Stable identity when groups reorder    |
+| `label`     | `string`  | —                  | Column label for this region           |
+| `deck`      | `Deck`    | `alphanumericDeck` | Stops for every cassette in this group |
+| `variant`   | `Variant` | inherited          | Overrides the row variant              |
+| `className` | `string`  | —                  | Inherits into glyphs                   |
 
 ### Cell / WideCell
 
-| Prop | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `children` | `string` or `number` | — | Displayed graphemes. WideCell uses two |
-| `deck` | `Deck` | inherited | Overrides the group or row deck |
-| `sequence` | `Sequence` | inherited | Overrides the group or row sequence |
-| `className` | `string` | — | Size and other cell-level styles |
+| Prop        | Type                      | Default   | Meaning                                                        |
+| ----------- | ------------------------- | --------- | -------------------------------------------------------------- |
+| `children`  | text or part declarations | —         | Displayed graphemes, or Face/Glyph/Retainer. WideCell uses two |
+| `deck`      | `Deck`                    | inherited | Overrides the group or row deck                                |
+| `className` | `string`                  | —         | Size and other cell-level styles                               |
+| `style`     | `CSSProperties`           | —         | Native cell styles                                             |
+
+### Face / Glyph / Retainer
+
+All three accept `className` and `style`. `Glyph` additionally requires a string
+or number as `children`. Parts are optional declarations inside Cell/WideCell,
+not standalone rendered components. A part may appear at most once.
 
 ### createDeck
 
-| Argument | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `characters` | `string` or `string[]` | — | Stops. Strings split by grapheme |
-| `variants` | `Variant[]` | `['white']` | Repeats the stops per variant |
+| Argument     | Type                   | Default     | Meaning                          |
+| ------------ | ---------------------- | ----------- | -------------------------------- |
+| `characters` | `string` or `string[]` | —           | Stops. Strings split by grapheme |
+| `variants`   | `Variant[]`            | `['white']` | Repeats the stops per variant    |
 
 ### riffle / cascade / motion
 
-| Option | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `riffleMs` | `number` | `36` | Riffle pitch duration |
-| `startSpreadMs` | `number` | `480` | Riffle start window across the board |
-| `pitchMs` | `number` | `52` | Cascade or custom pitch duration |
-| `rowDelayMs` | `number` | `150` | Cascade delay between rows |
-| `withinRowJitterMs` | `number` | `16` | Cascade start jitter inside a row |
-| `cadenceVariationPct` | `number` | `4` / `6` | Per-cassette timing noise |
-| `finalSettleMs` | `number` | `260` | Settle after the last pitch |
-| `finalReboundDeg` | `number` | `2` | Settle rebound angle |
+| Option                | Type     | Default   | Meaning                              |
+| --------------------- | -------- | --------- | ------------------------------------ |
+| `riffleMs`            | `number` | `36`      | Riffle pitch duration                |
+| `startSpreadMs`       | `number` | `480`     | Riffle start window across the board |
+| `pitchMs`             | `number` | `52`      | Cascade or custom pitch duration     |
+| `rowDelayMs`          | `number` | `150`     | Cascade delay between rows           |
+| `withinRowJitterMs`   | `number` | `16`      | Cascade start jitter inside a row    |
+| `cadenceVariationPct` | `number` | `4` / `6` | Per-cassette timing noise            |
+| `finalSettleMs`       | `number` | `260`     | Settle after the last pitch          |
+| `finalReboundDeg`     | `number` | `2`       | Settle rebound angle                 |
 
 `motion(schedule, options)` uses the shared option names above. `schedule`
 receives the cassettes that need to start and must call `ctx.start(index, at)`.
@@ -375,11 +409,11 @@ use.
 
 ### mechanicalSound
 
-| Option | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `bank` | `SoundBank` | — | clicks and settles URL lists |
-| `enabled` | `boolean` | `true` | Connect or disconnect the engine |
-| `volume` | `number` | `0.58` | Master level |
+| Option    | Type        | Default | Meaning                          |
+| --------- | ----------- | ------- | -------------------------------- |
+| `bank`    | `SoundBank` | —       | clicks and settles URL lists     |
+| `enabled` | `boolean`   | `true`  | Connect or disconnect the engine |
+| `volume`  | `number`    | `0.58`  | Master level                     |
 
 ## Development
 

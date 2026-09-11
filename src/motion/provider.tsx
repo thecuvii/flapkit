@@ -177,6 +177,7 @@ export function MotionProvider({
       pitchMs: adapter.options.pitchMs,
       reboundDeg: adapter.options.finalReboundDeg,
       reduceMotion,
+      renderer: adapter.renderer ?? 'canvas',
       rowDelayMs: adapter.options.rowDelayMs,
       schedule: adapter.schedule,
       specularStrength: splitFlapSpecularStrength,

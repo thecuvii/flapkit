@@ -7,7 +7,7 @@ export type QuickStartSnippetOptions = {
 
 function motionImport(motion: QuickStartSnippetOptions['motion']) {
   const name = motion === 'css' ? 'cascade' : motion
-  return `import { ${name} } from '@cuvii/flapkit/motion/${motion === 'css' ? 'css' : 'canvas'}/${name}'`
+  return `import { ${name} } from 'flapkit/motion/${motion === 'css' ? 'css' : 'canvas'}/${name}'`
 }
 
 export function quickStartCode({ look, motion, board, header }: QuickStartSnippetOptions) {
@@ -15,10 +15,10 @@ export function quickStartCode({ look, motion, board, header }: QuickStartSnippe
   const motionCall = `${motion === 'css' ? 'cascade' : motion}()`
   const headerLine = board && header ? '    <Flapkit.Header>Departures</Flapkit.Header>\n' : ''
 
-  return `import * as Flapkit from '@cuvii/flapkit'
+  return `import * as Flapkit from 'flapkit'
 ${motionImport(motion)}
-import '@cuvii/flapkit/flapkit.css'
-import '@cuvii/flapkit/${look}.css'
+import 'flapkit/flapkit.css'
+import 'flapkit/${look}.css'
 
 <Flapkit.Root motion={${motionCall}}>
   <Flapkit.${frame} aria-label="Package status" className="flapkit-${look}">
@@ -85,7 +85,7 @@ export const quickStartRanges: readonly QuickStartRange[] = [
   // Offsets are measured against the static default snippet.
   {
     id: 'look-import',
-    ...rangeInside(quickStartStaticCode, "import '@cuvii/flapkit/airport.css'", 'airport'),
+    ...rangeInside(quickStartStaticCode, "import 'flapkit/airport.css'", 'airport'),
   },
   { id: 'motion-import', ...rangeInside(quickStartStaticCode, motionImport('cascade'), motionImport('cascade')) },
   { id: 'motion', ...rangeInside(quickStartStaticCode, 'motion={cascade()}', 'cascade()') },
@@ -134,10 +134,10 @@ export function looksCode(tab: LooksTab) {
   const rowClass = tab === 'custom' ? ' className="font-mono"' : ''
   const cellName = tab === 'custom' ? 'EvaCell' : 'Flapkit.Cell'
 
-  return `import * as Flapkit from '@cuvii/flapkit'
-import { cascade } from '@cuvii/flapkit/motion/canvas/cascade'
-import '@cuvii/flapkit/flapkit.css'
-import '@cuvii/flapkit/${look}.css'
+  return `import * as Flapkit from 'flapkit'
+import { cascade } from 'flapkit/motion/canvas/cascade'
+import 'flapkit/flapkit.css'
+import 'flapkit/${look}.css'
 
 <Flapkit.Root motion={cascade()}>
   <Flapkit.Board className="${boardClass}">
@@ -170,7 +170,7 @@ export type LooksRangeId = 'look-import' | 'board-class' | 'row-class' | 'cell-o
 export const looksRanges: readonly { end: number; id: LooksRangeId; start: number }[] = [
   {
     id: 'look-import',
-    ...rangeInside(looksStaticCode, "import '@cuvii/flapkit/industrial.css'", 'industrial'),
+    ...rangeInside(looksStaticCode, "import 'flapkit/industrial.css'", 'industrial'),
   },
   {
     id: 'board-class',
@@ -205,17 +205,10 @@ export function looksLiveValue(id: LooksRangeId, tab: LooksTab) {
 
 function motionCode(motion: 'cascade' | 'riffle' | 'css') {
   const motionCall = `${motion === 'css' ? 'cascade' : motion}()`
-  return `import * as Flapkit from '@cuvii/flapkit'
-${motionImport(motion)}
+  return `${motionImport(motion)}
 
 <Flapkit.Root motion={${motionCall}}>
-  <Flapkit.Board className="flapkit-airport">
-    <Flapkit.Row label="STATUS">
-      {[...'FLAPKIT'].map((character, index) => (
-        <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
-      ))}
-    </Flapkit.Row>
-  </Flapkit.Board>
+  {/* Your board */}
 </Flapkit.Root>`
 }
 
@@ -225,10 +218,10 @@ export const docsCode = {
     language: 'tsx',
   },
   composition: {
-    code: `import * as Flapkit from '@cuvii/flapkit'
-import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
-import '@cuvii/flapkit/flapkit.css'
-import '@cuvii/flapkit/airport.css'
+    code: `import * as Flapkit from 'flapkit'
+import { riffle } from 'flapkit/motion/canvas/riffle'
+import 'flapkit/flapkit.css'
+import 'flapkit/airport.css'
 
 <Flapkit.Root motion={riffle()}>
   <Flapkit.Board className="flapkit-airport">
@@ -250,14 +243,11 @@ import '@cuvii/flapkit/airport.css'
     language: 'tsx',
   },
   decks: {
-    code: `// Outside the component — each entry is a complete grapheme.
-const phrases = [
-  ['안', '녕', '👋', '🌏'],
-  ['東', '京', '🚀', '✨'],
-  ['你', '好', '☕', '💚'],
-  // Add more characters and phrases here.
-]
-const deck = Flapkit.createDeck([' ', ...new Set(phrases.flat())])
+    code: `// Physical leaf order, independent of the displayed phrase.
+const deck = Flapkit.createDeck([
+  ' ', '안', '東', '☕', '好', '京', '💚',
+  '🌏', '✨', '👋', '你', '🚀', '녕',
+])
 
 // Within your Grid or Board.
 <Flapkit.Row deck={deck}>
@@ -288,26 +278,15 @@ const deck = Flapkit.createDeck([' ', ...new Set(phrases.flat())])
     language: 'tsx',
   },
   sound: {
-    code: `import * as Flapkit from '@cuvii/flapkit'
-import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
-import { mechanicalSound } from '@cuvii/flapkit/sound'
-import '@cuvii/flapkit/flapkit.css'
-import '@cuvii/flapkit/airport.css'
+    code: `import { mechanicalSound } from 'flapkit/sound'
 
 const soundBank = {
   clicks: ['/audio/click.wav'],
   settles: ['/audio/settle.wav'],
 }
 
-<Flapkit.Root
-  motion={riffle()}
-  sound={mechanicalSound({ bank: soundBank })}
->
-  <Flapkit.Board className="flapkit-airport">
-    <Flapkit.Row>
-      <Flapkit.Cell>A</Flapkit.Cell>
-    </Flapkit.Row>
-  </Flapkit.Board>
+<Flapkit.Root sound={mechanicalSound({ bank: soundBank })}>
+  {/* Your board */}
 </Flapkit.Root>`,
     language: 'tsx',
   },

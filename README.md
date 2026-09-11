@@ -6,7 +6,7 @@ independently importable looks, Unicode decks, and multi-cell cassettes.
 ## Install
 
 ```sh
-pnpm add @cuvii/flapkit
+pnpm add flapkit
 ```
 
 React 19 is a peer dependency. Import the structural stylesheet and one look;
@@ -25,10 +25,10 @@ Root ── motion adapter
 ```
 
 ```tsx
-import * as Flapkit from '@cuvii/flapkit'
-import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
-import '@cuvii/flapkit/flapkit.css'
-import '@cuvii/flapkit/airport.css'
+import * as Flapkit from 'flapkit'
+import { riffle } from 'flapkit/motion/canvas/riffle'
+import 'flapkit/flapkit.css'
+import 'flapkit/airport.css'
 
 const statusDeck = Flapkit.createDeck(' BOARDING', ['white', 'yellow'])
 
@@ -64,9 +64,9 @@ reorder.
 Choose the renderer through its import path:
 
 ```tsx
-import { cascade } from '@cuvii/flapkit/motion/css/cascade'
-// Or: '@cuvii/flapkit/motion/canvas/cascade'
-// Or: import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
+import { cascade } from 'flapkit/motion/css/cascade'
+// Or: 'flapkit/motion/canvas/cascade'
+// Or: import { riffle } from 'flapkit/motion/canvas/riffle'
 
 <Flapkit.Root motion={cascade()}>{/* Board or Grid */}</Flapkit.Root>
 ```
@@ -96,7 +96,7 @@ Import `alphanumericDeck`, `numericDeck`, or `punctuationDeck` and pass it throu
 | `punctuationDeck`  | Space, `:./-`             |
 
 ```tsx
-import { Cell, numericDeck } from '@cuvii/flapkit'
+import { Cell, numericDeck } from 'flapkit'
 
 // Inside a Row or Group:
 ;<Cell deck={numericDeck}>8</Cell>
@@ -117,8 +117,8 @@ is segmented with `Intl.Segmenter`, so combining marks and emoji sequences are
 not split across cells.
 
 ```tsx
-import * as Flapkit from '@cuvii/flapkit'
-import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
+import * as Flapkit from 'flapkit'
+import { riffle } from 'flapkit/motion/canvas/riffle'
 
 const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 
@@ -167,10 +167,10 @@ that host alongside Flapkit's structural classes. The legacy `flapkit-airport`
 and `flapkit-industrial` classes still work.
 
 ```tsx
-import * as Flapkit from '@cuvii/flapkit'
-import '@cuvii/flapkit/flapkit.css'
-import '@cuvii/flapkit/industrial.css'
-import { cascade } from '@cuvii/flapkit/motion/css/cascade'
+import * as Flapkit from 'flapkit'
+import 'flapkit/flapkit.css'
+import 'flapkit/industrial.css'
+import { cascade } from 'flapkit/motion/css/cascade'
 
 function EvaCell({ children }: { children: string }) {
   return (
@@ -222,7 +222,7 @@ Use consistent cell widths and group gaps when columns should align.
 ### CSS customization contract
 
 The Canvas entries use Canvas during motion and DOM for settled leaves.
-Import `cascade` from `@cuvii/flapkit/motion/css/cascade` to keep
+Import `cascade` from `flapkit/motion/css/cascade` to keep
 leaves in CSS 3D throughout the animation. Both consume the same primitives.
 Classes on `Face` apply to every stationary and moving face; classes on `Glyph`
 apply to its glyph carriers, and `Retainer` styles each axle/retainer.
@@ -276,9 +276,9 @@ Sound is optional and ships without audio assets. Supply URLs owned by the
 consumer and pass the sound element to `Root`:
 
 ```tsx
-import * as Flapkit from '@cuvii/flapkit'
-import { mechanicalSound } from '@cuvii/flapkit/sound'
-import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
+import * as Flapkit from 'flapkit'
+import { mechanicalSound } from 'flapkit/sound'
+import { riffle } from 'flapkit/motion/canvas/riffle'
 
 const soundBank = {
   clicks: ['/audio/flap-1.mp3', '/audio/flap-2.mp3'],
@@ -310,11 +310,11 @@ injection.
 
 ### Package subpaths
 
-- `@cuvii/flapkit`
-- `@cuvii/flapkit/sound`
-- `@cuvii/flapkit/flapkit.css`
-- `@cuvii/flapkit/airport.css`
-- `@cuvii/flapkit/industrial.css`
+- `flapkit`
+- `flapkit/sound`
+- `flapkit/flapkit.css`
+- `flapkit/airport.css`
+- `flapkit/industrial.css`
 
 ### Root
 

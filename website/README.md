@@ -1,6 +1,6 @@
 # Flapkit website
 
-Private Next.js documentation and demo workspace for `@cuvii/flapkit`.
+Private Next.js documentation and demo workspace for `flapkit`.
 
 ## Deploy
 

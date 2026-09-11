@@ -951,36 +951,11 @@ h2 {
   min-width: 0;
 }
 
-.docs-choice-rows [data-docs-choice] {
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
-  align-items: center;
-  column-gap: 12px;
-  padding-block: 6px;
-  border-bottom: 1px dashed var(--rule);
-}
-
-.docs-choice-rows [data-docs-options] {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.docs-choice-rows button {
-  justify-self: start;
-  text-align: left;
-  white-space: pre-line;
-  line-height: 1.5;
-}
-
 @media (min-width: 861px) {
-  #quick-start h2 {
-    anchor-name: --quick-start-heading;
-  }
-
   nav[aria-label='Documentation'] {
     position: fixed;
-    top: max(32px, anchor(--quick-start-heading top, 32px));
+    top: 50%;
+    transform: translateY(-50%);
   }
 }
 

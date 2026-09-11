@@ -100,7 +100,13 @@ const customPhrases = [
   ['←', '↑', '→', '↓'],
   ['🎉', '🎈', '🎁', '🎂'],
 ]
-const customDeck = Flapkit.createDeck([' ', ...new Set(customPhrases.flat())])
+const customDeck = Flapkit.createDeck([
+  ' ', '안', '🌸', '東', '☕', 'γ', '好', '🎈', '울', '🍣',
+  '↑', '京', '💚', '한', '🌏', '圳', '✨', 'か', '🎁', '港',
+  '👋', 'β', '大', '🌙', '你', '🎵', '→', '글', '🍵', '香',
+  '🚀', 'δ', '서', '🌴', '🎂', 'な', '💜', '阪', '↓', '🌊',
+  '녕', '🎨', '深', '⭐', 'α', '☀️', '🎉', '←', '⛴️',
+])
 const principleDeck: Flapkit.Deck = Flapkit.createDeck(
   ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-./:深圳香港東京紐約延誤取消',
 ).map((position) => ({
@@ -179,7 +185,7 @@ const optionRowClass =
   'grid grid-cols-[minmax(160px,0.7fr)_minmax(0,1.3fr)] gap-5 border-b border-dashed border-rule py-3.5 max-[560px]:grid-cols-1 max-[560px]:gap-[9px] [&_code]:font-mono [&_code]:text-xs [&_code]:font-[650] [&_code]:text-ink [&_code]:[overflow-wrap:anywhere]'
 const docsCopyClass = cn(
   'grid min-w-0 grid-cols-1 gap-u4 min-[861px]:grid-cols-2 min-[861px]:gap-x-u4',
-  'min-[861px]:[&>*]:col-span-2 min-[861px]:[&>[data-docs-choice]]:col-span-1',
+  'min-[861px]:[&>*]:col-span-2',
   '[&>p]:m-0 [&>p]:text-base [&>p]:font-[430] [&>p]:tracking-[-0.006em] [&>p]:leading-u4 [&>p]:text-muted [&>p]:text-pretty',
   '[&_p_code]:px-0.5 [&_p_code]:font-mono [&_p_code]:text-[0.86em] [&_p_code]:text-ink',
   '[&_a]:text-link [&_a]:underline [&_a]:underline-offset-[3px] [&_a]:hover:text-ink',
@@ -531,6 +537,9 @@ function DocsNavLink({ href, label }: { href: SectionId; label: string }) {
   )
 }
 
+const docsControlClass =
+  'relative inline-flex min-h-11 min-w-0 cursor-pointer touch-manipulation items-center gap-2 border-0 bg-transparent py-1 font-mono text-[10px] font-semibold tracking-[0.06em] uppercase hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink'
+
 function ChoiceSwitch<T extends string>({
   label,
   options,
@@ -546,7 +555,7 @@ function ChoiceSwitch<T extends string>({
 }) {
   return (
     <div
-      className="flex min-w-0 flex-wrap items-baseline gap-x-4"
+      className="grid min-w-0 grid-cols-[56px_minmax(0,1fr)] items-center gap-x-3 border-b border-dashed border-rule py-1.5"
       role="group"
       aria-label={label}
       data-docs-choice
@@ -554,7 +563,7 @@ function ChoiceSwitch<T extends string>({
       <span className="font-mono text-[10px] font-[620] leading-none tracking-[0.06em] text-ink uppercase opacity-40">
         {label}
       </span>
-      <div className="contents" data-docs-options>
+      <div className="grid grid-cols-3 gap-3" data-docs-options>
         {options.map((option) => {
           const pressed = value === option
           return (
@@ -563,8 +572,8 @@ function ChoiceSwitch<T extends string>({
               type="button"
               aria-pressed={pressed}
               className={cn(
-                'relative inline-flex min-h-11 min-w-0 cursor-pointer items-center overflow-visible border-0 bg-transparent py-1 font-mono text-[10px] font-semibold tracking-[0.06em] uppercase',
-                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+                docsControlClass,
+                'justify-self-start overflow-visible text-left leading-[1.5] whitespace-pre-line',
                 pressed ? 'text-ink' : 'text-muted',
               )}
               onClick={() => onChange(option)}
@@ -705,7 +714,6 @@ function QuickStartSection({ lines }: { lines: readonly QuickStartToken[][] }) {
       fillPreview
       preview={<DepartureBoard look={look} motion={motion} frame header />}
     >
-      <p>Install Flapkit. React 19 is required. Import the structural stylesheet and one look.</p>
       <div className="docs-choice-rows">
         <ChoiceSwitch label="Look" options={lookNames} value={look} onChange={setLook} />
         <ChoiceSwitch
@@ -945,9 +953,17 @@ function CompositionSection({ html }: { html: string }) {
             onPointerEnter={() => setHover(item.id)}
             onPointerLeave={() => setHover((current) => (current === item.id ? null : current))}
           >
-            <code className="font-mono text-xs font-[650] group-hover:text-flare group-data-active:text-flare">
+            <button
+              type="button"
+              className={cn(docsControlClass, 'w-fit text-muted group-data-active:text-ink')}
+              onFocus={() => setHover(item.id)}
+              onBlur={() => setHover((current) => (current === item.id ? null : current))}
+              onClick={() => setHover(item.id)}
+              aria-pressed={hover === item.id}
+            >
               {item.name}
-            </code>
+              {hover === item.id && <StreamlineBlockArrowheadsLeft className="size-[7px] text-flare" aria-hidden="true" />}
+            </button>
             <span className="text-[13px] leading-normal text-muted">{item.note}</span>
           </li>
         ))}
@@ -1034,7 +1050,7 @@ function SoundSection({ html }: { html: string }) {
         />
       }
     >
-      <p>
+      <p className="text-[14px]! font-normal!">
         Audio files are not bundled. Pass click and settle URLs to{' '}
         <code>{'mechanicalSound({ bank })'}</code>. Sounds follow actual flip events and stay in sync
         with the animation. The first interaction unlocks audio. Use{' '}
@@ -1042,9 +1058,12 @@ function SoundSection({ html }: { html: string }) {
       </p>
       <button
         type="button"
-        className="relative z-1 min-h-11 w-fit cursor-pointer touch-manipulation border border-rule-strong bg-transparent px-3 font-mono text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        className={cn(docsControlClass, 'z-1 w-fit text-ink')}
         onClick={playFlaps}
       >
+        <svg className="size-3 shrink-0 fill-current" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="m5 3 8 5-8 5z" />
+        </svg>
         {played ? 'Replay sounds' : 'Play sounds'}
       </button>
       <CodeBlock html={html} />
@@ -1170,10 +1189,14 @@ function HowItWorksSection() {
         aria-label="Complete Latin and CJK character deck"
       >
         {principleDeck.map(({ character, variant }, index) => (
-          <span
+          <button
             key={`${character}-${index}`}
+            type="button"
+            aria-label={character.trim() || 'Blank'}
+            aria-pressed={index === visibleIndex}
             className={cn(
-              'grid aspect-square cursor-pointer place-items-center font-mono text-xs font-[650] leading-none whitespace-nowrap text-muted',
+              docsControlClass,
+              'justify-center leading-none whitespace-nowrap text-muted',
               'data-active:bg-ink data-active:text-on-ink',
               'data-[variant=yellow]:not-data-active:text-deck-yellow',
               'data-[variant=orange]:not-data-active:text-deck-orange',
@@ -1187,7 +1210,7 @@ function HowItWorksSection() {
             }}
           >
             {character.trim() || '·'}
-          </span>
+          </button>
         ))}
       </div>
       <div className="grid grid-cols-[1fr_auto] items-end gap-x-[18px] gap-y-[calc(var(--spacing-u4)/2)]">
@@ -1206,7 +1229,7 @@ function HowItWorksSection() {
         <div
           className={cn(
             'principle-controls',
-            'col-span-full grid grid-cols-[minmax(0,1fr)_24px] items-center gap-3',
+            'col-span-full grid grid-cols-[minmax(0,1fr)_44px] items-center gap-3',
           )}
         >
           <div className="relative grid h-6 items-center">
@@ -1239,7 +1262,7 @@ function HowItWorksSection() {
           </div>
           <button
             type="button"
-            className="grid size-6 cursor-pointer place-items-center border border-rule-strong bg-transparent p-0 text-ink hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink [&_svg]:size-2.5 [&_svg]:fill-current"
+            className={cn(docsControlClass, 'size-11 justify-center text-ink [&_svg]:size-2.5 [&_svg]:fill-current')}
             onClick={togglePlayback}
             aria-label={isPlaying ? 'Pause deck playback' : 'Play deck to the final position'}
             title={isPlaying ? 'Pause' : progress >= 1 ? 'Replay' : 'Play'}
@@ -1410,8 +1433,8 @@ function LooksSection({
       preview={
         <div
           id={panelId}
-          role="tabpanel"
-          aria-labelledby={`${panelId}-tab-${tab}`}
+          role="region"
+          aria-label="Look preview"
           className={cn(
             'flapkit-industrial',
             'grid h-[calc(var(--flapkit-frame-top)+var(--flapkit-frame-bottom)+(3*var(--flapkit-cell-height))+(0.8*var(--flapkit-board-unit)))] w-full',
@@ -1597,9 +1620,12 @@ function DecksSection({ html }: { html: string }) {
       </p>
       <button
         type="button"
-        className="relative z-1 min-h-11 w-fit cursor-pointer touch-manipulation border border-rule-strong bg-transparent px-3 font-mono text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        className={cn(docsControlClass, 'z-1 w-fit text-ink')}
         onClick={() => setPhrase((current) => (current + 1) % customPhrases.length)}
       >
+        <svg className="size-3 shrink-0 fill-current" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="m5 3 8 5-8 5z" />
+        </svg>
         Play
       </button>
       <div>

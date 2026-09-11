@@ -13,6 +13,9 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     'sound/index': 'src/sound/index.ts',
+    'motion/canvas/cascade': 'src/motion/canvas/cascade.ts',
+    'motion/canvas/riffle': 'src/motion/canvas/riffle.ts',
+    'motion/css/cascade': 'src/motion/css/cascade.ts',
   },
   format: ['esm'],
   platform: 'neutral',

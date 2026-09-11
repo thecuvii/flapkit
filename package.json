@@ -20,6 +20,21 @@
       "types": "./dist/sound/index.d.ts",
       "import": "./dist/sound/index.js"
     },
+    "./motion/canvas/cascade": {
+      "development": "./src/motion/canvas/cascade.ts",
+      "types": "./dist/motion/canvas/cascade.d.ts",
+      "import": "./dist/motion/canvas/cascade.js"
+    },
+    "./motion/canvas/riffle": {
+      "development": "./src/motion/canvas/riffle.ts",
+      "types": "./dist/motion/canvas/riffle.d.ts",
+      "import": "./dist/motion/canvas/riffle.js"
+    },
+    "./motion/css/cascade": {
+      "development": "./src/motion/css/cascade.ts",
+      "types": "./dist/motion/css/cascade.d.ts",
+      "import": "./dist/motion/css/cascade.js"
+    },
     "./flapkit.css": {
       "development": "./src/styles/flapkit.css",
       "default": "./dist/styles/flapkit.css"
@@ -42,6 +57,18 @@
       "./sound": {
         "types": "./dist/sound/index.d.ts",
         "import": "./dist/sound/index.js"
+      },
+      "./motion/canvas/cascade": {
+        "types": "./dist/motion/canvas/cascade.d.ts",
+        "import": "./dist/motion/canvas/cascade.js"
+      },
+      "./motion/canvas/riffle": {
+        "types": "./dist/motion/canvas/riffle.d.ts",
+        "import": "./dist/motion/canvas/riffle.js"
+      },
+      "./motion/css/cascade": {
+        "types": "./dist/motion/css/cascade.d.ts",
+        "import": "./dist/motion/css/cascade.js"
       },
       "./flapkit.css": "./dist/styles/flapkit.css",
       "./airport.css": "./dist/styles/airport.css",

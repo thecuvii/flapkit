@@ -1,6 +1,9 @@
 'use client'
 
 import * as Flapkit from '@cuvii/flapkit'
+import { cascade as canvasCascade } from '@cuvii/flapkit/motion/canvas/cascade'
+import { cascade as cssCascade } from '@cuvii/flapkit/motion/css/cascade'
+import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
 import { mechanicalSound } from '@cuvii/flapkit/sound'
 import {
   Activity,
@@ -18,6 +21,9 @@ import {
   type SVGProps,
 } from 'react'
 import { TextMorph } from 'torph/react'
+import { compileFlapkitBoard } from '../../../src/compiler'
+import { MotionProvider } from '../../../src/motion/provider'
+import { BoardView, GridView } from '../../../src/render/board'
 import { CassettePreview } from '../../../src/render/cassette-preview'
 import {
   looksLiveValue,
@@ -80,8 +86,21 @@ const DocsNavContext = createContext<DocsNavContextValue>({
 const lookNames = ['airport', 'industrial'] as const
 type LookName = (typeof lookNames)[number]
 
-const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
-const wideDeck = Flapkit.createDeck(['  ', '14', '05', '55', '30'])
+const customPhrases = [
+  ['안', '녕', '👋', '🌏'],
+  ['東', '京', '🚀', '✨'],
+  ['你', '好', '☕', '💚'],
+  ['서', '울', '🌸', '🎵'],
+  ['大', '阪', '🍣', '🍵'],
+  ['深', '圳', '🌴', '☀️'],
+  ['한', '글', '🎨', '💜'],
+  ['か', 'な', '🌙', '⭐'],
+  ['香', '港', '⛴️', '🌊'],
+  ['α', 'β', 'γ', 'δ'],
+  ['←', '↑', '→', '↓'],
+  ['🎉', '🎈', '🎁', '🎂'],
+]
+const customDeck = Flapkit.createDeck([' ', ...new Set(customPhrases.flat())])
 const principleDeck: Flapkit.Deck = Flapkit.createDeck(
   ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-./:深圳香港東京紐約延誤取消',
 ).map((position) => ({
@@ -141,35 +160,6 @@ const departureRows = [
     gate: 'D04',
   },
 ] as const
-
-function PreviewScale({
-  children,
-  fill = 4,
-  groups = 1,
-  tracks,
-}: {
-  children: ReactNode
-  fill?: number
-  groups?: number
-  tracks: number
-}) {
-  return (
-    <div
-      className="flapkit-airport relative overflow-visible"
-      style={{
-        width: `calc((${tracks} * var(--flapkit-cell-track) + ${Math.max(0, groups - 1)} * 0.8 * var(--flapkit-board-unit)) * ${fill})`,
-        height: `calc(var(--flapkit-cell-height) * ${fill})`,
-      }}
-    >
-      <div
-        className="absolute top-0 left-1/2 w-max origin-top"
-        style={{ transform: `translateX(-50%) scale(${fill})` }}
-      >
-        {children}
-      </div>
-    </div>
-  )
-}
 
 function cells(text: string, count: number, deck?: Flapkit.Deck, className?: string) {
   return Array.from({ length: count }, (_, index) => (
@@ -601,12 +591,14 @@ function DepartureBoardTree({
   frame,
   header,
   sound = true,
+  staticDisplay = false,
 }: {
   look: LookName
   motion: QuickStartSnippetOptions['motion']
   frame: boolean
   header: boolean
   sound?: boolean
+  staticDisplay?: boolean
 }) {
   const Frame = frame ? Flapkit.Board : Flapkit.Grid
   const rows = departureRows.map((row) => (
@@ -634,15 +626,38 @@ function DepartureBoardTree({
     </Flapkit.Row>
   ))
 
+  if (staticDisplay) {
+    const compiled = compileFlapkitBoard(
+      <Frame aria-label="Airport departures" className={cn(`flapkit-${look}`, 'w-max')}>
+        {header ? <Flapkit.Header>Departures</Flapkit.Header> : null}
+        {rows}
+      </Frame>,
+    )
+    return (
+      <MotionProvider
+        adapter={cssCascade()}
+        source={compiled.source}
+        presentation={compiled.presentation}
+        reduceMotion
+      >
+        {frame ? (
+          <BoardView {...compiled.boardProps}>{compiled.header}</BoardView>
+        ) : (
+          <GridView {...compiled.boardProps} />
+        )}
+      </MotionProvider>
+    )
+  }
+
   return (
     <Flapkit.Root
       key={motion}
       motion={
         motion === 'css'
-          ? Flapkit.cascade({ renderer: 'css' })
+          ? cssCascade()
           : motion === 'cascade'
-            ? Flapkit.cascade()
-            : Flapkit.riffle()
+            ? canvasCascade()
+            : riffle()
       }
       sound={sound ? mechanicalSound({ bank: docsSoundBank }) : undefined}
     >
@@ -903,10 +918,11 @@ function CompositionSection({ html }: { html: string }) {
                     frame
                     header
                     sound={false}
+                    staticDisplay
                   />
                 </div>
                 <div className="composition-mechanism">
-                  <DepartureBoardTree look="industrial" motion="cascade" frame header />
+                  <DepartureBoardTree look="industrial" motion="cascade" frame header staticDisplay />
                 </div>
               </div>
             </div>
@@ -959,7 +975,7 @@ function StatusBoard({
   sound,
 }: {
   look?: LookName
-  motion?: 'cascade' | 'riffle'
+  motion?: 'cascade' | 'riffle' | 'css'
   custom?: boolean
   rows?: readonly [string, string]
   sound?: ReactElement
@@ -969,7 +985,13 @@ function StatusBoard({
 
   return (
     <Flapkit.Root
-      motion={motion === 'cascade' ? Flapkit.cascade() : Flapkit.riffle()}
+      motion={
+        motion === 'css'
+          ? cssCascade()
+          : motion === 'cascade'
+            ? canvasCascade()
+            : riffle()
+      }
       sound={sound}
     >
       <Flapkit.Board
@@ -988,7 +1010,6 @@ function StatusBoard({
 }
 
 function SoundSection({ html }: { html: string }) {
-  const [motion, setMotion] = useState<'cascade' | 'riffle'>('riffle')
   const [phrase, setPhrase] = useState(0)
   const [played, setPlayed] = useState(false)
   const prepareSound = useRef<(() => Promise<boolean>) | null>(null)
@@ -1007,7 +1028,7 @@ function SoundSection({ html }: { html: string }) {
       title="Sound"
       preview={
         <StatusBoard
-          motion={motion}
+          motion="riffle"
           rows={soundPhrases[phrase]}
           sound={mechanicalSound({ bank: docsSoundBank, prepareRef: prepareSound })}
         />
@@ -1015,15 +1036,10 @@ function SoundSection({ html }: { html: string }) {
     >
       <p>
         Audio files are not bundled. Pass click and settle URLs to{' '}
-        <code>{'mechanicalSound({ bank })'}</code>. The first interaction unlocks audio. Use{' '}
+        <code>{'mechanicalSound({ bank })'}</code>. Sounds follow actual flip events and stay in sync
+        with the animation. The first interaction unlocks audio. Use{' '}
         <code>SoundEngine</code> without React.
       </p>
-      <ChoiceSwitch
-        label="Motion"
-        options={['riffle', 'cascade'] as const}
-        value={motion}
-        onChange={setMotion}
-      />
       <button
         type="button"
         className="relative z-1 min-h-11 w-fit cursor-pointer touch-manipulation border border-rule-strong bg-transparent px-3 font-mono text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
@@ -1244,8 +1260,12 @@ function HowItWorksSection() {
   )
 }
 
-function MotionSection({ cascadeHtml, riffleHtml }: { cascadeHtml: string; riffleHtml: string }) {
-  const [motion, setMotion] = useState<'cascade' | 'riffle'>('riffle')
+function MotionSection({ cascadeHtml, riffleHtml, cssHtml }: {
+  cascadeHtml: string
+  riffleHtml: string
+  cssHtml: string
+}) {
+  const [motion, setMotion] = useState<'cascade' | 'riffle' | 'css'>('riffle')
 
   return (
     <DocsSection
@@ -1253,20 +1273,24 @@ function MotionSection({ cascadeHtml, riffleHtml }: { cascadeHtml: string; riffl
       title="Motion"
       preview={
         <div className="motion-preview-scale">
-          <StatusBoard motion={motion} />
+          <StatusBoard key={motion} motion={motion} />
         </div>
       }
     >
       <p>
-        Both render the same canvas leaves. <code>riffle()</code> randomizes starts;{' '}
-        <code>cascade()</code> staggers them by row.
+        <code>riffle()</code> randomizes starts; <code>cascade()</code> staggers them by row.
+        Import from <code>motion/canvas</code> for Canvas leaves, or <code>motion/css/cascade</code>{' '}
+        for CSS 3D leaves. The import selects the renderer without bundling the unused Canvas renderer.
       </p>
-      <ChoiceSwitch
-        label="Motion"
-        options={['riffle', 'cascade'] as const}
-        value={motion}
-        onChange={setMotion}
-      />
+      <div className="docs-choice-rows">
+        <ChoiceSwitch
+          label="Motion"
+          options={['cascade', 'riffle', 'css'] as const}
+          labels={{ cascade: 'Cascade\n(Canvas)', riffle: 'Riffle\n(Canvas)', css: 'Cascade\n(CSS)' }}
+          value={motion}
+          onChange={setMotion}
+        />
+      </div>
       <div>
         <div className={optionRowClass}>
           <code>riffle()</code>
@@ -1283,7 +1307,7 @@ function MotionSection({ cascadeHtml, riffleHtml }: { cascadeHtml: string; riffl
           </span>
         </div>
       </div>
-      <CodeBlock html={motion === 'cascade' ? cascadeHtml : riffleHtml} />
+      <CodeBlock html={motion === 'css' ? cssHtml : motion === 'cascade' ? cascadeHtml : riffleHtml} />
     </DocsSection>
   )
 }
@@ -1539,46 +1563,45 @@ function SidebarCoords() {
 }
 
 function DecksSection({ html }: { html: string }) {
+  const [phrase, setPhrase] = useState(-1)
+  const characters = customPhrases[phrase] ?? [' ', ' ', ' ', ' ']
+
   return (
     <DocsSection
       index="04"
       title="Decks"
       preview={
-        <div className="grid w-full justify-items-center gap-10">
-          <PreviewScale tracks={2}>
-            <Flapkit.Root motion={Flapkit.riffle()}>
-              <Flapkit.Grid aria-label="Local service" className="flapkit-airport w-max">
-                <Flapkit.Row deck={localDeck} label="LOCAL">
-                  {cells('東京', 2, localDeck)}
-                </Flapkit.Row>
-              </Flapkit.Grid>
-            </Flapkit.Root>
-          </PreviewScale>
-          <PreviewScale tracks={4} groups={2}>
-            <Flapkit.Root motion={Flapkit.riffle()}>
-              <Flapkit.Grid aria-label="Flight number and gate" className="flapkit-airport w-max">
-                <Flapkit.Row>
-                  <Flapkit.Group deck={wideDeck} label="FLIGHT">
-                    <Flapkit.WideCell>14</Flapkit.WideCell>
-                  </Flapkit.Group>
-                  <Flapkit.Group deck={Flapkit.numericDeck} label="GATE">
-                    <Flapkit.Cell>1</Flapkit.Cell>
-                    <Flapkit.Cell>2</Flapkit.Cell>
-                  </Flapkit.Group>
-                </Flapkit.Row>
-              </Flapkit.Grid>
-            </Flapkit.Root>
-          </PreviewScale>
+        <div className="grid w-full justify-items-center gap-5">
+          <Flapkit.Root motion={cssCascade()}>
+            <Flapkit.Grid aria-label="Custom multilingual deck" className="flapkit-airport w-max">
+              <Flapkit.Row deck={customDeck} className="gap-1">
+                {characters.map((character, index) => (
+                  <Flapkit.Cell key={index} className="h-20 w-14">
+                    <Flapkit.Glyph className="font-sans text-[36px]">{character}</Flapkit.Glyph>
+                  </Flapkit.Cell>
+                ))}
+              </Flapkit.Row>
+            </Flapkit.Grid>
+          </Flapkit.Root>
         </div>
       }
     >
       <p>
         A deck lists cassette stops. Import a built-in deck and pass it to <code>deck</code>, or use{' '}
-        <code>createDeck</code> for custom graphemes. Without a deck, cells use{' '}
+        <code>createDeck</code> for custom graphemes. Press Play to cycle through this multilingual
+        deck with Cascade (CSS). Each array entry is one complete grapheme, including emoji.
+        Without a deck, cells use{' '}
         <code>alphanumericDeck</code>. <code>WideCell</code> requires a custom deck with two
         graphemes per leaf. Every row in a <code>Board</code> or <code>Grid</code> must use the same
         Group / Cell / WideCell structure.
       </p>
+      <button
+        type="button"
+        className="relative z-1 min-h-11 w-fit cursor-pointer touch-manipulation border border-rule-strong bg-transparent px-3 font-mono text-[10px] font-semibold tracking-[0.06em] text-ink uppercase hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        onClick={() => setPhrase((current) => (current + 1) % customPhrases.length)}
+      >
+        Play
+      </button>
       <div>
         <div className={optionRowClass}>
           <code>alphanumericDeck</code>
@@ -1677,6 +1700,7 @@ export function DocsPage({
               <MotionSection
                 cascadeHtml={highlightedCode.motionCascade}
                 riffleHtml={highlightedCode.motionRiffle}
+                cssHtml={highlightedCode.motionCss}
               />
             </ActivitySection>
             <ActivitySection id="sound">

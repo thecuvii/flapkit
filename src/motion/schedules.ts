@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react'
 import { signedLeafNoise } from './noise'
 
 export type CassetteStart = {
@@ -34,6 +35,8 @@ export type MotionAdapter = {
   readonly options: SharedMotionOptions
   readonly renderer?: 'canvas' | 'css'
   readonly schedule: MotionSchedule
+  /** @internal Rendering supplied by the selected motion entry point. */
+  readonly Overlay?: ComponentType<{ geometryKey: string }>
 }
 
 /** Deterministic -1..1 noise for custom start schedules. */
@@ -62,6 +65,10 @@ export const scheduleCascade: MotionSchedule = (cassettes, ctx) => {
 }
 
 export const idleSchedule: MotionSchedule = () => undefined
+
+export function adapterSignature(adapter: MotionAdapter) {
+  return `${adapter.id}:${adapter.renderer ?? 'canvas'}:${motionOptionsSignature(adapter.options)}`
+}
 
 export function motionOptionsSignature(options: SharedMotionOptions) {
   return [

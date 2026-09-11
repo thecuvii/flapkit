@@ -35,6 +35,11 @@ type ScrubPitch = {
 const SplitFlapContext = createContext<SplitFlapContextValue | null>(null)
 const SplitFlapContentContext = createContext<ResolvedSplitFlapSource | null>(null)
 
+const MotionOverlayContext = createContext<MotionAdapter['Overlay']>(undefined)
+export function useMotionOverlay() {
+  return useContext(MotionOverlayContext)
+}
+
 /** Latest labels and accessible content, separate from the stable cassette topology. */
 export function useSplitFlapContent() {
   const layout = useContext(SplitFlapContentContext)
@@ -189,9 +194,11 @@ export function MotionProvider({
   )
 
   return (
-    <SplitFlapEffectProvider presentation={presentation} motion={tuning} source={source}>
-      {children}
-    </SplitFlapEffectProvider>
+    <MotionOverlayContext value={adapter.Overlay}>
+      <SplitFlapEffectProvider presentation={presentation} motion={tuning} source={source}>
+        {children}
+      </SplitFlapEffectProvider>
+    </MotionOverlayContext>
   )
 }
 

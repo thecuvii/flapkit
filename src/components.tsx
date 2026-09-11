@@ -17,7 +17,7 @@ import {
 import { compileFlapkitBoard } from './compiler'
 import type { Deck, Variant as DeckVariant } from './deck'
 import { markFlapkit } from './kind'
-import { adapterSignature, type MotionAdapter } from './motion'
+import { adapterSignature, type MotionAdapter } from './motion/schedules'
 import { usePrefersReducedMotion } from './motion/reduced-motion'
 import { MotionProvider } from './motion/provider'
 import { BoardView, type BoardViewProps, GridView, type GridViewProps } from './render/board'

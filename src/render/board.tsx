@@ -5,8 +5,7 @@
 import { memo, useId, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { presentationSignature } from '../compiler'
 import type { ResolvedSplitFlapSource } from '../layout'
-import { useSplitFlap, useSplitFlapContent } from '../motion/provider'
-import { MotionCanvas } from './canvas'
+import { useMotionOverlay, useSplitFlap, useSplitFlapContent } from '../motion/provider'
 import { BoardRow } from './cassette'
 import { classProps, styles } from './classes'
 import { cssValue } from './css-values'
@@ -94,6 +93,7 @@ export type GridViewProps = DataAttributes & {
 
 function GridContent() {
   const { controller, layout, motion, presentation } = useSplitFlap()
+  const Overlay = useMotionOverlay()
   const canvasGeometryKey = `${layout.layoutKey}:${presentationSignature(presentation)}`
 
   return (
@@ -114,9 +114,7 @@ function GridContent() {
           presentation={presentation.rows[rowIndex]}
         />
       ))}
-      {motion.variant !== 'scrub' && motion.renderer !== 'css' && (
-        <MotionCanvas geometryKey={canvasGeometryKey} />
-      )}
+      {Overlay && <Overlay geometryKey={canvasGeometryKey} />}
     </div>
   )
 }

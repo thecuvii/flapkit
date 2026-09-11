@@ -5,13 +5,18 @@ export type QuickStartSnippetOptions = {
   header: boolean
 }
 
+function motionImport(motion: QuickStartSnippetOptions['motion']) {
+  const name = motion === 'css' ? 'cascade' : motion
+  return `import { ${name} } from '@cuvii/flapkit/motion/${motion === 'css' ? 'css' : 'canvas'}/${name}'`
+}
+
 export function quickStartCode({ look, motion, board, header }: QuickStartSnippetOptions) {
   const frame = board ? 'Board' : 'Grid'
-  const motionCall =
-    motion === 'css' ? "Flapkit.cascade({ renderer: 'css' })" : `Flapkit.${motion}()`
+  const motionCall = `${motion === 'css' ? 'cascade' : motion}()`
   const headerLine = board && header ? '    <Flapkit.Header>Departures</Flapkit.Header>\n' : ''
 
   return `import * as Flapkit from '@cuvii/flapkit'
+${motionImport(motion)}
 import '@cuvii/flapkit/flapkit.css'
 import '@cuvii/flapkit/${look}.css'
 
@@ -45,6 +50,7 @@ export type QuickStartToken = {
 
 export type QuickStartRangeId =
   | 'look-import'
+  | 'motion-import'
   | 'motion'
   | 'frame-open'
   | 'look-class'
@@ -81,7 +87,8 @@ export const quickStartRanges: readonly QuickStartRange[] = [
     id: 'look-import',
     ...rangeInside(quickStartStaticCode, "import '@cuvii/flapkit/airport.css'", 'airport'),
   },
-  { id: 'motion', ...rangeInside(quickStartStaticCode, 'motion={Flapkit.cascade()}', 'cascade()') },
+  { id: 'motion-import', ...rangeInside(quickStartStaticCode, motionImport('cascade'), motionImport('cascade')) },
+  { id: 'motion', ...rangeInside(quickStartStaticCode, 'motion={cascade()}', 'cascade()') },
   {
     id: 'frame-open',
     ...rangeInside(quickStartStaticCode, '<Flapkit.Board aria-label', 'Board'),
@@ -100,7 +107,9 @@ export function quickStartLiveValue(id: QuickStartRangeId, options: QuickStartSn
     case 'look-class':
       return options.look
     case 'motion':
-      return options.motion === 'css' ? "cascade({ renderer: 'css' })" : `${options.motion}()`
+      return `${options.motion === 'css' ? 'cascade' : options.motion}()`
+    case 'motion-import':
+      return motionImport(options.motion)
     case 'frame-open':
     case 'frame-close':
       return options.board ? 'Board' : 'Grid'
@@ -126,10 +135,11 @@ export function looksCode(tab: LooksTab) {
   const cellName = tab === 'custom' ? 'EvaCell' : 'Flapkit.Cell'
 
   return `import * as Flapkit from '@cuvii/flapkit'
+import { cascade } from '@cuvii/flapkit/motion/canvas/cascade'
 import '@cuvii/flapkit/flapkit.css'
 import '@cuvii/flapkit/${look}.css'
 
-<Flapkit.Root motion={Flapkit.cascade()}>
+<Flapkit.Root motion={cascade()}>
   <Flapkit.Board className="${boardClass}">
     {['FLAPKIT', 'BY     ', 'CUVII  '].map((line, row) => (
       <Flapkit.Row key={row}${rowClass}>
@@ -193,9 +203,12 @@ export function looksLiveValue(id: LooksRangeId, tab: LooksTab) {
   }
 }
 
-function motionCode(motion: 'cascade' | 'riffle') {
-  const motionCall = motion === 'cascade' ? 'Flapkit.cascade()' : 'Flapkit.riffle()'
-  return `<Flapkit.Root motion={${motionCall}}>
+function motionCode(motion: 'cascade' | 'riffle' | 'css') {
+  const motionCall = `${motion === 'css' ? 'cascade' : motion}()`
+  return `import * as Flapkit from '@cuvii/flapkit'
+${motionImport(motion)}
+
+<Flapkit.Root motion={${motionCall}}>
   <Flapkit.Board className="flapkit-airport">
     <Flapkit.Row label="STATUS">
       {[...'FLAPKIT'].map((character, index) => (
@@ -213,10 +226,11 @@ export const docsCode = {
   },
   composition: {
     code: `import * as Flapkit from '@cuvii/flapkit'
+import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
 import '@cuvii/flapkit/flapkit.css'
 import '@cuvii/flapkit/airport.css'
 
-<Flapkit.Root motion={Flapkit.riffle()}>
+<Flapkit.Root motion={riffle()}>
   <Flapkit.Board className="flapkit-airport">
     <Flapkit.Header>Departures</Flapkit.Header>
     <Flapkit.Row id="LH401">
@@ -236,34 +250,21 @@ import '@cuvii/flapkit/airport.css'
     language: 'tsx',
   },
   decks: {
-    code: `import * as Flapkit from '@cuvii/flapkit'
+    code: `// Outside the component — each entry is a complete grapheme.
+const phrases = [
+  ['안', '녕', '👋', '🌏'],
+  ['東', '京', '🚀', '✨'],
+  ['你', '好', '☕', '💚'],
+  // Add more characters and phrases here.
+]
+const deck = Flapkit.createDeck([' ', ...new Set(phrases.flat())])
 
-const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
-const numberDeck = Flapkit.createDeck(['  ', '14', '05', '55', '30'])
-
-<Flapkit.Root motion={Flapkit.riffle()}>
-  <Flapkit.Grid className="flapkit-airport">
-    <Flapkit.Row deck={localDeck} label="LOCAL">
-      {[...'東京'].map((character, index) => (
-        <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
-      ))}
-    </Flapkit.Row>
-  </Flapkit.Grid>
-</Flapkit.Root>
-
-<Flapkit.Root motion={Flapkit.riffle()}>
-  <Flapkit.Grid className="flapkit-airport">
-    <Flapkit.Row>
-      <Flapkit.Group deck={numberDeck} label="FLIGHT">
-        <Flapkit.WideCell>14</Flapkit.WideCell>
-      </Flapkit.Group>
-      <Flapkit.Group deck={Flapkit.numericDeck} label="GATE">
-        <Flapkit.Cell>1</Flapkit.Cell>
-        <Flapkit.Cell>2</Flapkit.Cell>
-      </Flapkit.Group>
-    </Flapkit.Row>
-  </Flapkit.Grid>
-</Flapkit.Root>`,
+// Within your Grid or Board.
+<Flapkit.Row deck={deck}>
+  {['안', '녕', '👋', '🌏'].map((character, index) => (
+    <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+  ))}
+</Flapkit.Row>`,
     language: 'tsx',
   },
   motionRiffle: {
@@ -272,6 +273,10 @@ const numberDeck = Flapkit.createDeck(['  ', '14', '05', '55', '30'])
   },
   motionCascade: {
     code: motionCode('cascade'),
+    language: 'tsx',
+  },
+  motionCss: {
+    code: motionCode('css'),
     language: 'tsx',
   },
   looks: {
@@ -284,6 +289,7 @@ const numberDeck = Flapkit.createDeck(['  ', '14', '05', '55', '30'])
   },
   sound: {
     code: `import * as Flapkit from '@cuvii/flapkit'
+import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
 import { mechanicalSound } from '@cuvii/flapkit/sound'
 import '@cuvii/flapkit/flapkit.css'
 import '@cuvii/flapkit/airport.css'
@@ -294,7 +300,7 @@ const soundBank = {
 }
 
 <Flapkit.Root
-  motion={Flapkit.riffle()}
+  motion={riffle()}
   sound={mechanicalSound({ bank: soundBank })}
 >
   <Flapkit.Board className="flapkit-airport">

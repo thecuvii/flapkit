@@ -26,6 +26,7 @@ Root ── motion adapter
 
 ```tsx
 import * as Flapkit from '@cuvii/flapkit'
+import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
 import '@cuvii/flapkit/flapkit.css'
 import '@cuvii/flapkit/airport.css'
 
@@ -33,7 +34,7 @@ const statusDeck = Flapkit.createDeck(' BOARDING', ['white', 'yellow'])
 
 export function Departures() {
   return (
-    <Flapkit.Root motion={Flapkit.riffle()}>
+    <Flapkit.Root motion={riffle()}>
       <Flapkit.Board data-look="airport" className="departures-board">
         <Flapkit.Header>Departures</Flapkit.Header>
         <Flapkit.Row highlighted>
@@ -59,12 +60,23 @@ variant. Add `Group` only when adjacent horizontal regions need different
 settings. `Row` and `Group` IDs are optional; provide stable IDs when items can
 reorder.
 
-`Flapkit.riffle()` provides lightweight, randomized rapid flipping for dense
-boards. Use `Flapkit.cascade()` for the same canvas paint path with starts
-staggered across rows. Both are factories over `Flapkit.motion()`; pass your
-own start schedule when you need a third timing pattern. The paint path stays
-the same. Root keeps an adapter by `id` and options, so an inline schedule
-function does not remount motion on every render.
+`riffle()` randomizes rapid starts; `cascade()` staggers starts across rows.
+Choose the renderer through its import path:
+
+```tsx
+import { cascade } from '@cuvii/flapkit/motion/css/cascade'
+// Or: '@cuvii/flapkit/motion/canvas/cascade'
+// Or: import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
+
+<Flapkit.Root motion={cascade()}>{/* Board or Grid */}</Flapkit.Root>
+```
+
+The CSS entry does not depend on the Canvas renderer. The Canvas entries supply
+their renderer to Root, so CSS-only consumers can tree-shake it out. These
+entry points do not take a `renderer` option. Root exports remain for compatibility;
+prefer the explicit subpaths, especially over the legacy runtime renderer switch.
+`Flapkit.motion()` still supports custom Canvas start schedules. Root keeps an
+adapter by `id` and options, so an inline schedule does not remount motion.
 
 Changing cell values updates only cassettes whose resolved deck positions
 changed. Every row must share the first row's Group, Cell, and WideCell
@@ -106,10 +118,11 @@ not split across cells.
 
 ```tsx
 import * as Flapkit from '@cuvii/flapkit'
+import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
 
 const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 
-<Flapkit.Root motion={Flapkit.riffle()}>
+<Flapkit.Root motion={riffle()}>
   <Flapkit.Board>
     <Flapkit.Row deck={localDeck} label="LOCAL">
       {[...'東京出発'].map((character, index) => (
@@ -157,6 +170,7 @@ and `flapkit-industrial` classes still work.
 import * as Flapkit from '@cuvii/flapkit'
 import '@cuvii/flapkit/flapkit.css'
 import '@cuvii/flapkit/industrial.css'
+import { cascade } from '@cuvii/flapkit/motion/css/cascade'
 
 function EvaCell({ children }: { children: string }) {
   return (
@@ -170,7 +184,7 @@ function EvaCell({ children }: { children: string }) {
 
 export function Operations() {
   return (
-    <Flapkit.Root motion={Flapkit.cascade()}>
+    <Flapkit.Root motion={cascade()}>
       <Flapkit.Board data-look="industrial" className="p-5 bg-purple-950">
         <Flapkit.Header className="font-mono text-lime-300">Operations</Flapkit.Header>
         <Flapkit.Row className="gap-2 font-mono" label="STATUS">
@@ -207,8 +221,8 @@ Use consistent cell widths and group gaps when columns should align.
 
 ### CSS customization contract
 
-The default renderer uses Canvas during motion and DOM for settled leaves.
-Choose `cascade({ renderer: 'css' })` or `riffle({ renderer: 'css' })` to keep
+The Canvas entries use Canvas during motion and DOM for settled leaves.
+Import `cascade` from `@cuvii/flapkit/motion/css/cascade` to keep
 leaves in CSS 3D throughout the animation. Both consume the same primitives.
 Classes on `Face` apply to every stationary and moving face; classes on `Glyph`
 apply to its glyph carriers, and `Retainer` styles each axle/retainer.
@@ -264,6 +278,7 @@ consumer and pass the sound element to `Root`:
 ```tsx
 import * as Flapkit from '@cuvii/flapkit'
 import { mechanicalSound } from '@cuvii/flapkit/sound'
+import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
 
 const soundBank = {
   clicks: ['/audio/flap-1.mp3', '/audio/flap-2.mp3'],
@@ -272,7 +287,7 @@ const soundBank = {
 
 function BoardWithSound() {
   return (
-    <Flapkit.Root motion={Flapkit.riffle()} sound={mechanicalSound({ bank: soundBank })}>
+    <Flapkit.Root motion={riffle()} sound={mechanicalSound({ bank: soundBank })}>
       <Flapkit.Board>
         <Flapkit.Row>
           <Flapkit.Cell>A</Flapkit.Cell>

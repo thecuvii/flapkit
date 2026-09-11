@@ -1,15 +1,19 @@
-import { defaultCascadeMotion, defaultRiffleMotion, type CascadeMotion, type RiffleMotion } from './options'
-import {
-  motionOptionsSignature,
-  scheduleCascade,
-  scheduleRiffle,
-  type MotionAdapter,
-  type MotionSchedule,
-  type SharedMotionOptions,
-} from './schedules'
+import type { CascadeMotion } from './options'
+import { MotionCanvas } from '../render/canvas'
+import { cascade as canvasCascade } from './canvas/cascade'
+import { cascade as cssCascade } from './css/cascade'
+import { type MotionAdapter, type MotionSchedule, type SharedMotionOptions } from './schedules'
 
-export { timingNoise, type CassetteStart, type MotionSchedule, type MotionScheduleContext } from './schedules'
-export type { CascadeMotion, MotionAdapter, RiffleMotion, SharedMotionOptions }
+export {
+  timingNoise,
+  type CassetteStart,
+  type MotionSchedule,
+  type MotionScheduleContext,
+} from './schedules'
+export { riffle } from './canvas/riffle'
+export { adapterSignature } from './schedules'
+export type { CascadeMotion, RiffleMotion } from './options'
+export type { MotionAdapter, SharedMotionOptions }
 export { defaultCascadeMotion, defaultRiffleMotion } from './options'
 
 export const defaultSharedMotion: SharedMotionOptions = {
@@ -29,48 +33,16 @@ export function motion(
 ): MotionAdapter {
   return {
     id: 'custom',
+    Overlay: MotionCanvas,
     options: { ...defaultSharedMotion, ...options },
     schedule,
   }
 }
 
-/** Creates row-staggered motion, using Canvas unless CSS 3D is requested. */
-export function cascade(options: Partial<CascadeMotion> & Pick<MotionAdapter, 'renderer'> = {}): MotionAdapter {
-  const resolved = { ...defaultCascadeMotion, ...options }
-  return {
-    id: 'cascade',
-    renderer: options.renderer ?? 'canvas',
-    options: {
-      cadenceVariationPct: resolved.cadenceVariationPct,
-      finalReboundDeg: resolved.finalReboundDeg,
-      finalSettleMs: resolved.finalSettleMs,
-      pitchMs: resolved.pitchMs,
-      rowDelayMs: resolved.rowDelayMs,
-      startSpreadMs: 0,
-      withinRowJitterMs: resolved.withinRowJitterMs,
-    },
-    schedule: scheduleCascade,
-  }
-}
-
-/** Creates randomized, rapid Canvas-assisted motion. */
-export function riffle(options: Partial<RiffleMotion> = {}): MotionAdapter {
-  const resolved = { ...defaultRiffleMotion, ...options }
-  return {
-    id: 'riffle',
-    options: {
-      cadenceVariationPct: resolved.cadenceVariationPct,
-      finalReboundDeg: resolved.finalReboundDeg,
-      finalSettleMs: resolved.finalSettleMs,
-      pitchMs: resolved.riffleMs,
-      rowDelayMs: 0,
-      startSpreadMs: resolved.startSpreadMs,
-      withinRowJitterMs: 0,
-    },
-    schedule: scheduleRiffle,
-  }
-}
-
-export function adapterSignature(adapter: MotionAdapter) {
-  return `${adapter.id}:${adapter.renderer ?? 'canvas'}:${motionOptionsSignature(adapter.options)}`
+/** @deprecated Import cascade from a renderer-specific motion entry point. */
+export function cascade(
+  options: Partial<CascadeMotion> & Pick<MotionAdapter, 'renderer'> = {},
+): MotionAdapter {
+  const { renderer, ...tuning } = options
+  return renderer === 'css' ? cssCascade(tuning) : canvasCascade(tuning)
 }

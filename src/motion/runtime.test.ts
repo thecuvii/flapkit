@@ -185,6 +185,31 @@ describe('Flapkit motion controller', () => {
     expect(runtime?.pitchStart).toBeCloseTo(spreadPosition ** 2 * 480)
   })
 
+  it('stages a delayed riffle only when its first pitch starts', () => {
+    const controller = new SplitFlapMotionController(cells(' ').cells)
+    const view = fakeView()
+    controller.registerView(0, view)
+    controller.setMotion({
+      ...cascadeMotion,
+      variant: 'riffle',
+      schedule: (cassettes, ctx) => {
+        cassettes.forEach((cassette) => ctx.start(cassette.index, ctx.now + 100))
+      },
+    })
+    controller.setTargets(cells('A').targetIndices)
+    frame(99)
+    expect(view.arrivingUpperGlyph.textContent).toBe('')
+    frame(125)
+    expect(view.arrivingUpperGlyph.textContent).toBe('A')
+    expect(view.outgoingLowerGlyph.textContent).toBe('')
+    frame(160)
+    expect(view.arrivingUpperGlyph.textContent).toBe('A')
+    frame(200)
+    expect(view.outgoingLowerGlyph.textContent).toBe('A')
+    expect(controller.readPerformanceCounters().runningCassettes).toBe(0)
+    controller.destroy()
+  })
+
   it('does not promote compact cascade views onto CSS 3D', () => {
     const controller = new SplitFlapMotionController(cells('  ', 2).cells)
     controller.setMotion({

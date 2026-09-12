@@ -7,7 +7,7 @@ export default defineConfig({
     to: 'dist/styles',
   },
   deps: {
-    neverBundle: ['react', 'react/jsx-runtime'],
+    neverBundle: ['react', 'react-dom', 'react/jsx-runtime'],
   },
   dts: true,
   entry: {

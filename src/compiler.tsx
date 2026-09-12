@@ -49,6 +49,9 @@ export type CompiledBoard = {
   boardProps: Omit<BoardViewProps, 'children'>
   frame: boolean
   header?: ReactNode
+  headerClassName?: string
+  headerPortalId?: string
+  headerStyle?: CSSProperties
   presentation: CompiledBoardPresentation
   presentationSignature: string
   source: SplitFlapSource
@@ -296,7 +299,11 @@ export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
   }
   if (headers.length > 1) throw new Error('Flapkit.Board accepts at most one Flapkit.Header')
   if (!frame && headers.length > 0) throw new Error('Flapkit.Grid does not accept Flapkit.Header')
-  if (rowElements.length === 0) throw new Error(`${owner} requires at least one Flapkit.Row`)
+  if (rowElements.length === 0) {
+    throw new Error(
+      `${owner} requires at least one Flapkit.Row. A declaration must not be partially mounted; place Suspense or Activity around the whole Flapkit.Root instead of inside Board, Row, or Group.`,
+    )
+  }
 
   const rows = rowElements.map((row, rowIndex) => ({
     groups: rowGroups(row, rowIndex),
@@ -364,17 +371,20 @@ export function compileFlapkitBoard(children: ReactNode): CompiledBoard {
     })),
   }
 
+  const headerProps = headers[0]?.props as HeaderProps | undefined
+  const portalId = headerProps?.__flapkitHeaderPortalId
   return {
     boardProps: boardProps as Omit<BoardViewProps, 'children'>,
     frame,
-    header: headers[0] ? (
-      <div
-        className={(headers[0].props as HeaderProps).className}
-        style={(headers[0].props as HeaderProps).style}
-      >
-        {(headers[0].props as HeaderProps).children}
-      </div>
-    ) : undefined,
+    header:
+      headers[0] && !portalId ? (
+        <div className={headerProps?.className} style={headerProps?.style}>
+          {headerProps?.children}
+        </div>
+      ) : undefined,
+    headerClassName: portalId ? headerProps?.className : undefined,
+    headerPortalId: portalId,
+    headerStyle: portalId ? headerProps?.style : undefined,
     presentation,
     presentationSignature: presentationSignature(presentation),
     source,

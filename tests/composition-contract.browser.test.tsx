@@ -42,7 +42,7 @@ it.each(['css', 'canvas'] as const)(
     }
 
     async function render(value: string, large = false) {
-      await act(() =>
+      await act(async () => {
         root.render(
           <content.Provider value={value}>
             <style>{`
@@ -64,9 +64,10 @@ it.each(['css', 'canvas'] as const)(
               </Board>
             </Root>
           </content.Provider>,
-        ),
-      )
-      await act(async () => {
+        )
+        // Root compiles declarations in a queued microtask; keep act open through
+        // that commit and the renderer's initial measurements.
+        await Promise.resolve()
         for (let i = 0; i < 6; i++) await new Promise(requestAnimationFrame)
       })
     }
@@ -96,11 +97,17 @@ it.each(['css', 'canvas'] as const)(
         'rgb(182, 255, 54)',
       )
 
-      await act(() => toggle())
+      await act(async () => {
+        toggle()
+        await Promise.resolve()
+      })
       await expect
         .poll(() => host.querySelector('[aria-live="polite"]')?.textContent)
         .toContain('BA')
-      await act(() => toggle())
+      await act(async () => {
+        toggle()
+        await Promise.resolve()
+      })
       await expect
         .poll(() => host.querySelector('[aria-live="polite"]')?.textContent)
         .toContain('AA')

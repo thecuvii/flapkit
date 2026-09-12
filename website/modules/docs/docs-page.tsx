@@ -942,7 +942,7 @@ function CompositionSection({ html }: { html: string }) {
       <p>
         <code>Root</code> compiles the board and owns motion. A flat <code>Row</code> sets its cell
         defaults. With explicit groups, each <code>Group</code> sets its own defaults. Add stable{' '}
-        <code>id</code>s to reorderable rows and groups.
+        <code>id</code>s to identify rows and groups. Reordering rebuilds their animation state.
       </p>
       <ul className="m-0 grid list-none gap-0 p-0" aria-label="Flapkit component tree">
         {anatomyParts.map((item) => (
@@ -1319,7 +1319,7 @@ function MotionSection({ cascadeHtml, riffleHtml, cssHtml }: {
           <code>riffle()</code>
           <span className="text-[13px] leading-[1.55] text-muted">
             <code>riffleMs</code>, <code>startSpreadMs</code>, <code>cadenceVariationPct</code>,{' '}
-            <code>finalReboundDeg</code>, <code>finalSettleMs</code>
+            <code>finalSettleMs</code>
           </span>
         </div>
         <div className={optionRowClass}>

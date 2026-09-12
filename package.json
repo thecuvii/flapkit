@@ -88,6 +88,7 @@
     "test": "vp test run",
     "test:browser": "vp test run --config vitest.browser.config.ts",
     "test:docs": "node tests/docs.e2e.mjs",
+    "test:package": "node tests/package.e2e.mjs",
     "prepare": "vp config --no-agent"
   },
   "devDependencies": {
@@ -106,7 +107,8 @@
     "vitest": "catalog:dev"
   },
   "peerDependencies": {
-    "react": ">=19.0.0"
+    "react": ">=19.0.0",
+    "react-dom": ">=19.0.0"
   },
   "engines": {
     "node": ">=22.18.0"

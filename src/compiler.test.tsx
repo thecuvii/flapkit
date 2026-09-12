@@ -219,6 +219,12 @@ describe('Flapkit structural compiler', () => {
     expect(result.header).toBeUndefined()
   })
 
+  it('explains that local async boundaries cannot expose partial declarations', () => {
+    expect(() => compileFlapkitBoard(<Board>{null}</Board>)).toThrow(
+      'place Suspense or Activity around the whole Flapkit.Root instead',
+    )
+  })
+
   it('applies a variant and deck directly from a flat row', () => {
     const result = compileFlapkitBoard(
       <Board>

@@ -1,7 +1,14 @@
+'use client'
+
 // React bridge between Root and the framework-independent sound engine.
 import { useEffect, useRef, type RefObject } from 'react'
 import { useSplitFlapController } from '../motion/provider'
-import { SplitFlapSoundEngine, type SplitFlapSoundBank, type SplitFlapSoundTuning } from './engine'
+import {
+  defaultSplitFlapSoundTuning,
+  SplitFlapSoundEngine,
+  type SplitFlapSoundBank,
+  type SplitFlapSoundTuning,
+} from './engine'
 
 export type SplitFlapSoundProps = Partial<SplitFlapSoundTuning> & {
   bank: SplitFlapSoundBank
@@ -11,13 +18,13 @@ export type SplitFlapSoundProps = Partial<SplitFlapSoundTuning> & {
 
 export function SplitFlapSound({
   bank,
-  clickLevel,
+  clickLevel = defaultSplitFlapSoundTuning.clickLevel,
   enabled = true,
-  pitchVariation,
+  pitchVariation = defaultSplitFlapSoundTuning.pitchVariation,
   prepareRef,
-  settleLevel,
-  stereoWidth,
-  volume,
+  settleLevel = defaultSplitFlapSoundTuning.settleLevel,
+  stereoWidth = defaultSplitFlapSoundTuning.stereoWidth,
+  volume = defaultSplitFlapSoundTuning.volume,
 }: SplitFlapSoundProps) {
   const controller = useSplitFlapController()
   const engineRef = useRef<SplitFlapSoundEngine | null>(null)

@@ -22,6 +22,7 @@ export type MotionSchedule = (
 
 export type SharedMotionOptions = {
   cadenceVariationPct: number
+  /** @deprecated Compatibility only; settle curves have a fixed shape. */
   finalReboundDeg: number
   finalSettleMs: number
   pitchMs: number

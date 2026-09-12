@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useState,
+  type ReactNode,
 } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, it } from 'vitest'
@@ -180,7 +181,7 @@ it('tracks memoized wrapper order and Activity re-entry without losing hook stat
     return <Cell>{text}</Cell>
   })
   const render = async (values: string[], visible = true) =>
-    act(() =>
+    act(async () => {
       root.render(
         <Activity mode={visible ? 'visible' : 'hidden'}>
           <Root motion={cascade()}>
@@ -193,8 +194,9 @@ it('tracks memoized wrapper order and Activity re-entry without losing hook stat
             </Board>
           </Root>
         </Activity>,
-      ),
-    )
+      )
+      await Promise.resolve()
+    })
   try {
     await render(['A', 'B'])
     expect(host.querySelector('[aria-live]')?.textContent).toBe('AB')
@@ -205,6 +207,97 @@ it('tracks memoized wrapper order and Activity re-entry without losing hook stat
     expect(host.querySelector('[aria-live]')?.textContent).toBe('BA')
   } finally {
     await act(() => root.unmount())
+    host.remove()
+  }
+})
+
+it('resets runtime identity when explicit row and group IDs reorder', async () => {
+  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  let controller: SplitFlapMotionController | undefined
+  let wrapperMounts = 0
+
+  function Probe() {
+    const value = useSplitFlapController()
+    useEffect(() => {
+      controller = value
+    }, [value])
+    return null
+  }
+
+  function Wrapper({ children }: { children: ReactNode }) {
+    const [identity] = useState(() => ++wrapperMounts)
+    return <div data-wrapper-identity={identity}>{children}</div>
+  }
+
+  const render = async (reordered: boolean) => {
+    const rows = reordered
+      ? [
+          { id: 'south', values: ['B', 'A'] },
+          { id: 'north', values: ['A', 'B'] },
+        ]
+      : [
+          { id: 'north', values: ['A', 'B'] },
+          { id: 'south', values: ['B', 'A'] },
+        ]
+    const groups = reordered
+      ? [
+          { id: 'right', label: 'RIGHT', index: 1 },
+          { id: 'left', label: 'LEFT', index: 0 },
+        ]
+      : [
+          { id: 'left', label: 'LEFT', index: 0 },
+          { id: 'right', label: 'RIGHT', index: 1 },
+        ]
+    await act(async () => {
+      root.render(
+        <Wrapper>
+          <Root motion={cascade({ pitchMs: 1, finalSettleMs: 1 })} sound={<Probe />}>
+            <Board data-look="industrial">
+              {rows.map((row) => (
+                <Row id={row.id} key={row.id}>
+                  {groups.map((group) => (
+                    <Group id={group.id} label={group.label} deck={deck} key={group.id}>
+                      <Cell>{row.values[group.index]}</Cell>
+                    </Group>
+                  ))}
+                </Row>
+              ))}
+            </Board>
+          </Root>
+        </Wrapper>,
+      )
+      await Promise.resolve()
+      for (let index = 0; index < 4; index++) await new Promise(requestAnimationFrame)
+    })
+  }
+
+  try {
+    await render(false)
+    const initialController = controller
+    const initialCassette = host.querySelector('[data-slot="cassette"]')
+    const wrapper = host.querySelector('[data-wrapper-identity]')
+
+    await render(true)
+
+    expect(controller).not.toBe(initialController)
+    expect(host.querySelector('[data-slot="cassette"]')).not.toBe(initialCassette)
+    expect(host.querySelector('[data-wrapper-identity]')).toBe(wrapper)
+    expect(
+      host.querySelector('[data-wrapper-identity]')?.getAttribute('data-wrapper-identity'),
+    ).toBe('1')
+    expect(host.querySelector('[aria-live]')?.textContent).toBe('RIGHT A LEFT B. RIGHT B LEFT A')
+    await expect
+      .poll(() =>
+        Array.from(host.querySelectorAll('[data-slot="stationary-upper"] [data-slot="glyph"]'))
+          .map((glyph) => glyph.getAttribute('data-glyph'))
+          .join(''),
+      )
+      .toBe('ABBA')
+  } finally {
+    await act(async () => root.unmount())
     host.remove()
   }
 })

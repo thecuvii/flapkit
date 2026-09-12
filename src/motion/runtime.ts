@@ -1,6 +1,12 @@
 import { splitFlapGraphemes, type Position, type Variant } from '../deck'
 import { type ResolvedSplitFlapCell } from '../layout'
-import { riffleStackShifts, riffleVaneAngles, settleStackShifts, settleVaneAngles, type CurveKeyframe } from './curves'
+import {
+  riffleStackShifts,
+  riffleVaneAngles,
+  settleStackShifts,
+  settleVaneAngles,
+  type CurveKeyframe,
+} from './curves'
 import { signedLeafNoise } from './noise'
 import { idleSchedule, type MotionSchedule } from './schedules'
 import type { SplitFlapMechanicalEvent, SplitFlapMechanicalEventSource } from '../sound/engine'
@@ -163,10 +169,7 @@ function setGlyphScript(element: HTMLElement, glyph: string) {
   }
 }
 
-type GlyphTarget =
-  | { kind: 'compact' }
-  | { kind: 'text' }
-  | { kind: 'wide'; parts: HTMLElement[] }
+type GlyphTarget = { kind: 'compact' } | { kind: 'text' } | { kind: 'wide'; parts: HTMLElement[] }
 
 // The glyph element's shape is fixed for its lifetime; resolve it once instead of per pitch.
 const glyphTargets = new WeakMap<HTMLElement, GlyphTarget>()
@@ -641,7 +644,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
 
     if (animate) {
       const now = performance.now()
-      if (this.motion.variant !== 'cascade' || now >= startAt) {
+      if (now >= startAt) {
         runtime.views.forEach((view) => this.animatePitchView(runtime, view, now))
         runtime.animationStarted = true
       }
@@ -701,7 +704,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
     if (now < runtime.pitchStart) return
 
     let elapsed = now - runtime.pitchStart
-    let needsAnimation = this.motion.variant === 'cascade' && !runtime.animationStarted
+    let needsAnimation = !runtime.animationStarted
 
     while (elapsed >= runtime.duration) {
       if (!runtime.didImpact) this.emitImpact(runtime)
@@ -879,7 +882,11 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       return
     }
 
-    setGlyphPosition(view.outgoingLowerGlyph, pitchProgress > 0.5 ? nextPosition : currentPosition, true)
+    setGlyphPosition(
+      view.outgoingLowerGlyph,
+      pitchProgress > 0.5 ? nextPosition : currentPosition,
+      true,
+    )
     setGlyphPosition(view.arrivingUpperGlyph, nextPosition, false)
 
     ensureStackShiftProperty()
@@ -908,10 +915,7 @@ export class SplitFlapMotionController implements SplitFlapMechanicalEventSource
       view,
       0,
       view.movingVane,
-      createVaneKeyframes(
-        runtime.finalPitch ? settleVaneAngles : riffleVaneAngles,
-        specularPeak,
-      ),
+      createVaneKeyframes(runtime.finalPitch ? settleVaneAngles : riffleVaneAngles, specularPeak),
       timing,
       elapsed,
       paused,

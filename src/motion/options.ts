@@ -1,5 +1,6 @@
 export type CascadeMotion = {
   cadenceVariationPct: number
+  /** @deprecated Compatibility only; settle curves have a fixed shape. */
   finalReboundDeg: number
   finalSettleMs: number
   pitchMs: number
@@ -9,6 +10,7 @@ export type CascadeMotion = {
 
 export type RiffleMotion = {
   cadenceVariationPct: number
+  /** @deprecated Compatibility only; settle curves have a fixed shape. */
   finalReboundDeg: number
   finalSettleMs: number
   riffleMs: number

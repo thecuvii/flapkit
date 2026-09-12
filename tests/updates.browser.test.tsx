@@ -370,8 +370,10 @@ it('measures per-row fonts for wide Latin and CJK glyphs and restores DOM attrib
   }
   expect(host.querySelector('[data-split-flap-script="cjk"]')).toBeNull()
   const frames = controller.readPerformanceCounters().canvasFrames
-  document.fonts.dispatchEvent(new Event('loadingdone'))
-  await new Promise(requestAnimationFrame)
+  await act(async () => {
+    document.fonts.dispatchEvent(new Event('loadingdone'))
+    await new Promise(requestAnimationFrame)
+  })
   expect(controller.readPerformanceCounters().canvasFrames).toBeGreaterThan(frames)
   expect(host.querySelector('[data-split-flap-script="cjk"]')).toBeNull()
 })
@@ -405,7 +407,10 @@ it('keeps measured colors during presentation updates and does not loop on its o
     if (typeof this.fillStyle === 'string') colors.push(this.fillStyle)
     return fillRect.apply(this, args)
   })
-  await act(() => root.render(<StrictMode>{tree(true)}</StrictMode>))
+  await act(async () => {
+    root.render(<StrictMode>{tree(true)}</StrictMode>)
+    await Promise.resolve()
+  })
   // Measurement is deferred to RAF; an intervening motion frame must retain resolved colors.
   controller.requestCanvasRender()
   expect(colors).toContain('#141ec8')

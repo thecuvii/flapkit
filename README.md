@@ -81,8 +81,9 @@ adapter by `id` and options, so an inline schedule does not remount motion.
 Changing cell values updates only cassettes whose resolved deck positions
 changed. Every row must share the first row's Group, Cell, and WideCell
 structure — that is the physical board. Use another `Root` or `Grid` for a
-different layout. Stable optional row and group IDs keep cassette identity
-when those aligned rows reorder.
+different layout. Stable optional row and group IDs identify logical rows and
+regions. Reordering rows or groups rebuilds the cassettes and restarts animation
+toward the current targets; IDs do not preserve in-flight animation state.
 
 ## Built-in decks
 
@@ -208,6 +209,11 @@ hooks and context. React mounts each wrapper normally; Flapkit never calls a
 component function to inspect its return value. Declarations are collected after
 the client commit, so the visible display requires JavaScript. Structural
 wrappers are declarations, not a way to insert arbitrary visible HTML into a row.
+
+`Header` children keep their original React context, keys, and error boundaries.
+Place Suspense or Activity around the entire `Root`, not around structural
+declarations inside Board, Row, or Group. Partial structural trees are unsupported
+and still undergo normal layout validation. Header content can use its own boundaries.
 
 Use `padding` on `Board`, `row-gap` on `Board` or `Grid`, `gap` on `Row` or
 `Group`, and `width`/`height` on `Cell`. A flat Row's gap separates cells; a grouped
@@ -360,7 +366,7 @@ injection.
 
 | Prop          | Type      | Default            | Meaning                                 |
 | ------------- | --------- | ------------------ | --------------------------------------- |
-| `id`          | `string`  | generated          | Stable identity when rows reorder       |
+| `id`          | `string`  | generated          | Logical row ID; not animation identity  |
 | `label`       | `string`  | —                  | Column label when the row is one region |
 | `deck`        | `Deck`    | `alphanumericDeck` | Stops for every cassette in a flat row  |
 | `variant`     | `Variant` | `white`            | `white`, `yellow`, or `orange`          |
@@ -371,7 +377,7 @@ injection.
 
 | Prop        | Type      | Default            | Meaning                                |
 | ----------- | --------- | ------------------ | -------------------------------------- |
-| `id`        | `string`  | generated          | Stable identity when groups reorder    |
+| `id`        | `string`  | generated          | Logical region ID; not animation identity |
 | `label`     | `string`  | —                  | Column label for this region           |
 | `deck`      | `Deck`    | `alphanumericDeck` | Stops for every cassette in this group |
 | `variant`   | `Variant` | inherited          | Overrides the row variant              |
@@ -410,7 +416,7 @@ not standalone rendered components. A part may appear at most once.
 | `withinRowJitterMs`   | `number` | `16`      | Cascade start jitter inside a row    |
 | `cadenceVariationPct` | `number` | `4` / `6` | Per-cassette timing noise            |
 | `finalSettleMs`       | `number` | `260`     | Settle after the last pitch          |
-| `finalReboundDeg`     | `number` | `2`       | Settle rebound angle                 |
+| `finalReboundDeg`     | `number` | `2`       | Deprecated compatibility no-op; fixed settle curve |
 
 `motion(schedule, options)` uses the shared option names above. `schedule`
 receives the cassettes that need to start and must call `ctx.start(index, at)`.

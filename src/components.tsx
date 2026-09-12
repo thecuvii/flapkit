@@ -10,10 +10,12 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type ReactElement,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { compileFlapkitBoard } from './compiler'
 import type { Deck, Variant as DeckVariant } from './deck'
 import { markFlapkit } from './kind'
@@ -24,7 +26,13 @@ import { BoardView, type BoardViewProps, GridView, type GridViewProps } from './
 
 export type BoardProps = Omit<BoardViewProps, 'children'> & { children: ReactNode }
 export type GridProps = GridViewProps & { children: ReactNode }
-export type HeaderProps = { children: ReactNode; className?: string; style?: CSSProperties }
+export type HeaderProps = {
+  children: ReactNode
+  className?: string
+  style?: CSSProperties
+  /** @internal */
+  __flapkitHeaderPortalId?: string
+}
 export type Variant = DeckVariant
 export type RowProps = {
   children: ReactNode
@@ -63,6 +71,9 @@ export const Retainer = markFlapkit((_props: RetainerProps) => null, 'retainer')
 type Declaration = { element: ReactElement<{ children?: ReactNode }>; terminal: boolean }
 type Collection = {
   setHost: (host: HTMLElement | null) => void
+  setHeaderHost: (id: string, host: HTMLElement | null) => void
+  getHeaderHost: (id: string) => HTMLElement | null
+  subscribeHeaderHost: (id: string, listener: () => void) => () => void
   nodes: Map<HTMLElement, Declaration>
   changed: () => void
 }
@@ -72,10 +83,29 @@ function createCollection(commit: (tree: ReactNode) => void): Collection {
   let host: HTMLElement | null = null
   let pending = false
   let previous: Declaration[] = []
+  const headerHosts = new Map<string, HTMLElement>()
+  const headerListeners = new Map<string, Set<() => void>>()
   const nodes = new Map<HTMLElement, Declaration>()
   return {
     setHost(element) {
       host = element
+    },
+    setHeaderHost(id, element) {
+      if (element) headerHosts.set(id, element)
+      else headerHosts.delete(id)
+      headerListeners.get(id)?.forEach((listener) => listener())
+    },
+    getHeaderHost(id) {
+      return headerHosts.get(id) ?? null
+    },
+    subscribeHeaderHost(id, listener) {
+      const listeners = headerListeners.get(id) ?? new Set()
+      listeners.add(listener)
+      headerListeners.set(id, listeners)
+      return () => {
+        listeners.delete(listener)
+        if (listeners.size === 0) headerListeners.delete(id)
+      }
     },
     nodes,
     changed() {
@@ -138,7 +168,30 @@ function declaration<P extends { children?: ReactNode }>(
 
 export const Board = declaration<BoardProps>('board')
 export const Grid = declaration<GridProps>('grid')
-export const Header = declaration<HeaderProps>('header', true)
+export const Header = markFlapkit(function HeaderDeclaration(props: HeaderProps) {
+  const collection = useContext(CollectionContext)
+  if (!collection) throw new Error('Flapkit components require Root')
+  const id = useId()
+  const ref = useRef<HTMLDivElement>(null)
+  const host = useSyncExternalStore(
+    (listener) => collection.subscribeHeaderHost(id, listener),
+    () => collection.getHeaderHost(id),
+    () => null,
+  )
+  useLayoutEffect(() => {
+    const node = ref.current!
+    collection.nodes.set(node, {
+      element: createElement(Header, { ...props, __flapkitHeaderPortalId: id }),
+      terminal: true,
+    })
+    collection.changed()
+    return () => {
+      collection.nodes.delete(node)
+      collection.changed()
+    }
+  }, [collection, id, props])
+  return <div ref={ref}>{host && createPortal(props.children, host)}</div>
+}, 'header')
 export const Row = declaration<RowProps>('row')
 export const Group = declaration<GroupProps>('group')
 export const Cell = declaration<CellProps>('cell', true)
@@ -169,12 +222,12 @@ export function Root({ children, motion, sound }: RootProps) {
         <div hidden ref={host} data-flapkit-declarations>
           {children}
         </div>
+        {committed && (
+          <CompiledDisplay motion={motion} sound={sound}>
+            {committed}
+          </CompiledDisplay>
+        )}
       </CollectionContext>
-      {committed && (
-        <CompiledDisplay motion={motion} sound={sound}>
-          {committed}
-        </CompiledDisplay>
-      )}
     </>
   )
 }
@@ -192,8 +245,17 @@ function CompiledDisplay({ children, motion, sound }: RootProps) {
   // A new schedule may close over new props. Updating tuning does not remount the controller.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const stableMotion = useMemo(() => motion, [motionSignature, motion.schedule])
+  const header = compiled.headerPortalId ? (
+    <HeaderPortalTarget
+      id={compiled.headerPortalId}
+      className={compiled.headerClassName}
+      style={compiled.headerStyle}
+    />
+  ) : (
+    compiled.header
+  )
   const display = compiled.frame ? (
-    <BoardView {...compiled.boardProps}>{compiled.header}</BoardView>
+    <BoardView {...compiled.boardProps}>{header}</BoardView>
   ) : (
     <GridView {...compiled.boardProps} />
   )
@@ -209,4 +271,22 @@ function CompiledDisplay({ children, motion, sound }: RootProps) {
       {sound}
     </MotionProvider>
   )
+}
+
+function HeaderPortalTarget({
+  id,
+  className,
+  style,
+}: {
+  id: string
+  className?: string
+  style?: CSSProperties
+}) {
+  const collection = useContext(CollectionContext)!
+  const ref = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    collection.setHeaderHost(id, ref.current)
+    return () => collection.setHeaderHost(id, null)
+  }, [collection, id])
+  return <div ref={ref} className={className} style={style} />
 }

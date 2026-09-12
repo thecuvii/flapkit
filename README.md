@@ -312,6 +312,9 @@ injection.
 
 - `flapkit`
 - `flapkit/sound`
+- `flapkit/motion/css/cascade`
+- `flapkit/motion/canvas/cascade`
+- `flapkit/motion/canvas/riffle`
 - `flapkit/flapkit.css`
 - `flapkit/airport.css`
 - `flapkit/industrial.css`
@@ -433,13 +436,30 @@ use.
 ## Development
 
 The root is the publishable package. `website/` is a private workspace that
-consumes only public package subpaths.
+consumes the public package subpaths. Its static composition and look previews
+also use internal renderer APIs; those are not application-facing exports.
 
 ```sh
 pnpm install
 pnpm test
+pnpm test:browser
 pnpm check
 pnpm build
 pnpm build:website
 pnpm dev
 ```
+
+`pnpm test` covers the compiler, decks, motion, sound, and renderer entry-point
+tree-shaking. `pnpm test:browser` exercises the public motion subpaths in Chromium,
+including CSS/Canvas switching, composed cells, updates, geometry, and screenshots.
+
+With the documentation server running, run the page-level regression checks:
+
+```sh
+pnpm test:docs
+```
+
+These check fixed navigation, static Composition/Looks previews, independent
+Decks playback, code snippets, and mobile controls. The test runner defaults to
+`http://localhost:5173`; set `FLAPKIT_DOCS_URL` for a different local server port.
+The checks do not start a server.

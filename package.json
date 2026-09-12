@@ -1,5 +1,5 @@
 {
-  "name": "@cuvii/flapkit",
+  "name": "flapkit",
   "version": "0.0.0",
   "description": "React split-flap display components and looks.",
   "files": [
@@ -87,6 +87,7 @@
     "prepack": "pnpm build",
     "test": "vp test run",
     "test:browser": "vp test run --config vitest.browser.config.ts",
+    "test:docs": "node tests/docs.e2e.mjs",
     "prepare": "vp config --no-agent"
   },
   "devDependencies": {

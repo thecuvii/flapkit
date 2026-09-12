@@ -5,9 +5,9 @@ import '@fontsource/commit-mono/500.css'
 import '@fontsource/commit-mono/600.css'
 import '@fontsource/commit-mono/700.css'
 import './styles.css'
-import '@cuvii/flapkit/flapkit.css'
-import '@cuvii/flapkit/airport.css'
-import '@cuvii/flapkit/industrial.css'
+import 'flapkit/flapkit.css'
+import 'flapkit/airport.css'
+import 'flapkit/industrial.css'
 import { SiteGrain } from '../modules/site/site-grain'
 
 export const metadata: Metadata = {

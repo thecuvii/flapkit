@@ -1,7 +1,9 @@
 import { act, createContext, useContext, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, it } from 'vitest'
-import { Board, Cell, Face, Glyph, Header, Retainer, Root, Row, cascade, createDeck } from '../src'
+import { Board, Cell, Face, Glyph, Header, Retainer, Root, Row, createDeck } from 'flapkit'
+import { cascade } from 'flapkit/motion/canvas/cascade'
+import { cascade as cssCascade } from 'flapkit/motion/css/cascade'
 import '../src/styles/flapkit.css'
 import '../src/styles/industrial.css'
 
@@ -11,6 +13,7 @@ const deck = createDeck(' AB')
 it.each(['css', 'canvas'] as const)(
   'composes hook-using cells and native styles with the %s renderer',
   async (renderer) => {
+    const createMotion = renderer === 'css' ? cssCascade : cascade
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     const host = document.createElement('div')
     document.body.append(host)
@@ -51,7 +54,7 @@ it.each(['css', 'canvas'] as const)(
             .contract-glyph { color: rgb(182, 255, 54); }
             .contract-retainer { background: rgb(23, 16, 32); }
           `}</style>
-            <Root motion={cascade({ renderer, pitchMs: 20, withinRowJitterMs: 0 })}>
+            <Root motion={createMotion({ pitchMs: 20, withinRowJitterMs: 0 })}>
               <Board className="flapkit-industrial contract-board">
                 <Header className="contract-header">CUSTOM</Header>
                 <Row deck={deck} className="contract-row">

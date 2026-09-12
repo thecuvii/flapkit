@@ -1,7 +1,7 @@
 'use client'
 
-import * as Flapkit from '@cuvii/flapkit'
-import { cascade } from '@cuvii/flapkit/motion/css/cascade'
+import * as Flapkit from 'flapkit'
+import { cascade } from 'flapkit/motion/css/cascade'
 import { compileFlapkitBoard } from '../../../src/compiler'
 import { MotionProvider } from '../../../src/motion/provider'
 import { BoardView } from '../../../src/render/board'

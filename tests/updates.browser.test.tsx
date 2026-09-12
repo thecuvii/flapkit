@@ -4,9 +4,21 @@ import { act, createRef, StrictMode, useEffect, type ReactNode } from 'react'
 import { createRoot, type Root as ReactRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { page } from 'vitest/browser'
-import { Board, Cell, Grid, Header, Root, Row, WideCell } from '../src/components'
-import { createDeck } from '../src/deck'
-import { cascade, motion, riffle, type MotionAdapter } from '../src/motion'
+import {
+  Board,
+  Cell,
+  Grid,
+  Header,
+  Root,
+  Row,
+  WideCell,
+  createDeck,
+  motion,
+  type MotionAdapter,
+} from 'flapkit'
+import { cascade } from 'flapkit/motion/canvas/cascade'
+import { cascade as cssCascade } from 'flapkit/motion/css/cascade'
+import { riffle } from 'flapkit/motion/canvas/riffle'
 import { useSplitFlapController } from '../src/motion/provider'
 import type { SplitFlapMotionController } from '../src/motion/runtime'
 import { SplitFlapSound } from '../src/sound/adapter'
@@ -113,7 +125,7 @@ it('plays CSS 3D cascade without a canvas and switches back to Canvas', async ()
     withinRowJitterMs: 0,
     cadenceVariationPct: 0,
   }
-  await render(display({ schedule: cascade({ ...options, renderer: 'css' }) }))
+  await render(display({ schedule: cssCascade(options) }))
   expect(host.querySelector('canvas')).toBeNull()
   controller.setTargets([2, 1])
   await expect.poll(() => host.getAnimations({ subtree: true }).length).toBeGreaterThan(0)
@@ -129,7 +141,7 @@ it('plays CSS 3D cascade without a canvas and switches back to Canvas', async ()
 
   await render(display({ text: 'B', schedule: cascade(options) }))
   expect(host.querySelector('canvas')).not.toBeNull()
-  await render(display({ text: 'A', schedule: cascade({ ...options, renderer: 'css' }) }))
+  await render(display({ text: 'A', schedule: cssCascade(options) }))
   expect(host.querySelector('canvas')).toBeNull()
   await expect.poll(() => host.getAnimations({ subtree: true }).length).toBeGreaterThan(0)
   await expect.poll(() => controller.readPerformanceCounters().runningCassettes).toBe(0)

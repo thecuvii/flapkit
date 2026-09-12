@@ -10,19 +10,9 @@ import {
 } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, it } from 'vitest'
-import {
-  Board,
-  Cell,
-  Face,
-  Glyph,
-  Group,
-  Header,
-  Retainer,
-  Root,
-  Row,
-  cascade,
-  createDeck,
-} from '../src'
+import { Board, Cell, Face, Glyph, Group, Header, Retainer, Root, Row, createDeck } from 'flapkit'
+import { cascade } from 'flapkit/motion/canvas/cascade'
+import { cascade as cssCascade } from 'flapkit/motion/css/cascade'
 import { useSplitFlapController } from '../src/motion/provider'
 import type { SplitFlapMotionController } from '../src/motion/runtime'
 import '../src/styles/flapkit.css'
@@ -34,6 +24,7 @@ const Palette = createContext('rgb(182, 255, 54)')
 it.each(['css', 'canvas'] as const)(
   'composes hook-using cells and native geometry in %s',
   async (renderer) => {
+    const createMotion = renderer === 'css' ? cssCascade : cascade
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     const host = document.createElement('div')
     document.body.append(host)
@@ -86,8 +77,7 @@ it.each(['css', 'canvas'] as const)(
         `}</style>
             <Palette value="rgb(182, 255, 54)">
               <Root
-                motion={cascade({
-                  renderer,
+                motion={createMotion({
                   pitchMs: 20,
                   finalSettleMs: 20,
                   rowDelayMs: 0,

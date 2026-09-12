@@ -1,10 +1,10 @@
 'use client'
 
-import * as Flapkit from '@cuvii/flapkit'
-import { cascade as canvasCascade } from '@cuvii/flapkit/motion/canvas/cascade'
-import { cascade as cssCascade } from '@cuvii/flapkit/motion/css/cascade'
-import { riffle } from '@cuvii/flapkit/motion/canvas/riffle'
-import { mechanicalSound } from '@cuvii/flapkit/sound'
+import * as Flapkit from 'flapkit'
+import { cascade as canvasCascade } from 'flapkit/motion/canvas/cascade'
+import { cascade as cssCascade } from 'flapkit/motion/css/cascade'
+import { riffle } from 'flapkit/motion/canvas/riffle'
+import { mechanicalSound } from 'flapkit/sound'
 import {
   Activity,
   createContext,

@@ -1,5 +1,28 @@
+import { readFileSync } from 'node:fs'
 import { build } from 'vite'
 import { expect, it } from 'vitest'
+
+it('documents every published subpath under the actual package name', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'))
+  const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8')
+  expect(manifest.name).toBe('flapkit')
+  expect(Object.keys(manifest.publishConfig.exports)).toEqual(Object.keys(manifest.exports))
+  const subpaths = readme.split('### Package subpaths\n')[1]!.split('\n### ')[0]!
+  for (const path of Object.keys(manifest.exports)) {
+    expect(subpaths).toContain(`- \`${manifest.name}${path.slice(1)}\``)
+  }
+})
+
+it('keeps legacy root factories compatible with the renderer-specific factories', async () => {
+  const legacy = await import('./index')
+  const css = await import('./css/cascade')
+  const canvas = await import('./canvas/cascade')
+  const riffle = await import('./canvas/riffle')
+  const options = { pitchMs: 79, rowDelayMs: 123, withinRowJitterMs: 31 }
+  expect(legacy.cascade({ ...options, renderer: 'css' })).toEqual(css.cascade(options))
+  expect(legacy.cascade(options)).toEqual(canvas.cascade(options))
+  expect(legacy.riffle({ riffleMs: 47 })).toEqual(riffle.riffle({ riffleMs: 47 }))
+})
 
 it.each(['css/cascade', 'canvas/cascade', 'canvas/riffle'])(
   'includes only the selected renderer through the %s package entry',
@@ -18,8 +41,8 @@ it.each(['css/cascade', 'canvas/cascade', 'canvas/riffle'])(
           load(id) {
             if (id === '\0consumer')
               return `
-            export { Root, Board, Row, Cell } from '@cuvii/flapkit'
-            export { ${factory} } from '@cuvii/flapkit/motion/${entry}'
+            export { Root, Board, Row, Cell } from 'flapkit'
+            export { ${factory} } from 'flapkit/motion/${entry}'
           `
           },
         },

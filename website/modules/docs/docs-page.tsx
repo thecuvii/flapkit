@@ -419,7 +419,7 @@ function ActivitySection({ id, children }: { id: SectionId; children: ReactNode 
     <section
       ref={sectionRef}
       id={id}
-      className="w-full min-h-dvh max-[860px]:scroll-mt-14"
+      className="w-full min-h-dvh max-[860px]:scroll-mt-14 max-[860px]:pb-12"
       style={
         inView ? undefined : { minHeight: heightRef.current > 0 ? heightRef.current : '100dvh' }
       }
@@ -462,7 +462,7 @@ function DocsSection({
               {index}
             </span>
             <svg
-              className="size-2.5 shrink-0 self-center text-safety"
+              className="size-2.5 shrink-0 self-center text-safety max-[860px]:hidden"
               aria-hidden="true"
               viewBox="0 0 16 16"
               xmlns="http://www.w3.org/2000/svg"
@@ -479,7 +479,7 @@ function DocsSection({
             </span>
             <span
               aria-hidden="true"
-              className="h-2 min-w-12 flex-1 self-center bg-[image:var(--leader)] bg-[length:4px_4px] bg-repeat"
+              className="h-2 min-w-12 flex-1 self-center bg-[image:var(--leader)] bg-[length:4px_4px] bg-repeat max-[860px]:hidden"
             />
           </h2>
           {children}

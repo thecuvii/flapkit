@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0-beta.0 — Unreleased
+## 0.1.0-beta.0 — 2026-09-15
 
 - Composable React split-flap boards, grids, rows, groups and single/wide cassettes.
 - Unicode decks and editable Face, Glyph and Retainer parts using ordinary CSS.

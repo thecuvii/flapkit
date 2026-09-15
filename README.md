@@ -494,6 +494,10 @@ Chromium screenshots separately, with platform-specific baselines. Linux CI is
 fixed to Ubuntu 24.04. To intentionally update local baselines, run
 `pnpm test:visual --update`, inspect every changed image, then rerun without
 `--update`. Do not accept a new baseline merely because it makes a test green.
+For Linux baselines, manually run the Release checks workflow with
+`update_visuals` enabled and download its `visual-baselines` artifact. Review the
+images before committing them, then require a normal Release checks run to pass;
+the baseline-generation run does not validate a release.
 
 `test:package` checks npm/pnpm export parity and the exact packed artifact's
 export targets, development rendering and updates, TypeScript consumer, CSS

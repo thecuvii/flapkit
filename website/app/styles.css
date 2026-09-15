@@ -32,8 +32,8 @@
   --color-accent: var(--color-safety);
   --color-link: var(--color-safety-deep);
 
-  --font-sans: Inter, 'PingFang SC', 'Hiragino Sans', ui-sans-serif, sans-serif;
-  --font-display: 'Barlow Condensed', Inter, var(--font-sans);
+  --font-sans: 'Inter Variable', 'PingFang SC', 'Hiragino Sans', ui-sans-serif, sans-serif;
+  --font-display: 'Barlow Condensed', 'Inter Variable', var(--font-sans);
   --font-mono: 'Commit Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
   --spacing-u: round(down, clamp(64px, 6vw, 96px), 4px);

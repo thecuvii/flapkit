@@ -197,7 +197,16 @@ importers:
 
   website:
     dependencies:
+      '@fontsource-variable/inter':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/barlow-condensed':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource/commit-mono':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/shantell-sans':
         specifier: ^5.3.0
         version: 5.3.0
       cn:
@@ -327,8 +336,17 @@ packages:
   '@emnapi/runtime@1.11.3':
     resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
 
+  '@fontsource-variable/inter@5.3.0':
+    resolution: {integrity: sha512-OupL48va4JNofb97w6NYeF9S7W/kHNKM0Er8Dem5nqi4jeOLrVJDoE8tZEpnMJmtkvNbB1EIPPwHcdkF6b1oUA==}
+
+  '@fontsource/barlow-condensed@5.3.0':
+    resolution: {integrity: sha512-RA7MmIx0v3eQ6Gcf74qLVLOwLB0GpPOzx+eU9iG/AmCnSJGcIWYeU8y6CEMGZ210MGwGg5CZhzLkkvyZdTTk1g==}
+
   '@fontsource/commit-mono@5.3.0':
     resolution: {integrity: sha512-Bs+zlEWHDgk/cCVWEMJJaA7LbBU3Ixi5Zums+SSwMKdm2N7RJ4P7jCJTwsMHRt5WFiXYB0tu0q9HMfkn0YsLsQ==}
+
+  '@fontsource/shantell-sans@5.3.0':
+    resolution: {integrity: sha512-hVKmS5EO/xGOtKx+rHuyqIsswjWp5bb91DlszxSkO4jEqOSaRIjYH/iu5gJ7QVszDlofoezZeWM5OdKgyE2jtg==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -2959,7 +2977,13 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@fontsource-variable/inter@5.3.0': {}
+
+  '@fontsource/barlow-condensed@5.3.0': {}
+
   '@fontsource/commit-mono@5.3.0': {}
+
+  '@fontsource/shantell-sans@5.3.0': {}
 
   '@img/colour@1.1.0':
     optional: true

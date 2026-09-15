@@ -16,3 +16,10 @@ website/public/vendor/
 !.env.example
 
 *.tsbuildinfo
+
+video/output/
+video/dist/
+
+website/deploy-assets/
+.wrangler/
+website/worker-configuration.d.ts

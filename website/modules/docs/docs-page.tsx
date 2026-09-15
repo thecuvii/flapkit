@@ -1080,8 +1080,8 @@ function CompositionSection({ html }: { html: string }) {
 }
 
 const docsSoundBank = {
-  clicks: ['/audio/click.wav'],
-  settles: ['/audio/settle.wav'],
+  clicks: ['/flapkit/audio/click.wav'],
+  settles: ['/flapkit/audio/settle.wav'],
 } as const
 
 const soundPhrases = [

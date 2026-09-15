@@ -36,7 +36,7 @@ export function LabPage() {
     <SiteFrame>
       <main className="grid min-h-dvh justify-items-center gap-7 px-[var(--gutter)] pt-u pb-[calc(var(--spacing-u)*1.25)]">
         <header className="flex w-[min(100%,36rem)] items-baseline justify-between gap-6">
-          <a className={cn(headerType, 'hover:text-muted')} href="/">
+          <a className={cn(headerType, 'hover:text-muted')} href="/flapkit/">
             ← Docs
           </a>
           <span className={cn(headerType, 'text-faint')}>One cassette · one pitch</span>

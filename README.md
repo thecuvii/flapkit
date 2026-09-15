@@ -3,6 +3,8 @@
 Composable React split-flap displays with two motion engines, mechanical sound,
 independently importable looks, Unicode decks, and multi-cell cassettes.
 
+[Documentation and demos](https://cuvii.dev/flapkit/)
+
 ## Install
 
 ```sh
@@ -508,3 +510,16 @@ Published exports always point to `dist`. Workspace aliases provide source hot
 reload locally and never affect consumers. Build and verify before preparing a
 release tarball with `pnpm pack`. Publication is a separate, explicit step;
 prereleases use the `beta` dist-tag.
+
+## Documentation deployment
+
+The documentation is hosted at `https://cuvii.dev/flapkit/`. `pnpm deploy`
+builds the package and Next.js static site, mounts its export under `/flapkit/`,
+and deploys the dedicated Cloudflare Worker. The legacy `flapkit.cuvii.dev`
+host redirects permanently, preserving paths and query parameters.
+
+To verify a deployment, run:
+
+```sh
+FLAPKIT_SITE_ORIGIN=https://cuvii.dev pnpm test:subpath
+```

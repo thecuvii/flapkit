@@ -403,7 +403,7 @@ export function PerformancePage() {
       <main className="min-h-dvh px-[clamp(24px,5vw,72px)] pt-7 pb-24 max-[560px]:px-5 max-[560px]:pt-[22px] max-[560px]:pb-[72px]">
         <header className="mx-auto w-[min(100%,1120px)]">
           <div className="flex justify-between gap-6 text-xs font-[680] tracking-[0.04em] text-muted uppercase max-[560px]:flex-col max-[560px]:items-start">
-            <a className="text-ink no-underline" href="/">
+            <a className="text-ink no-underline" href="/flapkit/">
               ← Docs
             </a>
             <span>Browser benchmark · local results</span>

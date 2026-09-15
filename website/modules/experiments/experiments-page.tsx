@@ -96,7 +96,7 @@ export function ExperimentsPage() {
         }}
       >
         <header className="col-start-2 flex items-center justify-between gap-6 max-[560px]:flex-col max-[560px]:items-stretch">
-          <a className={cn(headerType, 'hover:text-muted')} href="/">
+          <a className={cn(headerType, 'hover:text-muted')} href="/flapkit/">
             ← Docs
           </a>
           <button

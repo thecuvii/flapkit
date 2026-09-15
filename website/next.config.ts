@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   output: 'export',
+  basePath: '/flapkit',
   trailingSlash: true,
   outputFileTracingRoot: workspaceRoot,
   transpilePackages: ['flapkit'],

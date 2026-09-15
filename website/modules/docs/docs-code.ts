@@ -284,8 +284,8 @@ const deck = Flapkit.createDeck([
     code: `import { mechanicalSound } from 'flapkit/sound'
 
 const soundBank = {
-  clicks: ['/audio/click.wav'],
-  settles: ['/audio/settle.wav'],
+  clicks: ['/flapkit/audio/click.wav'],
+  settles: ['/flapkit/audio/settle.wav'],
 }
 
 <Flapkit.Root sound={mechanicalSound({ bank: soundBank })}>

@@ -1,0 +1,56 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Install npm with trusted publishing support
+        run: npm install --global npm@11.19.1
+      - name: Validate release version and select dist-tag
+        id: release
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync, appendFileSync } from 'node:fs'
+          const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
+          if (process.env.EVENT_NAME === 'release' && process.env.RELEASE_TAG !== `v${version}`) {
+            throw new Error('Release tag must match package.json version')
+          }
+          appendFileSync(process.env.GITHUB_OUTPUT, `tag=${version.includes('-') ? 'beta' : 'latest'}\n`)
+          JS
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm check:release
+      - name: Verify package without publishing (manual run)
+        if: github.event_name == 'workflow_dispatch'
+        run: npm publish --dry-run --access public --tag "${{ steps.release.outputs.tag }}"
+      - name: Publish using npm trusted publisher
+        if: github.event_name == 'release'
+        run: npm publish --provenance --access public --tag "${{ steps.release.outputs.tag }}"

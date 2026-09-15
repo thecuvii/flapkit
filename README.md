@@ -523,3 +523,15 @@ To verify a deployment, run:
 ```sh
 FLAPKIT_SITE_ORIGIN=https://cuvii.dev pnpm test:subpath
 ```
+
+## Publishing from GitHub
+
+Publish a GitHub Release with a tag matching the package version (for example,
+`v0.1.1` for `0.1.1`). `.github/workflows/publish.yml` runs the full release
+checks before publishing through npm trusted publishing (OIDC), with provenance.
+Stable versions use `latest`; prereleases use `beta`. No npm token secret is needed.
+
+The npm trusted publisher is scoped to `thecuvii/flapkit` and `publish.yml`.
+A manual run of **Publish to npm** checks the pipeline and performs a dry run;
+it does not publish a version or prove a live OIDC publish. Already published
+npm versions cannot be republished.

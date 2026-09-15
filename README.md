@@ -532,6 +532,6 @@ checks before publishing through npm trusted publishing (OIDC), with provenance.
 Stable versions use `latest`; prereleases use `beta`. No npm token secret is needed.
 
 The npm trusted publisher is scoped to `thecuvii/flapkit` and `publish.yml`.
-A manual run of **Publish to npm** checks the pipeline and performs a dry run;
+A manual run of **Publish to npm** checks the pipeline and performs a package dry run;
 it does not publish a version or prove a live OIDC publish. Already published
 npm versions cannot be republished.

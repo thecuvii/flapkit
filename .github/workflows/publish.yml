@@ -50,7 +50,7 @@ jobs:
       - run: pnpm check:release
       - name: Verify package without publishing (manual run)
         if: github.event_name == 'workflow_dispatch'
-        run: npm publish --dry-run --access public --tag "${{ steps.release.outputs.tag }}"
+        run: npm pack --dry-run
       - name: Publish using npm trusted publisher
         if: github.event_name == 'release'
         run: npm publish --provenance --access public --tag "${{ steps.release.outputs.tag }}"

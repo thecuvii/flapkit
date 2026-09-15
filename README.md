@@ -474,7 +474,7 @@ The checks do not start a server.
 
 ## Release checks and compatibility
 
-The initial release is `0.1.0-beta.0`, under the MIT license. It is not published
+The current release is `0.1.0`, under the MIT license. It is not published
 by the verification commands below.
 
 - Runtime peers: React and React DOM 19.0 or later. The packaged consumer test

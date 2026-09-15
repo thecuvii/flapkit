@@ -1,6 +1,6 @@
 {
   "name": "flapkit",
-  "version": "0.1.0-beta.0",
+  "version": "0.1.0",
   "description": "React split-flap display components and looks.",
   "homepage": "https://cuvii.dev/flapkit/",
   "bugs": {
@@ -54,7 +54,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "beta"
+    "tag": "latest"
   },
   "scripts": {
     "build": "tsdown",

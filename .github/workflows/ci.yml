@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      update_visuals:
+        description: Generate visual baselines for review (does not run the release gate)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,6 +30,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm check:release
+        if: ${{ !inputs.update_visuals }}
+      - run: pnpm test:visual --update
+        if: ${{ inputs.update_visuals }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.update_visuals && success() }}
+        with:
+          name: visual-baselines
+          path: tests/__screenshots__/
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

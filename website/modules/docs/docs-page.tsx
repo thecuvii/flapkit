@@ -1,5 +1,6 @@
 'use client'
 
+import { version } from '../../../package.json'
 import * as Flapkit from 'flapkit'
 import { cascade as canvasCascade } from 'flapkit/motion/canvas/cascade'
 import { cascade as cssCascade } from 'flapkit/motion/css/cascade'
@@ -1688,7 +1689,7 @@ function SidebarCoords() {
 
   return (
     <p
-      className="m-0 min-h-6 min-w-[11ch] leading-3 whitespace-pre tabular-nums"
+      className="m-0 min-h-6 min-w-[11ch] cursor-default leading-3 whitespace-pre tabular-nums"
       aria-label="Made in Shenzhen"
       onPointerEnter={() => scrambleTo(sidebarPlaceText)}
       onPointerLeave={() => scrambleTo(sidebarCoordText)}
@@ -1849,7 +1850,7 @@ export function DocsPage({
                     rel="noreferrer"
                     aria-label="GitHub"
                   >
-                    <span aria-hidden="true">0.0.0</span>
+                    <span aria-hidden="true">{version}</span>
                     <GithubMark />
                   </a>
                   <a

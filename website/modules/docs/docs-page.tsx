@@ -14,6 +14,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type MouseEvent,
   type ReactElement,
@@ -54,7 +55,7 @@ const navigation = [
 ] as const
 
 const docsNavItemClass =
-  'grid w-fit max-w-full grid-cols-[8px_minmax(0,1fr)] items-center gap-2 py-1 font-display text-[15px] font-semibold uppercase tracking-[0.06em] text-faint [overflow-wrap:anywhere] hover:text-ink max-[860px]:inline-flex max-[860px]:shrink-0 max-[860px]:py-[5px]'
+  'grid w-fit max-w-full grid-cols-[8px_minmax(0,1fr)] items-center gap-2 py-1 font-display text-[15px] font-semibold uppercase tracking-[0.06em] text-faint [overflow-wrap:anywhere] hover:text-ink max-[860px]:inline-flex max-[860px]:shrink-0 max-[860px]:min-h-11 max-[860px]:py-[5px]'
 
 const sectionMeta = [
   { id: 'quick-start', index: '01', title: 'Quick start' },
@@ -186,7 +187,7 @@ const optionRowClass =
 const docsCopyClass = cn(
   'grid min-w-0 grid-cols-1 gap-u4 min-[861px]:grid-cols-2 min-[861px]:gap-x-u4',
   'min-[861px]:[&>*]:col-span-2',
-  '[&>p]:m-0 [&>p]:text-base [&>p]:font-[430] [&>p]:tracking-[-0.006em] [&>p]:leading-u4 [&>p]:text-muted [&>p]:text-pretty',
+  '[&>p]:m-0 [&>p]:text-base [&>p]:font-[430] [&>p]:tracking-[-0.006em] [&>p]:leading-u4 max-[860px]:[&>p]:leading-normal [&>p]:text-muted [&>p]:text-pretty',
   '[&_p_code]:px-0.5 [&_p_code]:font-mono [&_p_code]:text-[0.86em] [&_p_code]:text-ink',
   '[&_a]:text-link [&_a]:underline [&_a]:underline-offset-[3px] [&_a]:hover:text-ink',
 )
@@ -328,6 +329,7 @@ function TorphCodeBlock({
 function DocsProvider({ children }: { children: ReactNode }) {
   const ignoreObserver = useRef(false)
   const [activeId, setActiveId] = useState<SectionId>('quick-start')
+  const scrollFrame = useRef(0)
   const activeIdRef = useRef(activeId)
   activeIdRef.current = activeId
 
@@ -335,15 +337,32 @@ function DocsProvider({ children }: { children: ReactNode }) {
     const node = document.getElementById(id)
     if (!(node instanceof HTMLElement)) return
 
+    cancelAnimationFrame(scrollFrame.current)
     ignoreObserver.current = true
     node.scrollIntoView({ behavior, block: 'start' })
 
-    const unlock = () => {
-      ignoreObserver.current = false
+    // Activity reveals can change the heights above the destination. Re-align
+    // after layout settles instead of releasing the observer on the first scrollend.
+    let stableFrames = 0
+    let previousTop = Number.NaN
+    const started = performance.now()
+    const settle = () => {
+      const top = node.getBoundingClientRect().top
+      stableFrames = Math.abs(top - previousTop) < 0.5 ? stableFrames + 1 : 0
+      previousTop = top
+      if (stableFrames >= 3 || performance.now() - started > 1500) {
+        node.scrollIntoView({ behavior: 'instant', block: 'start' })
+        scrollFrame.current = requestAnimationFrame(() => {
+          ignoreObserver.current = false
+        })
+        return
+      }
+      scrollFrame.current = requestAnimationFrame(settle)
     }
-    window.addEventListener('scrollend', unlock, { once: true })
-    window.setTimeout(unlock, behavior === 'instant' ? 50 : 900)
+    scrollFrame.current = requestAnimationFrame(settle)
   }, [])
+
+  useEffect(() => () => cancelAnimationFrame(scrollFrame.current), [])
 
   const onNavClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>, id: SectionId) => {
@@ -364,11 +383,7 @@ function DocsProvider({ children }: { children: ReactNode }) {
       const hash = window.location.hash.slice(1)
       if (!isSectionId(hash)) return
       setActiveId(hash)
-      ignoreObserver.current = true
-      document.getElementById(hash)?.scrollIntoView({ behavior: 'instant', block: 'start' })
-      window.setTimeout(() => {
-        ignoreObserver.current = false
-      }, 50)
+      scrollToSection(hash, 'instant')
     }
 
     syncFromHash()
@@ -398,7 +413,7 @@ function DocsProvider({ children }: { children: ReactNode }) {
       observer.disconnect()
       window.removeEventListener('popstate', syncFromHash)
     }
-  }, [])
+  }, [scrollToSection])
 
   return (
     <DocsNavContext.Provider value={{ activeId, onNavClick }}>{children}</DocsNavContext.Provider>
@@ -408,23 +423,25 @@ function DocsProvider({ children }: { children: ReactNode }) {
 function ActivitySection({ id, children }: { id: SectionId; children: ReactNode }) {
   const sectionRef = useRef<HTMLElement>(null)
   const inView = useInView(sectionRef)
+  const { activeId } = useContext(DocsNavContext)
+  const visible = inView || activeId === id
   const heightRef = useRef(0)
 
   useLayoutEffect(() => {
     const node = sectionRef.current
-    if (inView && node) heightRef.current = node.offsetHeight
+    if (visible && node) heightRef.current = node.offsetHeight
   })
 
   return (
     <section
       ref={sectionRef}
       id={id}
-      className="w-full min-h-dvh max-[860px]:scroll-mt-14 max-[860px]:pb-12"
+      className="w-full min-h-dvh max-[860px]:scroll-mt-0 max-[860px]:pb-12"
       style={
-        inView ? undefined : { minHeight: heightRef.current > 0 ? heightRef.current : '100dvh' }
+        visible ? undefined : { minHeight: heightRef.current > 0 ? heightRef.current : '100dvh' }
       }
     >
-      <Activity mode={inView ? 'visible' : 'hidden'}>{children}</Activity>
+      <Activity mode={visible ? 'visible' : 'hidden'}>{children}</Activity>
     </section>
   )
 }
@@ -443,16 +460,16 @@ function DocsSection({
   children: ReactNode
 }) {
   return (
-    <div className="grid min-h-dvh min-w-0 max-[860px]:h-auto min-[861px]:h-dvh min-[861px]:grid-cols-[minmax(0,1fr)_minmax(0,clamp(26rem,calc(6*var(--u)),30rem))_var(--u)]">
+    <div className="grid min-h-dvh min-w-0 max-[860px]:min-h-0 max-[860px]:h-auto min-[861px]:h-dvh min-[861px]:grid-cols-[minmax(0,1fr)_minmax(0,clamp(26rem,calc(6*var(--u)),30rem))_var(--u)]">
       <div
         className={cn(
-          'grid px-u4 py-8 min-[861px]:min-h-0',
+          'grid px-u4 py-8 max-[860px]:py-6 min-[861px]:min-h-0',
           fillPreview ? 'items-center [&>*]:w-full' : 'place-items-center',
         )}
       >
         {preview}
       </div>
-      <div className="grid min-h-0 min-w-0 items-center overflow-y-auto overscroll-y-contain px-u4 py-8">
+      <div className="grid min-h-0 min-w-0 items-center overflow-y-auto overscroll-y-contain px-u4 py-8 max-[860px]:overflow-visible max-[860px]:pt-2">
         <div className={docsCopyClass}>
           <h2 className="relative m-0 flex items-baseline gap-3.5 text-balance">
             <span
@@ -490,8 +507,23 @@ function DocsSection({
 }
 
 function DocsNav() {
+  const navRef = useRef<HTMLElement>(null)
+  const { activeId } = useContext(DocsNavContext)
+
+  useEffect(() => {
+    const nav = navRef.current
+    const link = nav?.querySelector<HTMLElement>('[aria-current="location"]')
+    if (!nav || !link || !window.matchMedia('(max-width: 860px)').matches) return
+    const navBox = nav.getBoundingClientRect()
+    const linkBox = link.getBoundingClientRect()
+    if (linkBox.left < navBox.left || linkBox.right > navBox.right - 28) {
+      nav.scrollBy({ left: linkBox.left - navBox.left - 12, behavior: 'instant' })
+    }
+  }, [activeId])
+
   return (
     <nav
+      ref={navRef}
       aria-label="Documentation"
       className="grid min-w-0 gap-0.5 max-[860px]:flex max-[860px]:gap-4 max-[860px]:overflow-x-auto max-[860px]:pr-7 max-[860px]:[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[860px]:[-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[860px]:[overscroll-behavior-x:contain] max-[860px]:[scrollbar-width:none] max-[860px]:[&::-webkit-scrollbar]:hidden"
     >
@@ -528,7 +560,7 @@ function DocsNavLink({ href, label }: { href: SectionId; label: string }) {
       <span
         aria-hidden="true"
         className={cn(
-          'justify-self-center max-[860px]:hidden',
+          'shrink-0 justify-self-center',
           isActive ? 'size-1.5 rounded-none bg-safety' : 'size-1 rounded-full bg-[oklch(0.5_0_0)]',
         )}
       />
@@ -538,7 +570,7 @@ function DocsNavLink({ href, label }: { href: SectionId; label: string }) {
 }
 
 const docsControlClass =
-  'relative inline-flex min-h-11 min-w-0 cursor-pointer touch-manipulation items-center gap-2 border-0 bg-transparent py-1 font-mono text-[10px] font-semibold tracking-[0.06em] uppercase hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink'
+  'relative inline-flex min-h-11 min-w-0 cursor-pointer touch-manipulation items-center gap-2 border-0 bg-transparent py-1 font-mono text-[10px] max-[860px]:text-xs font-semibold tracking-[0.06em] uppercase hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink'
 
 function ChoiceSwitch<T extends string>({
   label,
@@ -555,7 +587,7 @@ function ChoiceSwitch<T extends string>({
 }) {
   return (
     <div
-      className="grid min-w-0 grid-cols-[56px_minmax(0,1fr)] items-center gap-x-3 border-b border-dashed border-rule py-1.5"
+      className="grid min-w-0 grid-cols-[56px_minmax(0,1fr)] max-[860px]:grid-cols-1 items-center gap-x-3 border-b border-dashed border-rule py-1.5"
       role="group"
       aria-label={label}
       data-docs-choice
@@ -601,6 +633,7 @@ function DepartureBoardTree({
   header,
   sound = true,
   staticDisplay = false,
+  compact = false,
 }: {
   look: LookName
   motion: QuickStartSnippetOptions['motion']
@@ -608,9 +641,10 @@ function DepartureBoardTree({
   header: boolean
   sound?: boolean
   staticDisplay?: boolean
+  compact?: boolean
 }) {
   const Frame = frame ? Flapkit.Board : Flapkit.Grid
-  const rows = departureRows.map((row) => (
+  const rows = (compact ? departureRows.slice(0, 3) : departureRows).map((row) => (
     <Flapkit.Row key={row.id} highlighted={'highlighted' in row && row.highlighted} id={row.id}>
       <Flapkit.Group deck={departureFlightDeck} id="flight" label="FLIGHT">
         <Flapkit.WideCell>{row.flight}</Flapkit.WideCell>
@@ -621,14 +655,16 @@ function DepartureBoardTree({
       <Flapkit.Group deck={departureDestDeck} id="dest" label="DEST">
         {cells(row.dest, 2, departureDestDeck)}
       </Flapkit.Group>
-      <Flapkit.Group
-        deck={departureStatusDeck}
-        id="status"
-        label="STATUS"
-        variant={row.statusVariant}
-      >
-        {cells(row.status, 8, departureStatusDeck)}
-      </Flapkit.Group>
+      {!compact && (
+        <Flapkit.Group
+          deck={departureStatusDeck}
+          id="status"
+          label="STATUS"
+          variant={row.statusVariant}
+        >
+          {cells(row.status, 8, departureStatusDeck)}
+        </Flapkit.Group>
+      )}
       <Flapkit.Group id="gate" label="GATE">
         {cells(row.gate, 3)}
       </Flapkit.Group>
@@ -661,13 +697,7 @@ function DepartureBoardTree({
   return (
     <Flapkit.Root
       key={motion}
-      motion={
-        motion === 'css'
-          ? cssCascade()
-          : motion === 'cascade'
-            ? canvasCascade()
-            : riffle()
-      }
+      motion={motion === 'css' ? cssCascade() : motion === 'cascade' ? canvasCascade() : riffle()}
       sound={sound ? mechanicalSound({ bank: docsSoundBank }) : undefined}
     >
       <Frame aria-label="Airport departures" className={cn(`flapkit-${look}`, 'w-max')}>
@@ -677,6 +707,15 @@ function DepartureBoardTree({
     </Flapkit.Root>
   )
 }
+
+const compactBoardQuery = '(max-width: 560px)'
+function subscribeCompactBoard(onChange: () => void) {
+  const media = window.matchMedia(compactBoardQuery)
+  media.addEventListener('change', onChange)
+  return () => media.removeEventListener('change', onChange)
+}
+const getCompactBoard = () => window.matchMedia(compactBoardQuery).matches
+const getServerCompactBoard = () => false
 
 function DepartureBoard({
   look,
@@ -689,14 +728,26 @@ function DepartureBoard({
   frame: boolean
   header: boolean
 }) {
+  const compact = useSyncExternalStore(
+    subscribeCompactBoard,
+    getCompactBoard,
+    getServerCompactBoard,
+  )
   return (
     <div
       className={`quick-start-board-slot flapkit-${look}`}
+      data-compact={compact || undefined}
       data-frame={frame ? 'on' : 'off'}
       data-header={header ? 'on' : 'off'}
     >
       <div className="quick-start-board-scale">
-        <DepartureBoardTree look={look} motion={motion} frame={frame} header={header} />
+        <DepartureBoardTree
+          look={look}
+          motion={motion}
+          frame={frame}
+          header={header}
+          compact={compact}
+        />
       </div>
     </div>
   )
@@ -1585,16 +1636,52 @@ function SidebarCoords() {
   )
 }
 
+function subscribeReducedMotion(onChange: () => void) {
+  const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+  media.addEventListener('change', onChange)
+  return () => media.removeEventListener('change', onChange)
+}
+const getReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const getServerReducedMotion = () => true
+
 function DecksSection({ html }: { html: string }) {
-  const [phrase, setPhrase] = useState(-1)
-  const characters = customPhrases[phrase] ?? [' ', ' ', ' ', ' ']
+  const [phrase, setPhrase] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const previewRef = useRef<HTMLDivElement>(null)
+  const inView = useInView(previewRef)
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotion,
+    getServerReducedMotion,
+  )
+  const autoPlay = !paused && !reducedMotion
+  const characters = customPhrases[phrase]!
+
+  useEffect(() => {
+    if (!inView || !autoPlay) return
+    let timer: ReturnType<typeof setInterval> | undefined
+    const syncVisibility = () => {
+      clearInterval(timer)
+      if (document.visibilityState === 'visible') {
+        timer = setInterval(() => {
+          setPhrase((current) => (current + 1) % customPhrases.length)
+        }, 4500)
+      }
+    }
+    syncVisibility()
+    document.addEventListener('visibilitychange', syncVisibility)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', syncVisibility)
+    }
+  }, [inView, autoPlay])
 
   return (
     <DocsSection
       index="04"
       title="Decks"
       preview={
-        <div className="grid w-full justify-items-center gap-5">
+        <div ref={previewRef} className="grid w-full justify-items-center gap-5">
           <Flapkit.Root motion={cssCascade()}>
             <Flapkit.Grid aria-label="Custom multilingual deck" className="flapkit-airport w-max">
               <Flapkit.Row deck={customDeck} className="gap-1">
@@ -1611,23 +1698,33 @@ function DecksSection({ html }: { html: string }) {
     >
       <p>
         A deck lists cassette stops. Import a built-in deck and pass it to <code>deck</code>, or use{' '}
-        <code>createDeck</code> for custom graphemes. Press Play to cycle through this multilingual
-        deck with Cascade (CSS). Each array entry is one complete grapheme, including emoji.
-        Without a deck, cells use{' '}
-        <code>alphanumericDeck</code>. <code>WideCell</code> requires a custom deck with two
-        graphemes per leaf. Every row in a <code>Board</code> or <code>Grid</code> must use the same
-        Group / Cell / WideCell structure.
+        <code>createDeck</code> for custom graphemes. This multilingual deck cycles automatically
+        with Cascade (CSS). Use Next to advance it manually. Each array entry is one complete
+        grapheme, including emoji. Without a deck, cells use <code>alphanumericDeck</code>.{' '}
+        <code>WideCell</code> requires a custom deck with two graphemes per leaf. Every row in a{' '}
+        <code>Board</code> or <code>Grid</code> must use the same Group / Cell / WideCell structure.
       </p>
-      <button
-        type="button"
-        className={cn(docsControlClass, 'z-1 w-fit text-ink')}
-        onClick={() => setPhrase((current) => (current + 1) % customPhrases.length)}
-      >
-        <svg className="size-3 shrink-0 fill-current" viewBox="0 0 16 16" aria-hidden="true">
-          <path d="m5 3 8 5-8 5z" />
-        </svg>
-        Play
-      </button>
+      <div className="flex items-center gap-6">
+        {!reducedMotion && (
+          <button
+            type="button"
+            className={cn(docsControlClass, 'z-1 w-fit text-ink')}
+            onClick={() => setPaused((current) => !current)}
+          >
+            {paused ? 'Resume' : 'Pause'}
+          </button>
+        )}
+        <button
+          type="button"
+          className={cn(docsControlClass, 'z-1 w-fit text-ink')}
+          onClick={() => setPhrase((current) => (current + 1) % customPhrases.length)}
+        >
+          <svg className="size-3 shrink-0 fill-current" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="m5 3 8 5-8 5z" />
+          </svg>
+          Next
+        </button>
+      </div>
       <div>
         <div className={optionRowClass}>
           <code>alphanumericDeck</code>

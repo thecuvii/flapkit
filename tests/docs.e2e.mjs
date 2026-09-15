@@ -125,9 +125,17 @@ async function desktop(page) {
   )
 
   const decks = await reveal(page, 'decks', 'button')
-  const play = decks.getByRole('button', { name: 'Play', exact: true })
+  const play = decks.getByRole('button', { name: 'Next', exact: true })
   const finalText = () => decks.locator('.flapkit-sr-only').innerText()
-  for (let click = 0; click < 4; click++) {
+  const firstPhrase = await finalText()
+  assert.ok(firstPhrase.trim(), 'Deck preview starts blank')
+  await page.waitForTimeout(4700)
+  assert.notEqual(await finalText(), firstPhrase, 'Deck preview did not autoplay')
+  await decks.getByRole('button', { name: 'Pause', exact: true }).click()
+  const pausedPhrase = await finalText()
+  await page.waitForTimeout(4700)
+  assert.equal(await finalText(), pausedPhrase, 'Deck preview ignored Pause')
+  for (let click = 0; click < 12 && (await finalText()) !== '서울🌸🎵'; click++) {
     await play.click()
     await page.waitForTimeout(2_600)
   }
@@ -223,6 +231,55 @@ async function mobile(page) {
   ]) {
     assert.equal(await page.locator(`#${id}`).count(), 1, `missing #${id}`)
   }
+  // First visits mount previously hidden sections; their heights must not
+  // pull a navigation jump back into the preceding chapter.
+  for (const id of ['looks', 'sound', 'quick-start', 'composition']) {
+    await page.locator(`nav a[href="#${id}"]`).click()
+    await page.waitForTimeout(1800)
+    const position = await page.locator(`#${id}`).evaluate((element) => ({
+      top: element.getBoundingClientRect().top,
+      expectedTop: Math.min(76, element.getBoundingClientRect().top + scrollY),
+      hash: location.hash,
+    }))
+    assert.equal(position.hash, `#${id}`, `navigation lost #${id}`)
+    assert.ok(Math.abs(position.top - position.expectedTop) < 2, `${id} landed at ${position.top}px`)
+    const active = await page.locator('nav a[aria-current="location"]').boundingBox()
+    assert.ok(active && active.x >= 0 && active.x + active.width <= 390,
+      `${id} is hidden in the mobile navigation`)
+  }
+  await page.goBack()
+  await page.waitForTimeout(1800)
+  assert.equal(new URL(page.url()).hash, '#quick-start', 'Back lost the previous chapter')
+  for (const width of [320, 390, 768]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.locator('nav a[href="#quick-start"]').click()
+    await page.waitForTimeout(1800)
+    const dimensions = await page.locator('#quick-start').evaluate((element) => {
+      const board = element.querySelector('.quick-start-board-scale').getBoundingClientRect()
+      return { width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+        left: board.left, right: board.right }
+    })
+    assert.ok(dimensions.scrollWidth <= width + 1, `${width}px page overflows`)
+    assert.ok(dimensions.left >= 0 && dimensions.right <= width + 1,
+      `${width}px departure board is clipped`)
+  }
+  for (const width of [320, 390, 540, 768, 860]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.locator('nav a[href="#motion"]').click()
+    await page.waitForTimeout(1800)
+    for (const name of ['Cascade\n(Canvas)', 'Riffle\n(Canvas)', 'Cascade\n(CSS)']) {
+      await page.locator('#motion').getByRole('button', { name }).click()
+      const layout = await page.locator('#motion').evaluate((element) => {
+        const board = element.querySelector('.motion-preview-scale').getBoundingClientRect()
+        const title = element.querySelector('h2').getBoundingClientRect()
+        return { left: board.left, right: board.right, gap: title.top - board.bottom }
+      })
+      assert.ok(layout.gap >= 24, `${width}px ${name} overlaps the Motion title`)
+      assert.ok(layout.left >= 16 && layout.right <= width - 16,
+        `${width}px ${name} exceeds the preview width`)
+    }
+  }
+  await page.setViewportSize({ width: 390, height: 844 })
   const looks = await reveal(page, 'looks', '[role="group"][aria-label="Look"]')
   const options = looks.locator('[role="group"][aria-label="Look"] button')
   assert.equal(await options.count(), 3)
@@ -257,7 +314,7 @@ try {
   const page = await context.newPage()
   await desktop(page)
   await mobile(page)
-  console.log('Docs E2E regression checks passed (desktop and 390px mobile).')
+  console.log('Docs E2E regression checks passed (desktop, mobile navigation, and 320/390/768px layouts).')
 } catch (error) {
   console.error(error)
   process.exitCode = 1

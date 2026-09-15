@@ -884,7 +884,7 @@ h2 {
     --sidebar-width: 0px;
     --gutter: 24px;
     --section-space: 4.5rem;
-    scroll-padding-top: 64px;
+    scroll-padding-top: 76px;
   }
 
   .docs-well {
@@ -965,5 +965,53 @@ h2 {
   .composition-mechanism :is(.flapkit-motion-canvas, canvas) {
     display: none;
     visibility: hidden;
+  }
+}
+
+@media (max-width: 860px) {
+  .quick-start-board-slot {
+    height: auto;
+    aspect-ratio: calc(var(--qs-reserve-width) / var(--qs-reserve-height));
+  }
+}
+
+.quick-start-board-slot[data-compact] {
+  --qs-tracks: 12;
+  --qs-groups: 4;
+  --qs-rows: 3;
+}
+
+/* On stacked layouts, reserve the enlarged board's actual layout size. */
+@media (max-width: 860px) {
+  .motion-preview-scale {
+    transform: none;
+    zoom: 1.25;
+  }
+}
+
+@media (360px <= width <= 860px) {
+  .motion-preview-scale {
+    zoom: 1.5;
+  }
+}
+
+@media (480px <= width <= 860px) {
+  .motion-preview-scale {
+    zoom: 1.85;
+  }
+}
+
+@media (max-width: 860px) {
+  #quick-start .quick-start-board-slot {
+    margin-block: 20px 24px;
+  }
+
+  #quick-start h2 {
+    margin-bottom: 12px;
+  }
+
+  #quick-start [data-docs-choice] {
+    row-gap: 6px;
+    padding-block: 12px;
   }
 }

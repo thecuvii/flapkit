@@ -14,3 +14,5 @@ website/public/vendor/
 .env.local
 .env.*.local
 !.env.example
+
+*.tsbuildinfo

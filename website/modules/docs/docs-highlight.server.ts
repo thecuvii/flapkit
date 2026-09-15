@@ -10,13 +10,11 @@ function toLines(
   tokens: readonly { color?: string; content: string; offset: number }[][],
 ): QuickStartToken[][] {
   return tokens.map((line) =>
-    line.map(
-      ({ color, content, offset }): QuickStartToken => ({
-        color,
-        content,
-        offset,
-      }),
-    ),
+    line.map(({ color, content, offset }): QuickStartToken => ({
+      color,
+      content,
+      offset,
+    })),
   )
 }
 

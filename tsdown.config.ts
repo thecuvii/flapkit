@@ -3,7 +3,7 @@ import { defineConfig } from 'tsdown'
 export default defineConfig({
   copy: {
     flatten: true,
-    from: 'src/styles/*.css',
+    from: 'src/styles/*',
     to: 'dist/styles',
   },
   deps: {

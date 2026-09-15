@@ -1,7 +1,16 @@
 {
   "name": "flapkit",
-  "version": "0.0.0",
+  "version": "0.1.0-beta.0",
   "description": "React split-flap display components and looks.",
+  "homepage": "https://github.com/thecuvii/flapkit#readme",
+  "bugs": {
+    "url": "https://github.com/thecuvii/flapkit/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thecuvii/flapkit.git"
+  },
   "files": [
     "dist"
   ],
@@ -11,69 +20,41 @@
   ],
   "exports": {
     ".": {
-      "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
     "./sound": {
-      "development": "./src/sound/index.ts",
       "types": "./dist/sound/index.d.ts",
       "import": "./dist/sound/index.js"
     },
     "./motion/canvas/cascade": {
-      "development": "./src/motion/canvas/cascade.ts",
       "types": "./dist/motion/canvas/cascade.d.ts",
       "import": "./dist/motion/canvas/cascade.js"
     },
     "./motion/canvas/riffle": {
-      "development": "./src/motion/canvas/riffle.ts",
       "types": "./dist/motion/canvas/riffle.d.ts",
       "import": "./dist/motion/canvas/riffle.js"
     },
     "./motion/css/cascade": {
-      "development": "./src/motion/css/cascade.ts",
       "types": "./dist/motion/css/cascade.d.ts",
       "import": "./dist/motion/css/cascade.js"
     },
     "./flapkit.css": {
-      "development": "./src/styles/flapkit.css",
+      "types": "./dist/styles/style.d.ts",
       "default": "./dist/styles/flapkit.css"
     },
     "./airport.css": {
-      "development": "./src/styles/airport.css",
+      "types": "./dist/styles/style.d.ts",
       "default": "./dist/styles/airport.css"
     },
     "./industrial.css": {
-      "development": "./src/styles/industrial.css",
+      "types": "./dist/styles/style.d.ts",
       "default": "./dist/styles/industrial.css"
     }
   },
   "publishConfig": {
-    "exports": {
-      ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js"
-      },
-      "./sound": {
-        "types": "./dist/sound/index.d.ts",
-        "import": "./dist/sound/index.js"
-      },
-      "./motion/canvas/cascade": {
-        "types": "./dist/motion/canvas/cascade.d.ts",
-        "import": "./dist/motion/canvas/cascade.js"
-      },
-      "./motion/canvas/riffle": {
-        "types": "./dist/motion/canvas/riffle.d.ts",
-        "import": "./dist/motion/canvas/riffle.js"
-      },
-      "./motion/css/cascade": {
-        "types": "./dist/motion/css/cascade.d.ts",
-        "import": "./dist/motion/css/cascade.js"
-      },
-      "./flapkit.css": "./dist/styles/flapkit.css",
-      "./airport.css": "./dist/styles/airport.css",
-      "./industrial.css": "./dist/styles/industrial.css"
-    }
+    "access": "public",
+    "tag": "beta"
   },
   "scripts": {
     "build": "tsdown",
@@ -89,7 +70,10 @@
     "test:browser": "vp test run --config vitest.browser.config.ts",
     "test:docs": "node tests/docs.e2e.mjs",
     "test:package": "node tests/package.e2e.mjs",
-    "prepare": "vp config --no-agent"
+    "prepare": "vp config --no-agent",
+    "test:visual": "FLAPKIT_VISUAL_TESTS=1 FLAPKIT_BROWSER=chromium vp test run --config vitest.browser.config.ts",
+    "check:release": "pnpm check && pnpm test && pnpm test:browser && pnpm test:visual && pnpm test:package && pnpm test:react-min",
+    "test:react-min": "FLAPKIT_REACT_VERSION=19.0.0 node tests/package.e2e.mjs"
   },
   "devDependencies": {
     "@types/react": "catalog:dev",

@@ -68,7 +68,7 @@ import { cascade } from 'flapkit/motion/css/cascade'
 // Or: 'flapkit/motion/canvas/cascade'
 // Or: import { riffle } from 'flapkit/motion/canvas/riffle'
 
-<Flapkit.Root motion={cascade()}>{/* Board or Grid */}</Flapkit.Root>
+;<Flapkit.Root motion={cascade()}>{/* Board or Grid */}</Flapkit.Root>
 ```
 
 The CSS entry does not depend on the Canvas renderer. The Canvas entries supply
@@ -375,13 +375,13 @@ injection.
 
 ### Group
 
-| Prop        | Type      | Default            | Meaning                                |
-| ----------- | --------- | ------------------ | -------------------------------------- |
+| Prop        | Type      | Default            | Meaning                                   |
+| ----------- | --------- | ------------------ | ----------------------------------------- |
 | `id`        | `string`  | generated          | Logical region ID; not animation identity |
-| `label`     | `string`  | —                  | Column label for this region           |
-| `deck`      | `Deck`    | `alphanumericDeck` | Stops for every cassette in this group |
-| `variant`   | `Variant` | inherited          | Overrides the row variant              |
-| `className` | `string`  | —                  | Inherits into glyphs                   |
+| `label`     | `string`  | —                  | Column label for this region              |
+| `deck`      | `Deck`    | `alphanumericDeck` | Stops for every cassette in this group    |
+| `variant`   | `Variant` | inherited          | Overrides the row variant                 |
+| `className` | `string`  | —                  | Inherits into glyphs                      |
 
 ### Cell / WideCell
 
@@ -407,15 +407,15 @@ not standalone rendered components. A part may appear at most once.
 
 ### riffle / cascade / motion
 
-| Option                | Type     | Default   | Meaning                              |
-| --------------------- | -------- | --------- | ------------------------------------ |
-| `riffleMs`            | `number` | `36`      | Riffle pitch duration                |
-| `startSpreadMs`       | `number` | `480`     | Riffle start window across the board |
-| `pitchMs`             | `number` | `52`      | Cascade or custom pitch duration     |
-| `rowDelayMs`          | `number` | `150`     | Cascade delay between rows           |
-| `withinRowJitterMs`   | `number` | `16`      | Cascade start jitter inside a row    |
-| `cadenceVariationPct` | `number` | `4` / `6` | Per-cassette timing noise            |
-| `finalSettleMs`       | `number` | `260`     | Settle after the last pitch          |
+| Option                | Type     | Default   | Meaning                                            |
+| --------------------- | -------- | --------- | -------------------------------------------------- |
+| `riffleMs`            | `number` | `36`      | Riffle pitch duration                              |
+| `startSpreadMs`       | `number` | `480`     | Riffle start window across the board               |
+| `pitchMs`             | `number` | `52`      | Cascade or custom pitch duration                   |
+| `rowDelayMs`          | `number` | `150`     | Cascade delay between rows                         |
+| `withinRowJitterMs`   | `number` | `16`      | Cascade start jitter inside a row                  |
+| `cadenceVariationPct` | `number` | `4` / `6` | Per-cassette timing noise                          |
+| `finalSettleMs`       | `number` | `260`     | Settle after the last pitch                        |
 | `finalReboundDeg`     | `number` | `2`       | Deprecated compatibility no-op; fixed settle curve |
 
 `motion(schedule, options)` uses the shared option names above. `schedule`
@@ -469,3 +469,38 @@ These check fixed navigation, static Composition/Looks previews, independent
 Decks playback, code snippets, and mobile controls. The test runner defaults to
 `http://localhost:5173`; set `FLAPKIT_DOCS_URL` for a different local server port.
 The checks do not start a server.
+
+## Release checks and compatibility
+
+The initial release is `0.1.0-beta.0`, under the MIT license. It is not published
+by the verification commands below.
+
+- Runtime peers: React and React DOM 19.0 or later. The packaged consumer test
+  exercises the workspace version and React 19.0.0 separately.
+- Browser functional tests run in Chromium, Firefox and WebKit using the locked
+  Playwright version. This is a current-engine test matrix, not a claim of support
+  for every historical browser version or real iOS device.
+- Node.js 22.18 or later is required for tooling. The package is ESM.
+- Visible displays require JavaScript. Canvas styling limitations are described
+  above; use CSS cascade when the face needs arbitrary CSS effects.
+
+```sh
+pnpm exec playwright install chromium firefox webkit
+pnpm check:release
+```
+
+`test:browser` runs functional checks in all three engines. `test:visual` runs
+Chromium screenshots separately, with platform-specific baselines. Linux CI is
+fixed to Ubuntu 24.04. To intentionally update local baselines, run
+`pnpm test:visual --update`, inspect every changed image, then rerun without
+`--update`. Do not accept a new baseline merely because it makes a test green.
+
+`test:package` checks npm/pnpm export parity and the exact packed artifact's
+export targets, development rendering and updates, TypeScript consumer, CSS
+imports and production tree-shaking. `test:react-min` repeats that consumer test
+with React 19.0.0 in a temporary installation.
+
+Published exports always point to `dist`. Workspace aliases provide source hot
+reload locally and never affect consumers. Build and verify before preparing a
+release tarball with `pnpm pack`. Publication is a separate, explicit step;
+prereleases use the `beta` dist-tag.

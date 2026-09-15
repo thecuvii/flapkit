@@ -1,16 +1,17 @@
-import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode, type SVGProps } from 'react'
+import {
+  useRef,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+  type SVGProps,
+} from 'react'
 import { cn } from 'cn'
 import { ExhibitStripes } from './exhibit-stripes'
 
 export function StreamlineBlockArrowheadsLeft(props: SVGProps<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16" {...props}>
-      <path
-        fill="currentColor"
-        fillRule="evenodd"
-        d="M11.92.16v15.68L4.08 8z"
-        clipRule="evenodd"
-      />
+      <path fill="currentColor" fillRule="evenodd" d="M11.92.16v15.68L4.08 8z" clipRule="evenodd" />
     </svg>
   )
 }
@@ -165,7 +166,12 @@ export function InstrumentField<T extends string>({
           })}
         </div>
       ) : (
-        <dd className={cn(instrumentType, 'relative inline-flex min-h-0 min-w-0 items-center text-ink')}>
+        <dd
+          className={cn(
+            instrumentType,
+            'relative inline-flex min-h-0 min-w-0 items-center text-ink',
+          )}
+        >
           {value}
           <InstrumentMark visible />
         </dd>
@@ -265,28 +271,24 @@ export function Exhibit<L extends string = string, M extends string = string>({
     Boolean(motion && motionOptions && onMotionChange) ||
     Boolean(extras?.length)
   const columns = [
-    look
-      ? (
-          <InstrumentField
-            key="look"
-            label="LOOK"
-            value={look}
-            options={onLookChange ? lookOptions : undefined}
-            onChange={onLookChange}
-          />
-        )
-      : null,
-    motion
-      ? (
-          <InstrumentField
-            key="motion"
-            label="MOTION"
-            value={motion}
-            options={onMotionChange ? motionOptions : undefined}
-            onChange={onMotionChange}
-          />
-        )
-      : null,
+    look ? (
+      <InstrumentField
+        key="look"
+        label="LOOK"
+        value={look}
+        options={onLookChange ? lookOptions : undefined}
+        onChange={onLookChange}
+      />
+    ) : null,
+    motion ? (
+      <InstrumentField
+        key="motion"
+        label="MOTION"
+        value={motion}
+        options={onMotionChange ? motionOptions : undefined}
+        onChange={onMotionChange}
+      />
+    ) : null,
     deck ? <InstrumentField key="deck" label="DECK" value={deck} /> : null,
     ...(extras ?? []),
   ].filter(Boolean)
@@ -304,7 +306,7 @@ export function Exhibit<L extends string = string, M extends string = string>({
       </div>
       <div className="exhibit-meta">
         {controlled ? (
-          tabs ?? (
+          (tabs ?? (
             <dl
               className="relative m-0 grid w-[var(--exhibit-span)] grid-cols-[repeat(var(--instrument-cols,3),minmax(0,1fr))] gap-x-u4 gap-y-3 px-u4 py-[calc((var(--u)-54px)/2)] max-[960px]:grid-cols-[repeat(min(2,var(--instrument-cols,3)),minmax(0,1fr))] max-[680px]:grid-cols-1 max-[680px]:gap-4 max-[680px]:py-4"
               style={{ '--instrument-cols': columns.length } as CSSProperties}
@@ -312,7 +314,7 @@ export function Exhibit<L extends string = string, M extends string = string>({
               <StripCorners />
               {columns}
             </dl>
-          )
+          ))
         ) : (
           <SpecStrip look={look} motion={motion} deck={deck} />
         )}

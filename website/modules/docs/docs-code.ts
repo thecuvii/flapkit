@@ -87,7 +87,10 @@ export const quickStartRanges: readonly QuickStartRange[] = [
     id: 'look-import',
     ...rangeInside(quickStartStaticCode, "import 'flapkit/airport.css'", 'airport'),
   },
-  { id: 'motion-import', ...rangeInside(quickStartStaticCode, motionImport('cascade'), motionImport('cascade')) },
+  {
+    id: 'motion-import',
+    ...rangeInside(quickStartStaticCode, motionImport('cascade'), motionImport('cascade')),
+  },
   { id: 'motion', ...rangeInside(quickStartStaticCode, 'motion={cascade()}', 'cascade()') },
   {
     id: 'frame-open',

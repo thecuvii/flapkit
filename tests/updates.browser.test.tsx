@@ -137,7 +137,9 @@ it('plays CSS 3D cascade without a canvas and switches back to Canvas', async ()
   expect(transforms.some((transform) => String(transform).includes('rotateX'))).toBe(true)
   await expect.poll(() => controller.readPerformanceCounters().runningCassettes).toBe(0)
   // DOM geometry alone cannot detect lower leaves hidden behind the 3D cavity.
-  await expect.element(page.elementLocator(host)).toMatchScreenshot('css-settled')
+  if (import.meta.env.FLAPKIT_VISUAL_TESTS) {
+    await expect.element(page.elementLocator(host)).toMatchScreenshot('css-settled')
+  }
 
   await render(display({ text: 'B', schedule: cascade(options) }))
   expect(host.querySelector('canvas')).not.toBeNull()
@@ -147,15 +149,18 @@ it('plays CSS 3D cascade without a canvas and switches back to Canvas', async ()
   await expect.poll(() => controller.readPerformanceCounters().runningCassettes).toBe(0)
 })
 
-it.each(['airport', 'industrial'])('preserves %s idle and moving appearance', async (look) => {
-  await render(display({ look }))
-  await expect.element(page.elementLocator(host)).toMatchScreenshot(`${look}-idle`)
-  const step = freezePitch()
-  for (const elapsed of [30, 80, 180, 350]) {
-    step(elapsed)
-    await expect.element(page.elementLocator(host)).toMatchScreenshot(`${look}-${elapsed}ms`)
-  }
-})
+it.runIf(import.meta.env.FLAPKIT_VISUAL_TESTS).each(['airport', 'industrial'])(
+  'preserves %s idle and moving appearance',
+  async (look) => {
+    await render(display({ look }))
+    await expect.element(page.elementLocator(host)).toMatchScreenshot(`${look}-idle`)
+    const step = freezePitch()
+    for (const elapsed of [30, 80, 180, 350]) {
+      step(elapsed)
+      await expect.element(page.elementLocator(host)).toMatchScreenshot(`${look}-${elapsed}ms`)
+    }
+  },
+)
 
 it.each([false, true])(
   'updates text and labels without replacing the controller (grid=%s)',

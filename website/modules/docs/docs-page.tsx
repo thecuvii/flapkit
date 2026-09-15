@@ -102,11 +102,55 @@ const customPhrases = [
   ['🎉', '🎈', '🎁', '🎂'],
 ]
 const customDeck = Flapkit.createDeck([
-  ' ', '안', '🌸', '東', '☕', 'γ', '好', '🎈', '울', '🍣',
-  '↑', '京', '💚', '한', '🌏', '圳', '✨', 'か', '🎁', '港',
-  '👋', 'β', '大', '🌙', '你', '🎵', '→', '글', '🍵', '香',
-  '🚀', 'δ', '서', '🌴', '🎂', 'な', '💜', '阪', '↓', '🌊',
-  '녕', '🎨', '深', '⭐', 'α', '☀️', '🎉', '←', '⛴️',
+  ' ',
+  '안',
+  '🌸',
+  '東',
+  '☕',
+  'γ',
+  '好',
+  '🎈',
+  '울',
+  '🍣',
+  '↑',
+  '京',
+  '💚',
+  '한',
+  '🌏',
+  '圳',
+  '✨',
+  'か',
+  '🎁',
+  '港',
+  '👋',
+  'β',
+  '大',
+  '🌙',
+  '你',
+  '🎵',
+  '→',
+  '글',
+  '🍵',
+  '香',
+  '🚀',
+  'δ',
+  '서',
+  '🌴',
+  '🎂',
+  'な',
+  '💜',
+  '阪',
+  '↓',
+  '🌊',
+  '녕',
+  '🎨',
+  '深',
+  '⭐',
+  'α',
+  '☀️',
+  '🎉',
+  '←',
+  '⛴️',
 ])
 const principleDeck: Flapkit.Deck = Flapkit.createDeck(
   ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-./:深圳香港東京紐約延誤取消',
@@ -981,7 +1025,13 @@ function CompositionSection({ html }: { html: string }) {
                   />
                 </div>
                 <div className="composition-mechanism">
-                  <DepartureBoardTree look="industrial" motion="cascade" frame header staticDisplay />
+                  <DepartureBoardTree
+                    look="industrial"
+                    motion="cascade"
+                    frame
+                    header
+                    staticDisplay
+                  />
                 </div>
               </div>
             </div>
@@ -1013,7 +1063,12 @@ function CompositionSection({ html }: { html: string }) {
               aria-pressed={hover === item.id}
             >
               {item.name}
-              {hover === item.id && <StreamlineBlockArrowheadsLeft className="size-[7px] text-flare" aria-hidden="true" />}
+              {hover === item.id && (
+                <StreamlineBlockArrowheadsLeft
+                  className="size-[7px] text-flare"
+                  aria-hidden="true"
+                />
+              )}
             </button>
             <span className="text-[13px] leading-normal text-muted">{item.note}</span>
           </li>
@@ -1052,13 +1107,7 @@ function StatusBoard({
 
   return (
     <Flapkit.Root
-      motion={
-        motion === 'css'
-          ? cssCascade()
-          : motion === 'cascade'
-            ? canvasCascade()
-            : riffle()
-      }
+      motion={motion === 'css' ? cssCascade() : motion === 'cascade' ? canvasCascade() : riffle()}
       sound={sound}
     >
       <Flapkit.Board
@@ -1103,9 +1152,9 @@ function SoundSection({ html }: { html: string }) {
     >
       <p className="text-[14px]! font-normal!">
         Audio files are not bundled. Pass click and settle URLs to{' '}
-        <code>{'mechanicalSound({ bank })'}</code>. Sounds follow actual flip events and stay in sync
-        with the animation. The first interaction unlocks audio. Use{' '}
-        <code>SoundEngine</code> without React.
+        <code>{'mechanicalSound({ bank })'}</code>. Sounds follow actual flip events and stay in
+        sync with the animation. The first interaction unlocks audio. Use <code>SoundEngine</code>{' '}
+        without React.
       </p>
       <button
         type="button"
@@ -1313,7 +1362,10 @@ function HowItWorksSection() {
           </div>
           <button
             type="button"
-            className={cn(docsControlClass, 'size-11 justify-center text-ink [&_svg]:size-2.5 [&_svg]:fill-current')}
+            className={cn(
+              docsControlClass,
+              'size-11 justify-center text-ink [&_svg]:size-2.5 [&_svg]:fill-current',
+            )}
             onClick={togglePlayback}
             aria-label={isPlaying ? 'Pause deck playback' : 'Play deck to the final position'}
             title={isPlaying ? 'Pause' : progress >= 1 ? 'Replay' : 'Play'}
@@ -1334,7 +1386,11 @@ function HowItWorksSection() {
   )
 }
 
-function MotionSection({ cascadeHtml, riffleHtml, cssHtml }: {
+function MotionSection({
+  cascadeHtml,
+  riffleHtml,
+  cssHtml,
+}: {
   cascadeHtml: string
   riffleHtml: string
   cssHtml: string
@@ -1352,15 +1408,19 @@ function MotionSection({ cascadeHtml, riffleHtml, cssHtml }: {
       }
     >
       <p>
-        <code>riffle()</code> randomizes starts; <code>cascade()</code> staggers them by row.
-        Import from <code>motion/canvas</code> for Canvas leaves, or <code>motion/css/cascade</code>{' '}
-        for CSS 3D leaves. The import selects the renderer without bundling the unused Canvas renderer.
+        <code>riffle()</code> randomizes starts; <code>cascade()</code> staggers them by row. Import
+        from <code>motion/canvas</code> for Canvas leaves, or <code>motion/css/cascade</code> for
+        CSS 3D leaves. The import selects the renderer without bundling the unused Canvas renderer.
       </p>
       <div className="docs-choice-rows">
         <ChoiceSwitch
           label="Motion"
           options={['cascade', 'riffle', 'css'] as const}
-          labels={{ cascade: 'Cascade\n(Canvas)', riffle: 'Riffle\n(Canvas)', css: 'Cascade\n(CSS)' }}
+          labels={{
+            cascade: 'Cascade\n(Canvas)',
+            riffle: 'Riffle\n(Canvas)',
+            css: 'Cascade\n(CSS)',
+          }}
           value={motion}
           onChange={setMotion}
         />
@@ -1381,7 +1441,9 @@ function MotionSection({ cascadeHtml, riffleHtml, cssHtml }: {
           </span>
         </div>
       </div>
-      <CodeBlock html={motion === 'css' ? cssHtml : motion === 'cascade' ? cascadeHtml : riffleHtml} />
+      <CodeBlock
+        html={motion === 'css' ? cssHtml : motion === 'cascade' ? cascadeHtml : riffleHtml}
+      />
     </DocsSection>
   )
 }

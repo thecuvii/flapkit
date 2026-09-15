@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { build } from 'vite'
 import { expect, it } from 'vitest'
+import { viteWorkspaceAliases } from '../../flapkit.workspace.ts'
 
 it('documents every published subpath under the actual package name', () => {
   const manifest = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'))
   const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8')
   expect(manifest.name).toBe('flapkit')
-  expect(Object.keys(manifest.publishConfig.exports)).toEqual(Object.keys(manifest.exports))
   const subpaths = readme.split('### Package subpaths\n')[1]!.split('\n### ')[0]!
   for (const path of Object.keys(manifest.exports)) {
     expect(subpaths).toContain(`- \`${manifest.name}${path.slice(1)}\``)
@@ -31,7 +31,7 @@ it.each(['css/cascade', 'canvas/cascade', 'canvas/riffle'])(
     const result = await build({
       configFile: false,
       logLevel: 'silent',
-      resolve: { conditions: ['development'] },
+      resolve: { alias: viteWorkspaceAliases },
       plugins: [
         {
           name: 'motion-consumer',

@@ -242,10 +242,15 @@ async function mobile(page) {
       hash: location.hash,
     }))
     assert.equal(position.hash, `#${id}`, `navigation lost #${id}`)
-    assert.ok(Math.abs(position.top - position.expectedTop) < 2, `${id} landed at ${position.top}px`)
+    assert.ok(
+      Math.abs(position.top - position.expectedTop) < 2,
+      `${id} landed at ${position.top}px`,
+    )
     const active = await page.locator('nav a[aria-current="location"]').boundingBox()
-    assert.ok(active && active.x >= 0 && active.x + active.width <= 390,
-      `${id} is hidden in the mobile navigation`)
+    assert.ok(
+      active && active.x >= 0 && active.x + active.width <= 390,
+      `${id} is hidden in the mobile navigation`,
+    )
   }
   await page.goBack()
   await page.waitForTimeout(1800)
@@ -256,12 +261,18 @@ async function mobile(page) {
     await page.waitForTimeout(1800)
     const dimensions = await page.locator('#quick-start').evaluate((element) => {
       const board = element.querySelector('.quick-start-board-scale').getBoundingClientRect()
-      return { width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
-        left: board.left, right: board.right }
+      return {
+        width: innerWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        left: board.left,
+        right: board.right,
+      }
     })
     assert.ok(dimensions.scrollWidth <= width + 1, `${width}px page overflows`)
-    assert.ok(dimensions.left >= 0 && dimensions.right <= width + 1,
-      `${width}px departure board is clipped`)
+    assert.ok(
+      dimensions.left >= 0 && dimensions.right <= width + 1,
+      `${width}px departure board is clipped`,
+    )
   }
   for (const width of [320, 390, 540, 768, 860]) {
     await page.setViewportSize({ width, height: 844 })
@@ -275,8 +286,10 @@ async function mobile(page) {
         return { left: board.left, right: board.right, gap: title.top - board.bottom }
       })
       assert.ok(layout.gap >= 24, `${width}px ${name} overlaps the Motion title`)
-      assert.ok(layout.left >= 16 && layout.right <= width - 16,
-        `${width}px ${name} exceeds the preview width`)
+      assert.ok(
+        layout.left >= 16 && layout.right <= width - 16,
+        `${width}px ${name} exceeds the preview width`,
+      )
     }
   }
   await page.setViewportSize({ width: 390, height: 844 })
@@ -314,7 +327,9 @@ try {
   const page = await context.newPage()
   await desktop(page)
   await mobile(page)
-  console.log('Docs E2E regression checks passed (desktop, mobile navigation, and 320/390/768px layouts).')
+  console.log(
+    'Docs E2E regression checks passed (desktop, mobile navigation, and 320/390/768px layouts).',
+  )
 } catch (error) {
   console.error(error)
   process.exitCode = 1

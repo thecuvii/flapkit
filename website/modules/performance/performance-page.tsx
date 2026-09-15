@@ -92,11 +92,7 @@ function BenchmarkSummary({
   )
   const latestSample = samples.at(-1)
 
-  const metric = (
-    label: string,
-    value: string,
-    note: string,
-  ) => (
+  const metric = (label: string, value: string, note: string) => (
     <div className="min-w-0 bg-panel p-3.5">
       <span className="block min-h-7 text-[10px] leading-[1.4] text-muted uppercase">{label}</span>
       <strong className="mt-1.5 block text-[18px] tabular-nums">{value}</strong>
@@ -136,21 +132,13 @@ function BenchmarkSummary({
             ? `p95 ${summaries.commitLatency.p95.toFixed(1)} ms`
             : 'No samples',
         )}
-        {metric(
-          'Animation FPS',
-          summaries.fps ? summaries.fps.median.toFixed(1) : '—',
-          'Median',
-        )}
+        {metric('Animation FPS', summaries.fps ? summaries.fps.median.toFixed(1) : '—', 'Median')}
         {metric(
           'P95 frame',
           summaries.p95Frame ? `${summaries.p95Frame.median.toFixed(1)} ms` : '—',
           'Median run',
         )}
-        {metric(
-          'Frames > 20 ms',
-          summaries.droppedFrames?.median.toFixed(0) ?? '—',
-          'Median run',
-        )}
+        {metric('Frames > 20 ms', summaries.droppedFrames?.median.toFixed(0) ?? '—', 'Median run')}
         {metric(
           'Geometry reads',
           summaries.geometryReads?.median.toFixed(0) ?? '—',
@@ -219,12 +207,18 @@ function MeasuredRuns({ samples }: { samples: readonly Sample[] }) {
                 <td className="border-t border-rule px-[18px] py-2.5 text-right">
                   {sample.commitLatency.toFixed(1)} ms
                 </td>
-                <td className="border-t border-rule px-[18px] py-2.5 text-right">{sample.fps.toFixed(1)}</td>
+                <td className="border-t border-rule px-[18px] py-2.5 text-right">
+                  {sample.fps.toFixed(1)}
+                </td>
                 <td className="border-t border-rule px-[18px] py-2.5 text-right">
                   {sample.p95Frame.toFixed(1)} ms
                 </td>
-                <td className="border-t border-rule px-[18px] py-2.5 text-right">{sample.droppedFrames}</td>
-                <td className="border-t border-rule px-[18px] py-2.5 text-right">{sample.geometryReads}</td>
+                <td className="border-t border-rule px-[18px] py-2.5 text-right">
+                  {sample.droppedFrames}
+                </td>
+                <td className="border-t border-rule px-[18px] py-2.5 text-right">
+                  {sample.geometryReads}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -406,129 +400,132 @@ export function PerformancePage() {
 
   return (
     <SiteFrame>
-    <main className="min-h-dvh px-[clamp(24px,5vw,72px)] pt-7 pb-24 max-[560px]:px-5 max-[560px]:pt-[22px] max-[560px]:pb-[72px]">
-      <header className="mx-auto w-[min(100%,1120px)]">
-        <div className="flex justify-between gap-6 text-xs font-[680] tracking-[0.04em] text-muted uppercase max-[560px]:flex-col max-[560px]:items-start">
-          <a className="text-ink no-underline" href="/">
-            ← Docs
-          </a>
-          <span>Browser benchmark · local results</span>
-        </div>
-        <h1 className="mt-[72px] mb-[18px] max-[560px]:mt-14">Bench</h1>
-        <p className="m-0 max-w-[720px] leading-[1.65] text-muted">
-          Compare median and p95 for identical updates in the same browser.
-        </p>
-      </header>
+      <main className="min-h-dvh px-[clamp(24px,5vw,72px)] pt-7 pb-24 max-[560px]:px-5 max-[560px]:pt-[22px] max-[560px]:pb-[72px]">
+        <header className="mx-auto w-[min(100%,1120px)]">
+          <div className="flex justify-between gap-6 text-xs font-[680] tracking-[0.04em] text-muted uppercase max-[560px]:flex-col max-[560px]:items-start">
+            <a className="text-ink no-underline" href="/">
+              ← Docs
+            </a>
+            <span>Browser benchmark · local results</span>
+          </div>
+          <h1 className="mt-[72px] mb-[18px] max-[560px]:mt-14">Bench</h1>
+          <p className="m-0 max-w-[720px] leading-[1.65] text-muted">
+            Compare median and p95 for identical updates in the same browser.
+          </p>
+        </header>
 
-      <section
-        className="mx-auto mt-12 grid w-[min(100%,1120px)] grid-cols-[repeat(3,minmax(0,1fr))_auto] items-end gap-3 max-[860px]:grid-cols-2 max-[560px]:grid-cols-1"
-        aria-label="Benchmark controls"
-      >
-        <label className="grid gap-2 text-[11px] font-[680] tracking-[0.05em] text-muted uppercase">
-          Motion
-          <select
-            className="min-h-11 rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[inherit] text-ink disabled:cursor-wait disabled:opacity-50"
-            value={motionKind}
-            disabled={running}
-            onChange={(event) => {
-              clearResults()
-              setMotionKind(event.target.value as MotionKind)
-            }}
-          >
-            <option value="riffle">Riffle · Canvas</option>
-            <option value="cascade">Cascade · canvas</option>
-          </select>
-        </label>
-        <label className="grid gap-2 text-[11px] font-[680] tracking-[0.05em] text-muted uppercase">
-          Scale
-          <select
-            className="min-h-11 rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[inherit] text-ink disabled:cursor-wait disabled:opacity-50"
-            value={sizeIndex}
-            disabled={running}
-            onChange={(event) => {
-              clearResults()
-              setSizeIndex(Number(event.target.value))
-            }}
-          >
-            {sizes.map((preset, index) => (
-              <option key={preset.label} value={index}>
-                {preset.label} · {preset.rows}×{preset.columns}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-2 text-[11px] font-[680] tracking-[0.05em] text-muted uppercase">
-          Measured runs
-          <select
-            className="min-h-11 rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[inherit] text-ink disabled:cursor-wait disabled:opacity-50"
-            value={runCount}
-            disabled={running}
-            onChange={(event) => {
-              clearResults()
-              setRunCount(Number(event.target.value) as (typeof runCounts)[number])
-            }}
-          >
-            {runCounts.map((count) => (
-              <option key={count} value={count}>
-                {count} runs
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex gap-2 max-[860px]:col-span-full max-[560px]:grid max-[560px]:grid-cols-2">
-          <button
-            type="button"
-            className="min-h-11 cursor-pointer rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[680] whitespace-nowrap text-ink disabled:cursor-wait disabled:opacity-50"
-            disabled={running}
-            onClick={runOnce}
-          >
-            Run once
-          </button>
-          <button
-            type="button"
-            className="min-h-11 cursor-pointer rounded-[7px] border border-ink bg-ink px-[13px] font-[680] whitespace-nowrap text-on-ink disabled:cursor-wait disabled:opacity-50"
-            disabled={running}
-            onClick={runBenchmark}
-          >
-            {running ? statusLabel : 'Run benchmark'}
-          </button>
-        </div>
-      </section>
-
-      <BenchmarkSummary samples={samples} size={size} statusLabel={statusLabel} />
-      <MeasuredRuns samples={samples} />
-
-      <section
-        ref={stageRef}
-        className="mx-auto mt-7 max-h-[680px] w-[min(100%,1120px)] overflow-auto rounded-[10px] bg-surface p-12 max-[560px]:p-7 [&>div]:mx-auto [&>div]:w-max"
-        aria-label="Benchmark board"
-      >
-        <Profiler id="flapkit-bench" onRender={handleRender}>
-          <Flapkit.Root motion={motion}>
-            <Flapkit.Board aria-label={`${size.label} benchmark board`} className="flapkit-airport">
-              <Flapkit.Header>
-                {motionKind.toUpperCase()} · {size.label}
-              </Flapkit.Header>
-              {rows.map((row, rowIndex) => (
-                <Flapkit.Row key={`row-${rowIndex}`}>
-                  <Flapkit.Group label="LOCAL">
-                    {row.map((cell, columnIndex) => (
-                      <Flapkit.Cell key={columnIndex}>{cell}</Flapkit.Cell>
-                    ))}
-                  </Flapkit.Group>
-                </Flapkit.Row>
+        <section
+          className="mx-auto mt-12 grid w-[min(100%,1120px)] grid-cols-[repeat(3,minmax(0,1fr))_auto] items-end gap-3 max-[860px]:grid-cols-2 max-[560px]:grid-cols-1"
+          aria-label="Benchmark controls"
+        >
+          <label className="grid gap-2 text-[11px] font-[680] tracking-[0.05em] text-muted uppercase">
+            Motion
+            <select
+              className="min-h-11 rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[inherit] text-ink disabled:cursor-wait disabled:opacity-50"
+              value={motionKind}
+              disabled={running}
+              onChange={(event) => {
+                clearResults()
+                setMotionKind(event.target.value as MotionKind)
+              }}
+            >
+              <option value="riffle">Riffle · Canvas</option>
+              <option value="cascade">Cascade · canvas</option>
+            </select>
+          </label>
+          <label className="grid gap-2 text-[11px] font-[680] tracking-[0.05em] text-muted uppercase">
+            Scale
+            <select
+              className="min-h-11 rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[inherit] text-ink disabled:cursor-wait disabled:opacity-50"
+              value={sizeIndex}
+              disabled={running}
+              onChange={(event) => {
+                clearResults()
+                setSizeIndex(Number(event.target.value))
+              }}
+            >
+              {sizes.map((preset, index) => (
+                <option key={preset.label} value={index}>
+                  {preset.label} · {preset.rows}×{preset.columns}
+                </option>
               ))}
-            </Flapkit.Board>
-          </Flapkit.Root>
-          <CommitProbe revision={revision} onCommit={handleCommit} />
-        </Profiler>
-      </section>
+            </select>
+          </label>
+          <label className="grid gap-2 text-[11px] font-[680] tracking-[0.05em] text-muted uppercase">
+            Measured runs
+            <select
+              className="min-h-11 rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[inherit] text-ink disabled:cursor-wait disabled:opacity-50"
+              value={runCount}
+              disabled={running}
+              onChange={(event) => {
+                clearResults()
+                setRunCount(Number(event.target.value) as (typeof runCounts)[number])
+              }}
+            >
+              {runCounts.map((count) => (
+                <option key={count} value={count}>
+                  {count} runs
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex gap-2 max-[860px]:col-span-full max-[560px]:grid max-[560px]:grid-cols-2">
+            <button
+              type="button"
+              className="min-h-11 cursor-pointer rounded-[7px] border border-rule-strong bg-panel px-[13px] font-[680] whitespace-nowrap text-ink disabled:cursor-wait disabled:opacity-50"
+              disabled={running}
+              onClick={runOnce}
+            >
+              Run once
+            </button>
+            <button
+              type="button"
+              className="min-h-11 cursor-pointer rounded-[7px] border border-ink bg-ink px-[13px] font-[680] whitespace-nowrap text-on-ink disabled:cursor-wait disabled:opacity-50"
+              disabled={running}
+              onClick={runBenchmark}
+            >
+              {running ? statusLabel : 'Run benchmark'}
+            </button>
+          </div>
+        </section>
 
-      <p className="mx-auto mt-3.5 w-[min(100%,1120px)] text-xs leading-[1.5] text-muted">
-        Excludes one warm-up. Each run samples 1.5 seconds of animation. Keep this tab visible; results are not
-        comparable across devices.
-      </p>
-    </main>
+        <BenchmarkSummary samples={samples} size={size} statusLabel={statusLabel} />
+        <MeasuredRuns samples={samples} />
+
+        <section
+          ref={stageRef}
+          className="mx-auto mt-7 max-h-[680px] w-[min(100%,1120px)] overflow-auto rounded-[10px] bg-surface p-12 max-[560px]:p-7 [&>div]:mx-auto [&>div]:w-max"
+          aria-label="Benchmark board"
+        >
+          <Profiler id="flapkit-bench" onRender={handleRender}>
+            <Flapkit.Root motion={motion}>
+              <Flapkit.Board
+                aria-label={`${size.label} benchmark board`}
+                className="flapkit-airport"
+              >
+                <Flapkit.Header>
+                  {motionKind.toUpperCase()} · {size.label}
+                </Flapkit.Header>
+                {rows.map((row, rowIndex) => (
+                  <Flapkit.Row key={`row-${rowIndex}`}>
+                    <Flapkit.Group label="LOCAL">
+                      {row.map((cell, columnIndex) => (
+                        <Flapkit.Cell key={columnIndex}>{cell}</Flapkit.Cell>
+                      ))}
+                    </Flapkit.Group>
+                  </Flapkit.Row>
+                ))}
+              </Flapkit.Board>
+            </Flapkit.Root>
+            <CommitProbe revision={revision} onCommit={handleCommit} />
+          </Profiler>
+        </section>
+
+        <p className="mx-auto mt-3.5 w-[min(100%,1120px)] text-xs leading-[1.5] text-muted">
+          Excludes one warm-up. Each run samples 1.5 seconds of animation. Keep this tab visible;
+          results are not comparable across devices.
+        </p>
+      </main>
     </SiteFrame>
   )
 }

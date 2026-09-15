@@ -9,14 +9,7 @@ export function SiteGrain() {
       className="pointer-events-none fixed inset-0 z-[999] size-full opacity-20 mix-blend-overlay"
       aria-hidden
     >
-      <filter
-        id={filterId}
-        x="0"
-        y="0"
-        width="100%"
-        height="100%"
-        colorInterpolationFilters="sRGB"
-      >
+      <filter id={filterId} x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
         <feTurbulence
           type="fractalNoise"
           baseFrequency="0.72"

@@ -1,10 +1,10 @@
 import path from 'node:path'
 import type { NextConfig } from 'next'
+import { workspaceAliases } from '../flapkit.workspace.ts'
 
 const workspaceRoot = path.resolve(import.meta.dirname, '..')
 
-// `flapkit` resolves to `src/` through the package's `development`
-// export condition in `next dev`, and to `dist/` in `next build`.
+// Develop against source locally; production exercises the published dist exports.
 const nextConfig: NextConfig = {
   agentRules: false,
   // Trust only the configured preview host, not every origin on a shared portal domain.
@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ['flapkit'],
   turbopack: {
     root: workspaceRoot,
+    resolveAlias: process.env.NODE_ENV === 'development' ? workspaceAliases : {},
   },
 }
 

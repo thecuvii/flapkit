@@ -3,9 +3,24 @@ import { interpolateCurve, pitchProgress, stackShift, vaneAngle } from './curves
 
 describe('shared motion curves', () => {
   it('interpolates between keyframe offsets', () => {
-    expect(interpolateCurve(0.25, [[0, 0], [0.5, 100]])).toBe(50)
-    expect(interpolateCurve(-1, [[0, 10], [1, 20]])).toBe(10)
-    expect(interpolateCurve(2, [[0, 10], [1, 20]])).toBe(20)
+    expect(
+      interpolateCurve(0.25, [
+        [0, 0],
+        [0.5, 100],
+      ]),
+    ).toBe(50)
+    expect(
+      interpolateCurve(-1, [
+        [0, 10],
+        [1, 20],
+      ]),
+    ).toBe(10)
+    expect(
+      interpolateCurve(2, [
+        [0, 10],
+        [1, 20],
+      ]),
+    ).toBe(20)
   })
 
   it('uses the settle vane table after the halfway fold', () => {

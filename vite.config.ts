@@ -1,10 +1,13 @@
 import { defineConfig } from 'vite-plus'
+import { viteWorkspaceAliases } from './flapkit.workspace.ts'
 
 export default defineConfig({
+  resolve: { alias: viteWorkspaceAliases },
   test: {
     include: ['src/**/*.test.{ts,tsx}'],
   },
   fmt: {
+    ignorePatterns: ['website/next-env.d.ts'],
     semi: false,
     singleQuote: true,
   },

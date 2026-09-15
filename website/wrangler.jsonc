@@ -4,7 +4,7 @@
   "routes": [
     { "pattern": "cuvii.dev/flapkit", "zone_name": "cuvii.dev" },
     { "pattern": "cuvii.dev/flapkit/*", "zone_name": "cuvii.dev" },
-    { "pattern": "flapkit.cuvii.dev", "custom_domain": true }
+    { "pattern": "flapkit.cuvii.dev", "custom_domain": true },
   ],
   "compatibility_date": "2026-09-05",
   // NEXT_PUBLIC_POSTHOG_* is inlined by `next build`. Set it in

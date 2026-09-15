@@ -155,7 +155,9 @@ body {
   --flapkit-detailed-glyph-y: 1.4cqw;
 }
 .film-board[data-theme] .film-glyph {
-  font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', 'Apple SD Gothic Neo', 'PingFang TC', 'Apple Color Emoji', sans-serif;
+  font-family:
+    'Helvetica Neue', Arial, 'Hiragino Sans', 'Apple SD Gothic Neo', 'PingFang TC',
+    'Apple Color Emoji', sans-serif;
   font-size: 46px;
   font-weight: 600;
   letter-spacing: 0;
@@ -164,7 +166,9 @@ body {
   gap: 0;
 }
 
-.film-object { position: relative; }
+.film-object {
+  position: relative;
+}
 .film-url {
   position: absolute;
   top: calc(100% + 42px);
@@ -172,7 +176,10 @@ body {
   right: 0;
   text-align: center;
   color: #c4c8c1;
-  font: 21px/28px Menlo, 'SFMono-Regular', monospace;
+  font:
+    21px/28px Menlo,
+    'SFMono-Regular',
+    monospace;
   letter-spacing: 2.8px;
   text-decoration: none;
 }

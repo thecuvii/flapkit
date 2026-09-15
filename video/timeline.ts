@@ -19,13 +19,24 @@ export const finalRows = [
 
 // One multilingual drum: Latin with French/German/Spanish accents, Japanese,
 // Korean, Traditional Chinese, numbers and weather emoji. No repeated stops.
-const characters = [...new Set(split(' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-./:→ÀÂÆÇÉÈÊËÎÏÔŒÙÛÜŸÄÖẞÑÁÍÓÚ東京大阪서울부산臺北香港☀️🌤️☁️🌧️'))]
+const characters = [
+  ...new Set(
+    split(
+      ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-./:→ÀÂÆÇÉÈÊËÎÏÔŒÙÛÜŸÄÖẞÑÁÍÓÚ東京大阪서울부산臺北香港☀️🌤️☁️🌧️',
+    ),
+  ),
+]
 // Colored positions are physical stops in the same drum, not a CSS tint.
-export const deck = characters.flatMap((character) => createDeck([character], [
-  'white',
-  ...('FLAPKIT'.includes(character) ? ['orange'] : []),
-  ...('ZEROOPEN'.includes(character) ? ['yellow'] : []),
-]))
+export const deck = characters.flatMap((character) =>
+  createDeck(
+    [character],
+    [
+      'white',
+      ...('FLAPKIT'.includes(character) ? ['orange'] : []),
+      ...('ZEROOPEN'.includes(character) ? ['yellow'] : []),
+    ],
+  ),
+)
 export const finalVariants: Variant[][] = finalRows.map((row, rowIndex) =>
   row.map((_, column) => {
     if (rowIndex === 0 && column >= 1 && column <= 7) return 'orange'
@@ -43,10 +54,15 @@ export const initialRows = [
 export const START_AT = 0.6
 const distances = initialRows.flat().map((glyph, i) => {
   const start = deck.findIndex((p) => p.character === glyph && p.variant === 'white')
-  const end = deck.findIndex((p) => p.character === finalRows.flat()[i] && p.variant === finalVariants.flat()[i])
+  const end = deck.findIndex(
+    (p) => p.character === finalRows.flat()[i] && p.variant === finalVariants.flat()[i],
+  )
   if (start < 0 || end < 0) throw new Error(`Missing deck glyph at cell ${i}`)
   return (end - start + deck.length) % deck.length
 })
 // Longest traversal finishes around 9s, leaving a readable final hold.
 export const PITCH_MS = (9000 - START_AT * 1000 - 540 - 280) / (Math.max(...distances) - 1)
-export const columns = Array.from({ length: COLUMNS }, (_, index) => ({ id: `column-${index}`, index }))
+export const columns = Array.from({ length: COLUMNS }, (_, index) => ({
+  id: `column-${index}`,
+  index,
+}))

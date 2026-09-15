@@ -31,7 +31,13 @@ if (captureRate > 1) {
 }
 const soundBank = { clicks: [clickUrl], settles: [settleUrl] }
 if (captureRate > 1) window.nativeSoundBank = soundBank
-const preloadAdapter = cascade({ pitchMs: 20, finalSettleMs: 20, rowDelayMs: 0, withinRowJitterMs: 0, cadenceVariationPct: 0 })
+const preloadAdapter = cascade({
+  pitchMs: 20,
+  finalSettleMs: 20,
+  rowDelayMs: 0,
+  withinRowJitterMs: 0,
+  cadenceVariationPct: 0,
+})
 const adapter = cascade({
   pitchMs: PITCH_MS * captureRate,
   rowDelayMs: 180 * captureRate,
@@ -91,7 +97,14 @@ function Film() {
       aria-label="Flapkit product film"
     >
       <div className="film-object">
-        <Root motion={started ? adapter : preloadAdapter} sound={mechanicalSound({ bank: soundBank, prepareRef: prepareSound, volume: started ? 0.58 : 0 })}>
+        <Root
+          motion={started ? adapter : preloadAdapter}
+          sound={mechanicalSound({
+            bank: soundBank,
+            prepareRef: prepareSound,
+            volume: started ? 0.58 : 0,
+          })}
+        >
           <Board
             className="film-board"
             data-look={theme === 'industrial' ? 'industrial' : 'airport'}
@@ -102,16 +115,16 @@ function Film() {
             {rows.map((row, rowIndex) => (
               <Row key={`row-${rowIndex}`} id={`row-${rowIndex}`}>
                 {columns.map((column) => (
-                  <Group key={column.id} id={column.id} variant={started ? finalVariants[rowIndex]![column.index] : 'white'}>
-                  <Cell
-                    deck={deck}
-                    className="film-cell"
-                    style={{ width: 54, height: 78 }}
+                  <Group
+                    key={column.id}
+                    id={column.id}
+                    variant={started ? finalVariants[rowIndex]![column.index] : 'white'}
                   >
-                    <Face className="film-face" />
-                    <Glyph className="film-glyph">{row[column.index]!}</Glyph>
-                    <Retainer className="film-retainer" />
-                  </Cell>
+                    <Cell deck={deck} className="film-cell" style={{ width: 54, height: 78 }}>
+                      <Face className="film-face" />
+                      <Glyph className="film-glyph">{row[column.index]!}</Glyph>
+                      <Retainer className="film-retainer" />
+                    </Cell>
                   </Group>
                 ))}
               </Row>
@@ -119,7 +132,9 @@ function Film() {
           </Board>
         </Root>
         {!new URLSearchParams(location.search).has('capture') && (
-          <a className="film-url" href="https://cuvii.dev/flapkit">cuvii.dev/flapkit</a>
+          <a className="film-url" href="https://cuvii.dev/flapkit">
+            cuvii.dev/flapkit
+          </a>
         )}
       </div>
     </main>

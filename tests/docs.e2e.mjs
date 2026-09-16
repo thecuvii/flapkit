@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright'
 
-const url = process.env.FLAPKIT_DOCS_URL || 'http://localhost:5173'
+const url = process.env.FLAPKIT_DOCS_URL || 'http://localhost:5173/flapkit/'
 let browser
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -209,8 +209,8 @@ async function desktop(page) {
   const sound = await reveal(page, 'sound', 'button')
   const snippet = await sound.locator('[aria-label="Code example"]').innerText()
   assert.match(snippet, /import \{ mechanicalSound \} from 'flapkit\/sound'/)
-  assert.ok(snippet.trim().split('\n').length <= 12, 'Sound snippet is no longer concise')
-  assert.ok(!/motion=|riffle|Flapkit.Cell/.test(snippet), 'Sound snippet includes unrelated setup')
+  assert.match(snippet, /motion=\{riffle\(\)\}/)
+  assert.match(snippet, /Your own files/)
   const soundButton = sound.getByRole('button', { name: /^(Play|Replay) sounds$/ })
   assert.equal(await soundButton.locator('svg').count(), 1, 'Sound play/replay icon is missing')
   await soundButton.click()

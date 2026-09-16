@@ -208,10 +208,13 @@ export function looksLiveValue(id: LooksRangeId, tab: LooksTab) {
 
 function motionCode(motion: 'cascade' | 'riffle' | 'css') {
   const motionCall = `${motion === 'css' ? 'cascade' : motion}()`
-  return `${motionImport(motion)}
+  return `import * as Flapkit from 'flapkit'
+${motionImport(motion)}
 
 <Flapkit.Root motion={${motionCall}}>
-  {/* Your board */}
+  <Flapkit.Grid>
+    <Flapkit.Row><Flapkit.Cell>A</Flapkit.Cell></Flapkit.Row>
+  </Flapkit.Grid>
 </Flapkit.Root>`
 }
 
@@ -246,18 +249,30 @@ import 'flapkit/airport.css'
     language: 'tsx',
   },
   decks: {
-    code: `// Physical leaf order, independent of the displayed phrase.
+    code: `import * as Flapkit from 'flapkit'
+import { cascade } from 'flapkit/motion/css/cascade'
+import 'flapkit/flapkit.css'
+import 'flapkit/airport.css'
+
+// Physical leaf order, independent of the displayed phrase.
 const deck = Flapkit.createDeck([
   ' ', '안', '東', '☕', '好', '京', '💚',
   '🌏', '✨', '👋', '你', '🚀', '녕',
 ])
 
-// Within your Grid or Board.
-<Flapkit.Row deck={deck}>
-  {['안', '녕', '👋', '🌏'].map((character, index) => (
-    <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
-  ))}
-</Flapkit.Row>`,
+export function MultilingualBoard() {
+  return (
+    <Flapkit.Root motion={cascade()}>
+      <Flapkit.Grid data-look="airport">
+        <Flapkit.Row deck={deck}>
+          {['안', '녕', '👋', '🌏'].map((character, index) => (
+            <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+          ))}
+        </Flapkit.Row>
+      </Flapkit.Grid>
+    </Flapkit.Root>
+  )
+}`,
     language: 'tsx',
   },
   motionRiffle: {
@@ -281,16 +296,36 @@ const deck = Flapkit.createDeck([
     language: 'tsx',
   },
   sound: {
-    code: `import { mechanicalSound } from 'flapkit/sound'
+    code: `import { useRef, useState } from 'react'
+import * as Flapkit from 'flapkit'
+import { mechanicalSound } from 'flapkit/sound'
+import { riffle } from 'flapkit/motion/canvas/riffle'
+import 'flapkit/flapkit.css'
+import 'flapkit/airport.css'
 
+// Your own files served from your application's public/audio directory.
 const soundBank = {
-  clicks: ['/flapkit/audio/click.wav'],
-  settles: ['/flapkit/audio/settle.wav'],
+  clicks: ['/audio/click.wav'],
+  settles: ['/audio/settle.wav'],
 }
 
-<Flapkit.Root sound={mechanicalSound({ bank: soundBank })}>
-  {/* Your board */}
-</Flapkit.Root>`,
+export function SoundBoard() {
+  const [value, setValue] = useState('A')
+  const prepareRef = useRef<(() => Promise<boolean>) | null>(null)
+  return (
+    <>
+      <button onClick={async () => {
+        await prepareRef.current?.()
+        setValue((current) => current === 'A' ? 'B' : 'A')
+      }}>Flip with sound</button>
+      <Flapkit.Root motion={riffle()} sound={mechanicalSound({ bank: soundBank, prepareRef })}>
+        <Flapkit.Board data-look="airport">
+          <Flapkit.Row><Flapkit.Cell>{value}</Flapkit.Cell></Flapkit.Row>
+        </Flapkit.Board>
+      </Flapkit.Root>
+    </>
+  )
+}`,
     language: 'tsx',
   },
 } as const

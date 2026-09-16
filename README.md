@@ -11,7 +11,7 @@ independently importable looks, Unicode decks, and multi-cell cassettes.
 pnpm add flapkit
 ```
 
-React 19 is a peer dependency. Import the structural stylesheet and one look;
+React and React DOM 19 or later are peer dependencies. Import the structural stylesheet and one look;
 Flapkit does not inject styles at runtime.
 
 ## Composition
@@ -70,7 +70,13 @@ import { cascade } from 'flapkit/motion/css/cascade'
 // Or: 'flapkit/motion/canvas/cascade'
 // Or: import { riffle } from 'flapkit/motion/canvas/riffle'
 
-;<Flapkit.Root motion={cascade()}>{/* Board or Grid */}</Flapkit.Root>
+;<Flapkit.Root motion={cascade()}>
+  <Flapkit.Grid>
+    <Flapkit.Row>
+      <Flapkit.Cell>A</Flapkit.Cell>
+    </Flapkit.Row>
+  </Flapkit.Grid>
+</Flapkit.Root>
 ```
 
 The CSS entry does not depend on the Canvas renderer. The Canvas entries supply
@@ -125,15 +131,19 @@ import { riffle } from 'flapkit/motion/canvas/riffle'
 
 const localDeck = Flapkit.createDeck(' 東京大阪成田羽田出発到着搭乗')
 
-<Flapkit.Root motion={riffle()}>
-  <Flapkit.Board>
-    <Flapkit.Row deck={localDeck} label="LOCAL">
-      {[...'東京出発'].map((character, index) => (
-        <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
-      ))}
-    </Flapkit.Row>
-  </Flapkit.Board>
-</Flapkit.Root>
+export function LocalDepartures() {
+  return (
+    <Flapkit.Root motion={riffle()}>
+      <Flapkit.Board>
+        <Flapkit.Row deck={localDeck} label="LOCAL">
+          {[...'東京出発'].map((character, index) => (
+            <Flapkit.Cell key={index}>{character}</Flapkit.Cell>
+          ))}
+        </Flapkit.Row>
+      </Flapkit.Board>
+    </Flapkit.Root>
+  )
+}
 ```
 
 Each grapheme resolves to one independently driven character cell. Every cell
@@ -150,12 +160,23 @@ Some displays use a single cassette whose leaves are wide enough to carry two
 graphemes. Use `WideCell` with a custom deck of two-grapheme positions:
 
 ```tsx
+import * as Flapkit from 'flapkit'
+import { cascade } from 'flapkit/motion/css/cascade'
+
 const numberDeck = Flapkit.createDeck(['  ', '14', '05', '55', '30'])
 
-<Flapkit.Row deck={numberDeck} label="NUMBER">
-  <Flapkit.WideCell>14</Flapkit.WideCell>
-  <Flapkit.WideCell>05</Flapkit.WideCell>
-</Flapkit.Row>
+export function Numbers() {
+  return (
+    <Flapkit.Root motion={cascade()}>
+      <Flapkit.Grid>
+        <Flapkit.Row deck={numberDeck} label="NUMBER">
+          <Flapkit.WideCell>14</Flapkit.WideCell>
+          <Flapkit.WideCell>05</Flapkit.WideCell>
+        </Flapkit.Row>
+      </Flapkit.Grid>
+    </Flapkit.Root>
+  )
+}
 ```
 
 This renders two double-width cassettes: `[14] [05]`. Each cassette has one
@@ -382,8 +403,11 @@ injection.
 | `id`        | `string`  | generated          | Logical region ID; not animation identity |
 | `label`     | `string`  | —                  | Column label for this region              |
 | `deck`      | `Deck`    | `alphanumericDeck` | Stops for every cassette in this group    |
-| `variant`   | `Variant` | inherited          | Overrides the row variant                 |
+| `variant`   | `Variant` | `white`            | Target variant for this group             |
 | `className` | `string`  | —                  | Inherits into glyphs                      |
+
+A Row containing Groups cannot set `label`, `deck`, or `variant`; put those
+settings on each Group. Row and Group also accept `style: CSSProperties`.
 
 ### Cell / WideCell
 
@@ -402,10 +426,10 @@ not standalone rendered components. A part may appear at most once.
 
 ### createDeck
 
-| Argument     | Type                   | Default     | Meaning                          |
-| ------------ | ---------------------- | ----------- | -------------------------------- |
-| `characters` | `string` or `string[]` | —           | Stops. Strings split by grapheme |
-| `variants`   | `Variant[]`            | `['white']` | Repeats the stops per variant    |
+| Argument     | Type                   | Default     | Meaning                                             |
+| ------------ | ---------------------- | ----------- | --------------------------------------------------- |
+| `characters` | `string` or `string[]` | —           | Stops. Strings split by grapheme                    |
+| `variants`   | `Variant[]`            | `['white']` | Repeats stops per variant; blanks only in the first |
 
 ### riffle / cascade / motion
 
@@ -420,17 +444,42 @@ not standalone rendered components. A part may appear at most once.
 | `finalSettleMs`       | `number` | `260`     | Settle after the last pitch                        |
 | `finalReboundDeg`     | `number` | `2`       | Deprecated compatibility no-op; fixed settle curve |
 
-`motion(schedule, options)` uses the shared option names above. `schedule`
+`motion(schedule, options)` uses shared options with its own defaults:
+
+| Option                                               | Default                |
+| ---------------------------------------------------- | ---------------------- |
+| `pitchMs`                                            | `52`                   |
+| `cadenceVariationPct`                                | `4`                    |
+| `finalSettleMs`                                      | `260`                  |
+| `finalReboundDeg`                                    | `2` (deprecated no-op) |
+| `rowDelayMs` / `startSpreadMs` / `withinRowJitterMs` | `0`                    |
+
+The schedule decides how to apply the delay/window options. `schedule`
 receives the cassettes that need to start and must call `ctx.start(index, at)`.
 `timingNoise(index, salt)` is the same deterministic noise riffle and cascade
 use.
 
 ```tsx
-<Flapkit.Root
-  motion={Flapkit.motion((cassettes, ctx) => {
-    cassettes.forEach((cassette) => ctx.start(cassette.index, ctx.now))
-  }, { pitchMs: 40 })}
->
+import * as Flapkit from 'flapkit'
+
+export function CustomMotion() {
+  return (
+    <Flapkit.Root
+      motion={Flapkit.motion(
+        (cassettes, ctx) => {
+          cassettes.forEach((cassette) => ctx.start(cassette.index, ctx.now))
+        },
+        { pitchMs: 40 },
+      )}
+    >
+      <Flapkit.Grid>
+        <Flapkit.Row>
+          <Flapkit.Cell>A</Flapkit.Cell>
+        </Flapkit.Row>
+      </Flapkit.Grid>
+    </Flapkit.Root>
+  )
+}
 ```
 
 ### mechanicalSound
@@ -458,8 +507,9 @@ pnpm dev
 ```
 
 `pnpm test` covers the compiler, decks, motion, sound, and renderer entry-point
-tree-shaking. `pnpm test:browser` exercises the public motion subpaths in Chromium,
-including CSS/Canvas switching, composed cells, updates, geometry, and screenshots.
+tree-shaking. `pnpm test:browser` exercises the public motion subpaths in Chromium, Firefox and WebKit,
+including CSS/Canvas switching, composed cells, updates and geometry.
+`pnpm test:visual` separately enables Chromium screenshot comparisons.
 
 With the documentation server running, run the page-level regression checks:
 
@@ -469,7 +519,8 @@ pnpm test:docs
 
 These check fixed navigation, static Composition/Looks previews, independent
 Decks playback, code snippets, and mobile controls. The test runner defaults to
-`http://localhost:5173`; set `FLAPKIT_DOCS_URL` for a different local server port.
+`http://localhost:5173/flapkit/`; set `FLAPKIT_DOCS_URL` to the full documentation
+URL (including `/flapkit/`) when using another host or port.
 The checks do not start a server.
 
 ## Release checks and compatibility
@@ -501,6 +552,10 @@ For Linux baselines, manually run the Release checks workflow with
 images before committing them, then require a normal Release checks run to pass;
 the baseline-generation run does not validate a release.
 
+`test:docs-examples` parses the README and website TSX examples and type-checks
+them against the built package declarations. Run `pnpm build` first when using
+this check on its own.
+
 `test:package` checks npm/pnpm export parity and the exact packed artifact's
 export targets, development rendering and updates, TypeScript consumer, CSS
 imports and production tree-shaking. `test:react-min` repeats that consumer test
@@ -531,7 +586,11 @@ Publish a GitHub Release with a tag matching the package version (for example,
 checks before publishing through npm trusted publishing (OIDC), with provenance.
 Stable versions use `latest`; prereleases use `beta`. No npm token secret is needed.
 
-The npm trusted publisher is scoped to `thecuvii/flapkit` and `publish.yml`.
+Before the first automated publication, configure an npm trusted publisher for
+`thecuvii/flapkit` with workflow filename `publish.yml` and direct publishing
+permission. Creating this trust requires npm account verification; committing
+the workflow alone does not establish it. Verify the publisher configuration in
+the npm package settings before publishing a release.
 A manual run of **Publish to npm** checks the pipeline and performs a package dry run;
 it does not publish a version or prove a live OIDC publish. Already published
 npm versions cannot be republished.

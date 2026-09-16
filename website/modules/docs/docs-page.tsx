@@ -56,7 +56,7 @@ const navigation = [
 ] as const
 
 const docsNavItemClass =
-  'grid w-fit max-w-full grid-cols-[8px_minmax(0,1fr)] items-center gap-2 py-1 font-display text-[15px] font-semibold uppercase tracking-[0.06em] text-faint [overflow-wrap:anywhere] hover:text-ink max-[860px]:inline-flex max-[860px]:shrink-0 max-[860px]:min-h-11 max-[860px]:py-[5px]'
+  'grid w-fit max-w-full grid-cols-[8px_minmax(0,1fr)] items-center gap-2 py-1 font-display text-[15px] font-semibold uppercase tracking-[0.06em] text-faint [overflow-wrap:anywhere] hover:text-ink max-[861px]:inline-flex max-[861px]:shrink-0 max-[861px]:min-h-11 max-[861px]:py-[5px]'
 
 const sectionMeta = [
   { id: 'quick-start', index: '01', title: 'Quick start' },
@@ -232,7 +232,7 @@ const optionRowClass =
 const docsCopyClass = cn(
   'grid min-w-0 grid-cols-1 gap-u4 min-[861px]:grid-cols-2 min-[861px]:gap-x-u4',
   'min-[861px]:[&>*]:col-span-2',
-  '[&>p]:m-0 [&>p]:text-base [&>p]:font-[430] [&>p]:tracking-[-0.006em] [&>p]:leading-u4 max-[860px]:[&>p]:leading-normal [&>p]:text-muted [&>p]:text-pretty',
+  '[&>p]:m-0 [&>p]:text-base [&>p]:font-[430] [&>p]:tracking-[-0.006em] [&>p]:leading-u4 max-[861px]:[&>p]:leading-normal [&>p]:text-muted [&>p]:text-pretty',
   '[&_p_code]:px-0.5 [&_p_code]:font-mono [&_p_code]:text-[0.86em] [&_p_code]:text-ink',
   '[&_a]:text-link [&_a]:underline [&_a]:underline-offset-[3px] [&_a]:hover:text-ink',
 )
@@ -481,7 +481,7 @@ function ActivitySection({ id, children }: { id: SectionId; children: ReactNode 
     <section
       ref={sectionRef}
       id={id}
-      className="w-full min-h-dvh max-[860px]:scroll-mt-0 max-[860px]:pb-12"
+      className="w-full min-h-dvh max-[861px]:scroll-mt-0 max-[861px]:pb-12"
       style={
         visible ? undefined : { minHeight: heightRef.current > 0 ? heightRef.current : '100dvh' }
       }
@@ -505,16 +505,16 @@ function DocsSection({
   children: ReactNode
 }) {
   return (
-    <div className="grid min-h-dvh min-w-0 max-[860px]:min-h-0 max-[860px]:h-auto min-[861px]:h-dvh min-[861px]:grid-cols-[minmax(0,1fr)_minmax(0,clamp(26rem,calc(6*var(--u)),30rem))_var(--u)]">
+    <div className="grid min-h-dvh min-w-0 max-[861px]:min-h-0 max-[861px]:h-auto min-[861px]:h-dvh min-[861px]:grid-cols-[minmax(0,1fr)_minmax(0,clamp(26rem,calc(6*var(--u)),30rem))_var(--u)]">
       <div
         className={cn(
-          'grid px-u4 py-8 max-[860px]:py-6 min-[861px]:min-h-0',
+          'grid px-u4 py-8 max-[861px]:py-6 min-[861px]:min-h-0',
           fillPreview ? 'items-center [&>*]:w-full' : 'place-items-center',
         )}
       >
         {preview}
       </div>
-      <div className="grid min-h-0 min-w-0 items-center overflow-y-auto overscroll-y-contain px-u4 py-8 max-[860px]:overflow-visible max-[860px]:pt-2">
+      <div className="grid min-h-0 min-w-0 items-center overflow-y-auto overscroll-y-contain px-u4 py-8 max-[861px]:overflow-visible max-[861px]:pt-2">
         <div className={docsCopyClass}>
           <h2 className="relative m-0 flex items-baseline gap-3.5 text-balance">
             <span
@@ -524,7 +524,7 @@ function DocsSection({
               {index}
             </span>
             <svg
-              className="size-2.5 shrink-0 self-center text-safety max-[860px]:hidden"
+              className="size-2.5 shrink-0 self-center text-safety max-[861px]:hidden"
               aria-hidden="true"
               viewBox="0 0 16 16"
               xmlns="http://www.w3.org/2000/svg"
@@ -541,7 +541,7 @@ function DocsSection({
             </span>
             <span
               aria-hidden="true"
-              className="h-2 min-w-12 flex-1 self-center bg-[image:var(--leader)] bg-[length:4px_4px] bg-repeat max-[860px]:hidden"
+              className="h-2 min-w-12 flex-1 self-center bg-[image:var(--leader)] bg-[length:4px_4px] bg-repeat max-[861px]:hidden"
             />
           </h2>
           {children}
@@ -558,7 +558,7 @@ function DocsNav() {
   useEffect(() => {
     const nav = navRef.current
     const link = nav?.querySelector<HTMLElement>('[aria-current="location"]')
-    if (!nav || !link || !window.matchMedia('(max-width: 860px)').matches) return
+    if (!nav || !link || !window.matchMedia('(width < 861px)').matches) return
     const navBox = nav.getBoundingClientRect()
     const linkBox = link.getBoundingClientRect()
     if (linkBox.left < navBox.left || linkBox.right > navBox.right - 28) {
@@ -570,7 +570,7 @@ function DocsNav() {
     <nav
       ref={navRef}
       aria-label="Documentation"
-      className="grid min-w-0 gap-0.5 max-[860px]:flex max-[860px]:gap-4 max-[860px]:overflow-x-auto max-[860px]:pr-7 max-[860px]:[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[860px]:[-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[860px]:[overscroll-behavior-x:contain] max-[860px]:[scrollbar-width:none] max-[860px]:[&::-webkit-scrollbar]:hidden"
+      className="grid min-w-0 gap-0.5 max-[861px]:flex max-[861px]:gap-4 max-[861px]:overflow-x-auto max-[861px]:pr-7 max-[861px]:[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[861px]:[-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] max-[861px]:[overscroll-behavior-x:contain] max-[861px]:[scrollbar-width:none] max-[861px]:[&::-webkit-scrollbar]:hidden"
     >
       {navigation.map(([label, id]) => (
         <DocsNavLink key={id} href={id} label={label} />
@@ -583,7 +583,7 @@ function DocsNav() {
       >
         <span
           aria-hidden="true"
-          className="size-1 justify-self-center rounded-full bg-[oklch(0.5_0_0)] max-[860px]:hidden"
+          className="size-1 justify-self-center rounded-full bg-[oklch(0.5_0_0)] max-[861px]:hidden"
         />
         API reference
       </a>
@@ -615,7 +615,7 @@ function DocsNavLink({ href, label }: { href: SectionId; label: string }) {
 }
 
 const docsControlClass =
-  'relative inline-flex min-h-11 min-w-0 cursor-pointer touch-manipulation items-center gap-2 border-0 bg-transparent py-1 font-mono text-[10px] max-[860px]:text-xs font-semibold tracking-[0.06em] uppercase hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink'
+  'relative inline-flex min-h-11 min-w-0 cursor-pointer touch-manipulation items-center gap-2 border-0 bg-transparent py-1 font-mono text-[10px] max-[861px]:text-xs font-semibold tracking-[0.06em] uppercase hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink'
 
 function ChoiceSwitch<T extends string>({
   label,
@@ -632,7 +632,7 @@ function ChoiceSwitch<T extends string>({
 }) {
   return (
     <div
-      className="grid min-w-0 grid-cols-[56px_minmax(0,1fr)] max-[860px]:grid-cols-1 items-center gap-x-3 border-b border-dashed border-rule py-1.5"
+      className="grid min-w-0 grid-cols-[56px_minmax(0,1fr)] max-[861px]:grid-cols-1 items-center gap-x-3 border-b border-dashed border-rule py-1.5"
       role="group"
       aria-label={label}
       data-docs-choice
@@ -1410,8 +1410,9 @@ function MotionSection({
     >
       <p>
         <code>riffle()</code> randomizes starts; <code>cascade()</code> staggers them by row. Import
-        from <code>motion/canvas</code> for Canvas leaves, or <code>motion/css/cascade</code> for
-        CSS 3D leaves. The import selects the renderer without bundling the unused Canvas renderer.
+        from <code>flapkit/motion/canvas/riffle</code> or <code>flapkit/motion/canvas/cascade</code>
+        for Canvas leaves, or <code>flapkit/motion/css/cascade</code> for CSS 3D leaves. The import
+        selects the renderer without bundling the unused Canvas renderer.
       </p>
       <div className="docs-choice-rows">
         <ChoiceSwitch
@@ -1809,7 +1810,9 @@ function DecksSection({ html }: { html: string }) {
           <code>variant</code>
           <span className="text-[13px] leading-[1.55] text-muted">
             <code>white</code>, <code>yellow</code>, or <code>orange</code>. Pass as{' '}
-            <code>createDeck</code>’s second argument.
+            <code>createDeck</code>’s second argument as an array, for example{' '}
+            <code>{"createDeck(' ABC', ['white', 'yellow'])"}</code>, then set{' '}
+            <code>variant="yellow"</code> on the flat Row or Group.
           </span>
         </div>
       </div>
@@ -1830,11 +1833,11 @@ export function DocsPage({
   return (
     <DocsProvider>
       <SiteFrame>
-        <div className="grid grid-cols-[var(--sidebar-width)_minmax(0,1fr)] max-[860px]:block">
-          <aside className="min-w-0 border-r border-dashed border-rule font-mono max-[860px]:sticky max-[860px]:top-0 max-[860px]:z-2 max-[860px]:border-r-0 max-[860px]:border-b">
-            <div className="sticky top-0 flex min-h-dvh flex-col items-start px-u4 pt-u4 pb-6 max-[860px]:static max-[860px]:min-h-0 max-[860px]:grid max-[860px]:grid-cols-1 max-[860px]:items-center max-[860px]:bg-[color-mix(in_oklch,var(--paper)_92%,transparent)] max-[860px]:px-4 max-[860px]:py-2.5">
+        <div className="grid grid-cols-[var(--sidebar-width)_minmax(0,1fr)] max-[861px]:block">
+          <aside className="min-w-0 border-r border-dashed border-rule font-mono max-[861px]:sticky max-[861px]:top-0 max-[861px]:z-2 max-[861px]:border-r-0 max-[861px]:border-b">
+            <div className="sticky top-0 flex min-h-dvh flex-col items-start px-u4 pt-u4 pb-6 max-[861px]:static max-[861px]:min-h-0 max-[861px]:grid max-[861px]:grid-cols-1 max-[861px]:items-center max-[861px]:bg-[color-mix(in_oklch,var(--paper)_92%,transparent)] max-[861px]:px-4 max-[861px]:py-2.5">
               <DocsNav />
-              <div className="mt-auto flex w-full items-end gap-u4 font-mono text-meta font-[620] tracking-[0.08em] text-faint uppercase max-[860px]:hidden">
+              <div className="mt-auto flex w-full items-end gap-u4 font-mono text-meta font-[620] tracking-[0.08em] text-faint uppercase max-[861px]:hidden">
                 <div className="grid gap-[calc(var(--spacing-u4)/2)]">
                   <i
                     aria-hidden="true"

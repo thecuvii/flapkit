@@ -879,7 +879,7 @@ h2 {
   grid-column: 1 / -1;
 }
 
-@media (max-width: 860px) {
+@media (width < 861px) {
   :root {
     --sidebar-width: 0px;
     --gutter: 24px;
@@ -968,7 +968,7 @@ h2 {
   }
 }
 
-@media (max-width: 860px) {
+@media (width < 861px) {
   .quick-start-board-slot {
     height: auto;
     aspect-ratio: calc(var(--qs-reserve-width) / var(--qs-reserve-height));
@@ -982,26 +982,26 @@ h2 {
 }
 
 /* On stacked layouts, reserve the enlarged board's actual layout size. */
-@media (max-width: 860px) {
+@media (width < 861px) {
   .motion-preview-scale {
     transform: none;
     zoom: 1.25;
   }
 }
 
-@media (360px <= width <= 860px) {
+@media (360px <= width < 861px) {
   .motion-preview-scale {
     zoom: 1.5;
   }
 }
 
-@media (480px <= width <= 860px) {
+@media (480px <= width < 861px) {
   .motion-preview-scale {
     zoom: 1.85;
   }
 }
 
-@media (max-width: 860px) {
+@media (width < 861px) {
   #quick-start .quick-start-board-slot {
     margin-block: 20px 24px;
   }

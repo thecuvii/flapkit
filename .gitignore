@@ -18,7 +18,6 @@ website/public/vendor/
 *.tsbuildinfo
 
 video/output/
-video/dist/
 
 website/deploy-assets/
 .wrangler/

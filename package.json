@@ -74,9 +74,6 @@
     "test:visual": "FLAPKIT_VISUAL_TESTS=1 FLAPKIT_BROWSER=chromium vp test run --config vitest.browser.config.ts",
     "check:release": "pnpm check && pnpm test && pnpm test:browser && pnpm test:visual && pnpm test:package && pnpm test:react-min",
     "test:react-min": "FLAPKIT_REACT_VERSION=19.0.0 node tests/package.e2e.mjs",
-    "video:dev": "vite --config video/vite.config.ts",
-    "video:render": "node video/render.mjs",
-    "video:check": "tsc -p video/tsconfig.json",
     "test:subpath": "node tests/subpath.e2e.mjs"
   },
   "devDependencies": {

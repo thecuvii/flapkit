@@ -1,14 +1,18 @@
 import { chromium } from 'playwright'
 import { readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-const output = fileURLToPath(new URL('./output/', import.meta.url))
+const output = fileURLToPath(
+  new URL(process.env.FLAPKIT_VIDEO_4K === '1' ? './output/4k/' : './output/', import.meta.url),
+)
 const events = JSON.parse(await readFile(`${output}/mechanical-events.json`, 'utf8'))
   .map((event) => ({ ...event, at: (0.6 + (event.at - 0.6) / 1.65) * 1000 }))
   .filter((e) => e.at >= 600 && e.at < 7000)
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] })
 try {
   const page = await browser.newPage()
-  await page.goto(process.env.FLAPKIT_VIDEO_URL ?? 'http://127.0.0.1:5188/?capture')
+  const captureUrl = new URL(process.env.FLAPKIT_VIDEO_URL ?? 'http://127.0.0.1:5189/')
+  captureUrl.searchParams.set('capture', '')
+  await page.goto(captureUrl.href)
   await page.waitForFunction(() => window.NativeSoundEngine && window.nativeSoundBank)
   const audio = await page.evaluate(async (events) => {
     const Engine = window.NativeSoundEngine

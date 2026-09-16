@@ -4,7 +4,9 @@ import { fileURLToPath } from 'node:url'
 import assert from 'node:assert/strict'
 import { START_AT } from './timeline.ts'
 
-const output = fileURLToPath(new URL('./output/', import.meta.url))
+const output = fileURLToPath(
+  new URL(process.env.FLAPKIT_VIDEO_4K === '1' ? './output/4k/' : './output/', import.meta.url),
+)
 const PLAYBACK_SPEED = 1.65
 const OUTPUT_DURATION = 7
 const themes = ['industrial']
@@ -13,12 +15,13 @@ const filters = [
   `[0:v]setpts='if(lt(T,${START_AT}),PTS,(${START_AT}+(T-${START_AT})/${PLAYBACK_SPEED})/TB)',fps=60,tpad=stop_mode=clone:stop_duration=4,trim=duration=${OUTPUT_DURATION}[film]`,
 ]
 const website = 'cuvii.dev/flapkit'
-const tracking = 22
-const websiteWidth = (website.length - 1) * tracking + 18
+const scale = process.env.FLAPKIT_VIDEO_4K === '1' ? 2 : 1
+const tracking = 22 * scale
+const websiteWidth = (website.length - 1) * tracking + 18 * scale
 const websiteType = [...website]
   .map(
     (letter, index) =>
-      `drawtext=fontfile='/System/Library/Fonts/Menlo.ttc':text='${letter}':fontcolor=0xc4c8c1:fontsize=30:x=(w-${websiteWidth})/2+${index * tracking}:y=923:y_align=baseline`,
+      `drawtext=fontfile='/System/Library/Fonts/Menlo.ttc':text='${letter}':fontcolor=0xc4c8c1:fontsize=${30 * scale}:x=(w-${websiteWidth})/2+${index * tracking}:y=${923 * scale}:y_align=baseline`,
   )
   .join(',')
 filters.push(`[film]${websiteType}[out]`)
@@ -43,7 +46,7 @@ const result = spawnSync(
     '-c:a',
     'aac',
     '-b:a',
-    '192k',
+    '320k',
     '-c:v',
     'libx264',
     '-preset',

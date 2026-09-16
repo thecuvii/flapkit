@@ -20,7 +20,8 @@ import 'flapkit/airport.css'
 import 'flapkit/industrial.css'
 import './style.css'
 
-const captureRate = new URLSearchParams(location.search).has('capture') ? 4 : 1
+const captureParams = new URLSearchParams(location.search)
+const captureRate = captureParams.has('capture') ? Number(captureParams.get('rate') ?? 4) : 1
 // Capture the public sound-engine events; mix native-speed samples after retiming.
 if (captureRate > 1) {
   window.NativeSoundEngine = SoundEngine

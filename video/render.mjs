@@ -6,13 +6,16 @@ import { resolve } from 'node:path'
 import assert from 'node:assert/strict'
 import { DURATION, finalRows } from './timeline.ts'
 
-const CAPTURE_RATE = 4
-const output = fileURLToPath(new URL('./output/', import.meta.url))
+const UHD = process.env.FLAPKIT_VIDEO_4K === '1'
+const WIDTH = UHD ? 3840 : 1920
+const HEIGHT = UHD ? 2160 : 1080
+const CAPTURE_RATE = UHD ? 12 : 4
+const output = fileURLToPath(new URL(UHD ? './output/4k/' : './output/', import.meta.url))
 await mkdir(output, { recursive: true })
 async function record(theme) {
   const browser = await chromium.launch()
   const context = await browser.newContext({
-    viewport: { width: 1920, height: 1080 },
+    viewport: { width: WIDTH, height: HEIGHT },
     reducedMotion: 'no-preference',
   })
   const page = await context.newPage()
@@ -26,6 +29,7 @@ async function record(theme) {
   try {
     const url = new URL(process.env.FLAPKIT_VIDEO_URL ?? 'http://127.0.0.1:5189/')
     url.searchParams.set('capture', '')
+    url.searchParams.set('rate', String(CAPTURE_RATE))
     url.searchParams.set('theme', theme)
     await page.goto(url.href)
     await page.waitForFunction(() => window.flapkitFilm)
@@ -36,9 +40,9 @@ async function record(theme) {
     })
     await session.send('Page.startScreencast', {
       format: 'jpeg',
-      quality: 92,
-      maxWidth: 1920,
-      maxHeight: 1080,
+      quality: 96,
+      maxWidth: WIDTH,
+      maxHeight: HEIGHT,
       everyNthFrame: 1,
     })
     startedAt = await page.evaluate((rate) => {
@@ -121,7 +125,7 @@ async function record(theme) {
       '-i',
       resolve(frameDirectory, 'frames.txt'),
       '-vf',
-      'fps=60,scale=in_range=full:out_range=tv:in_color_matrix=bt601:out_color_matrix=bt709',
+      `fps=${UHD ? 120 : 60},scale=in_range=full:out_range=tv:in_color_matrix=bt601:out_color_matrix=bt709`,
       '-color_primaries',
       'bt709',
       '-color_trc',
@@ -150,11 +154,11 @@ async function record(theme) {
     resolve(output, `verification-${theme}.json`),
     JSON.stringify(
       {
-        mode: '4x slow recording through public motion parameters, restored to normal speed',
+        mode: `${CAPTURE_RATE}x slow recording through public motion parameters, restored to normal speed`,
         duration: DURATION,
         compositorFrames: captured.length,
-        width: 1920,
-        height: 1080,
+        width: WIDTH,
+        height: HEIGHT,
         motionSamples,
         pageErrors: errors,
         finalCopy: 'PASS',

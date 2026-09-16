@@ -51,3 +51,17 @@ The capture logs public SoundEngine mechanical events from the actual animation.
 using the same click/settle bank as the docs. AudioWorklet records the native
 compressor output against the AudioContext sample clock, preserving initial silence; there is no custom mixer or replacement synthesis.
 `edit.mjs` muxes that recording into the video. Rerun `video:render` if motion changes.
+
+## 4K delivery
+
+With the production preview running on port 5189, run:
+
+```sh
+FLAPKIT_VIDEO_4K=1 pnpm video:render
+```
+
+This captures a native 3840×2160 viewport at 12× slower motion and encodes a
+120fps intermediate before the final 60fps edit. The URL caption scales with
+the frame. The final 7-second H.264 MP4 includes 48kHz stereo native sound
+encoded at 320kbps AAC. Output is `video/output/4k/flapkit-continuous.mp4`;
+1080p outputs remain in their existing directory.
